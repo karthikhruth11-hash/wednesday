@@ -109,16 +109,25 @@ export default function ArcReactorVisualizer({ state, activeGesture, handPos }) 
 
       ctx.restore();
 
-      // Counter-Rotating Inner Ring with Tick Lines
+      // Counter-Rotating Inner Ring with Hazard Dashes & Ticks
       ctx.save();
       ctx.translate(centerX, centerY);
       ctx.rotate(rotation2);
 
-      ctx.strokeStyle = 'rgba(0, 240, 255, 0.5)';
-      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = 'rgba(0, 240, 255, 0.6)';
+      ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.arc(0, 0, 75, 0, Math.PI * 2);
+      ctx.arc(0, 0, 78, 0, Math.PI * 2);
       ctx.stroke();
+
+      // Inner Hazard Stripes Ring
+      ctx.setLineDash([6, 6]);
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(0, 0, 68, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]); // Reset dash
 
       // Inner Reticle Teeth
       for (let i = 0; i < 24; i++) {
@@ -126,8 +135,8 @@ export default function ArcReactorVisualizer({ state, activeGesture, handPos }) 
         ctx.strokeStyle = coreColor;
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.moveTo(Math.cos(angle) * 68, Math.sin(angle) * 68);
-        ctx.lineTo(Math.cos(angle) * 75, Math.sin(angle) * 75);
+        ctx.moveTo(Math.cos(angle) * 60, Math.sin(angle) * 60);
+        ctx.lineTo(Math.cos(angle) * 68, Math.sin(angle) * 68);
         ctx.stroke();
       }
 
@@ -192,6 +201,13 @@ export default function ArcReactorVisualizer({ state, activeGesture, handPos }) 
       ctx.beginPath();
       ctx.arc(0, 0, 32, 0, Math.PI * 2);
       ctx.stroke();
+
+      // Digital 8 Center Counter
+      ctx.font = 'bold 20px Orbitron, sans-serif';
+      ctx.fillStyle = '#00f0ff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('8', 0, 0);
 
       ctx.restore();
 

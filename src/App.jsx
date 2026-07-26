@@ -14,9 +14,11 @@ import SettingsModal from './components/SettingsModal';
 import { speechEngine } from './services/speech';
 import { soundFx } from './services/soundFx';
 import { aiAgent } from './services/aiAgent';
+import { systemApi } from './services/systemApi';
 import {
-  Sparkles, Settings, Folder, Terminal, BrainCircuit, Hand, Mic, MicOff,
-  Send, Menu, X, Heart, Scale, Code, Bot, Activity, Cpu, HardDrive, Zap, CloudSun, Globe
+  Sparkles, Folder, Terminal, BrainCircuit, Hand, Mic, MicOff,
+  Send, Menu, X, Code, Activity, CloudSun, Globe,
+  Atom, Search, BatteryCharging, Gauge, Compass, Video, Tv
 } from 'lucide-react';
 
 export default function App() {
@@ -25,15 +27,19 @@ export default function App() {
   const [isListening, setIsListening] = useState(false);
   const [isHandsFree, setIsHandsFree] = useState(false);
   const [inputText, setInputText] = useState('');
+  const [searchBarInput, setSearchBarInput] = useState('');
   const [interimTranscript, setInterimTranscript] = useState('');
   const [activeGesture, setActiveGesture] = useState(null);
   const [handPos, setHandPos] = useState(null);
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [drawerTab, setDrawerTab] = useState('gestures'); // 'gestures', 'custom_voice', 'tools', 'files', 'trainer', 'telemetry'
+  const [drawerTab, setDrawerTab] = useState('gestures');
   const [personaMode, setPersonaMode] = useState(localStorage.getItem('wednesday_persona_mode') || 'jarvis');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString());
+
+  // Natural Human Voice Selector State
+  const [availableVoices, setAvailableVoices] = useState([]);
+  const [selectedVoiceName, setSelectedVoiceName] = useState('');
 
   const [messages, setMessages] = useState([
     {
@@ -44,9 +50,19 @@ export default function App() {
   ]);
 
   useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date().toLocaleTimeString()), 1000);
-    return () => clearInterval(timer);
+    const voices = speechEngine.getAvailableVoices();
+    setAvailableVoices(voices);
+    if (speechEngine.selectedVoice) {
+      setSelectedVoiceName(speechEngine.selectedVoice.name);
+    }
   }, []);
+
+  const handleVoiceChange = (e) => {
+    const vName = e.target.value;
+    setSelectedVoiceName(vName);
+    speechEngine.setSelectedVoice(vName);
+    soundFx.playClick();
+  };
 
   const handleStartWednesday = useCallback(() => {
     soundFx.playListeningChime();
@@ -222,149 +238,188 @@ export default function App() {
     handleSendMessage(inputText);
   };
 
-  const personas = [
-    { id: 'jarvis', label: 'SIGMA Omni', icon: Sparkles, color: '#00f0ff' },
-    { id: 'girlfriend', label: 'Girlfriend', icon: Heart, color: '#f43f5e' },
-    { id: 'lawyer', label: 'Lawyer', icon: Scale, color: '#ffb703' },
-    { id: 'polyglot', label: 'Coding', icon: Code, color: '#a855f7' }
-  ];
+  const handleTopSearchSubmit = (e) => {
+    e.preventDefault();
+    if (!searchBarInput.trim()) return;
+    soundFx.playClick();
+    systemApi.openUrl(`https://www.google.com/search?q=${encodeURIComponent(searchBarInput)}`);
+    setSearchBarInput('');
+  };
+
+  const handleDriveClick = (driveLetter) => {
+    soundFx.playClick();
+    systemApi.launchApp('explorer');
+    handleSendMessage(`Open Disk Drive ${driveLetter}`);
+  };
+
+  const handleAppDockClick = (appName, url) => {
+    soundFx.playClick();
+    if (url) systemApi.openUrl(url);
+    else systemApi.launchApp(appName);
+  };
 
   return (
-    <div className="stark-workspace">
-      {/* Top Holographic Header Bar */}
-      <header className="stark-header">
-        <div className="stark-brand">
-          <Bot size={26} color="#00f0ff" />
-          <h1 className="sigma-logo-title">SIGMA INDUSTRIES</h1>
-          <span className="sigma-badge">ARC REACTOR v4.2</span>
+    <div className="jarvis-workspace">
+      {/* 1-to-1 Top Header Bar */}
+      <header className="jarvis-top-header">
+        <div className="top-atom-badge">
+          <Atom size={20} color="#00f0ff" />
+          <div style={{ fontSize: '0.75rem', fontFamily: 'Orbitron', color: '#00f0ff' }}>
+            4.5 G <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>RAM</span>
+          </div>
+          <BatteryCharging size={14} color="#00ff66" />
         </div>
 
-        {/* Live Clock & Persona Switcher */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-          <div style={{ fontFamily: 'Orbitron', fontSize: '0.8rem', color: '#00f0ff', background: 'rgba(0,240,255,0.08)', padding: '0.25rem 0.75rem', borderRadius: '4px', border: '1px solid rgba(0,240,255,0.3)' }}>
-            ⏰ {currentTime}
-          </div>
+        {/* Top Google Search Bar */}
+        <form onSubmit={handleTopSearchSubmit} className="top-search-bar">
+          <Search size={14} color="#00f0ff" />
+          <input
+            type="text"
+            placeholder="Google Search..."
+            value={searchBarInput}
+            onChange={(e) => setSearchBarInput(e.target.value)}
+            style={{ background: 'transparent', border: 'none', outline: 'none', color: '#fff', fontSize: '0.75rem', width: '100%' }}
+          />
+        </form>
 
-          <div style={{ display: 'flex', gap: '0.3rem', background: 'rgba(0,0,0,0.5)', padding: '0.2rem', borderRadius: '6px', border: '1px solid var(--border-hud)' }}>
-            {personas.map((p) => {
-              const Icon = p.icon;
-              const isActive = personaMode === p.id;
-              return (
-                <button
-                  key={p.id}
-                  onClick={() => { soundFx.playClick(); handleSelectPersona(p.id); }}
-                  style={{
-                    fontSize: '0.72rem',
-                    fontFamily: 'Orbitron',
-                    padding: '0.25rem 0.6rem',
-                    borderRadius: '4px',
-                    border: 'none',
-                    background: isActive ? p.color : 'transparent',
-                    color: isActive ? '#020813' : '#94a3b8',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.3rem',
-                    fontWeight: 'bold'
-                  }}
-                >
-                  <Icon size={12} /> {p.label}
-                </button>
-              );
-            })}
-          </div>
+        {/* Top Chevron Badges Navigation */}
+        <div className="top-chevron-group">
+          <button className="chevron-btn active" onClick={() => handleSendMessage('Hello Wednesday')}>
+            J.A.R.V.I.S
+          </button>
+
+          <button className="chevron-btn" onClick={() => { setDrawerTab('telemetry'); setIsDrawerOpen(true); }}>
+            System
+          </button>
+
+          <button className="chevron-btn" onClick={() => { setDrawerTab('files'); setIsDrawerOpen(true); }}>
+            OS Files
+          </button>
+
+          <button className="chevron-btn" onClick={() => { setDrawerTab('trainer'); setIsDrawerOpen(true); }}>
+            Backup
+          </button>
+
+          <button className="chevron-btn" onClick={() => { setDrawerTab('tools'); setIsDrawerOpen(true); }}>
+            Downloads
+          </button>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <button
-            className={`btn-start-wednesday ${isHandsFree ? 'active' : ''}`}
-            onClick={handleStartWednesday}
-            style={{ fontSize: '0.75rem', padding: '0.35rem 0.9rem', borderRadius: '20px' }}
+        {/* Natural Human Voice Selector Dropdown */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(0,0,0,0.5)', padding: '0.2rem 0.5rem', borderRadius: '4px', border: '1px solid var(--border-hud)' }}>
+          <Mic size={14} color="#00f0ff" />
+          <select
+            value={selectedVoiceName}
+            onChange={handleVoiceChange}
+            style={{ background: 'transparent', border: 'none', color: '#00f0ff', fontFamily: 'Orbitron', fontSize: '0.7rem', outline: 'none', cursor: 'pointer' }}
           >
+            {availableVoices.map((v, i) => (
+              <option key={i} value={v.name} style={{ background: '#041024', color: '#fff' }}>
+                {v.name} ({v.lang})
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Top Speedometer Gauge */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.7rem', fontFamily: 'Orbitron', color: '#00f0ff' }}>
+            <Gauge size={16} color="#00f0ff" /> 00100 KM/H
+          </div>
+
+          <button className={`btn-start-wednesday ${isHandsFree ? 'active' : ''}`} onClick={handleStartWednesday} style={{ fontSize: '0.72rem', padding: '0.3rem 0.8rem', borderRadius: '20px' }}>
             ⚡ {isHandsFree ? 'VOICE ON' : 'START WEDNESDAY'}
           </button>
 
-          <button
-            className="btn-stark-icon"
-            onClick={() => { soundFx.playClick(); setIsSettingsOpen(true); }}
-            title="Settings"
-          >
-            <Settings size={16} />
-          </button>
-
-          <button
-            className={`btn-stark-icon ${isDrawerOpen ? 'active' : ''}`}
-            onClick={() => { soundFx.playClick(); setIsDrawerOpen(prev => !prev); }}
-            title="Toggle Subsystem Drawer"
-          >
-            {isDrawerOpen ? <X size={16} /> : <Menu size={16} />}
+          <button className="dock-icon-btn" onClick={() => setIsDrawerOpen(prev => !prev)} title="Toggle Subsystem Drawer">
+            <Menu size={16} />
           </button>
         </div>
       </header>
 
-      {/* Main 3-Column Stark Arc Reactor Workspace */}
-      <main className="stark-body">
-        {/* Left Column: Circular Telemetry Gauges */}
-        <aside className="telemetry-column-left">
-          {/* CPU Circular Gauge Dial */}
-          <div className="circular-gauge-card">
-            <div className="gauge-circle-outer">
-              <div className="gauge-circle-inner">
-                <Cpu size={18} color="#00f0ff" />
-                <span className="gauge-value">74%</span>
-              </div>
-            </div>
-            <span className="gauge-label">CPU CORE METRICS</span>
-          </div>
-
-          {/* RAM & SWAP Circular Gauge Dial */}
-          <div className="circular-gauge-card">
-            <div className="gauge-circle-outer" style={{ borderColor: '#a855f7' }}>
-              <div className="gauge-circle-inner" style={{ borderColor: '#a855f7' }}>
-                <Activity size={18} color="#a855f7" />
-                <span className="gauge-value" style={{ color: '#a855f7' }}>75%</span>
-              </div>
-            </div>
-            <span className="gauge-label">RAM / SWAP MEMORY</span>
-          </div>
-
-          {/* 100% Energy Arc Reactor Dial */}
-          <div className="circular-gauge-card">
-            <div className="gauge-circle-outer" style={{ borderColor: '#00ff66' }}>
-              <div className="gauge-circle-inner" style={{ borderColor: '#00ff66' }}>
-                <Zap size={18} color="#00ff66" />
-                <span className="gauge-value" style={{ color: '#00ff66' }}>100%</span>
-              </div>
-            </div>
-            <span className="gauge-label">SIGMA ENERGY CORE</span>
-          </div>
-
-          {/* Disk Storage Circular Gauge */}
-          <div className="circular-gauge-card">
-            <div className="gauge-circle-outer" style={{ borderColor: '#ffb703' }}>
-              <div className="gauge-circle-inner" style={{ borderColor: '#ffb703' }}>
-                <HardDrive size={18} color="#ffb703" />
-                <span className="gauge-value" style={{ color: '#ffb703', fontSize: '0.85rem' }}>100GB</span>
-              </div>
-            </div>
-            <span className="gauge-label">STORAGE DISK FREE</span>
-          </div>
-
-          {/* SIGMA EXPO Watermark Badge */}
-          <div style={{ padding: '0.6rem', background: 'rgba(0,240,255,0.03)', border: '1px dashed var(--border-hud)', borderRadius: '8px', textAlign: 'center' }}>
-            <div style={{ fontFamily: 'Orbitron', fontSize: '0.7rem', color: '#00f0ff', letterSpacing: '2px', fontWeight: 'bold' }}>
-              SIGMA EXPO 2026
+      {/* Main 3-Column Body */}
+      <main className="jarvis-main-body">
+        {/* Left Column: Telemetry & Interactive Drive Cards */}
+        <aside className="left-panel-jarvis">
+          {/* CPU & Memory Telemetry Graph Box */}
+          <div className="hud-box-card">
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: '#00f0ff', fontFamily: 'Orbitron', marginBottom: '0.4rem' }}>
+              <span>CPU FREQUENCY</span>
+              <span>4333 MHz</span>
             </div>
             <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)' }}>
-              BOSS KARTHIK COMMAND CORE
+              LAN IP: 192.168.100.100 • OS: Windows 11 x64
+            </div>
+          </div>
+
+          {/* Interactive Drive Status Cards */}
+          <div className="drive-card" onClick={() => handleDriveClick('D')}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: 'bold', color: '#fff' }}>
+              <span>DRIVE D:\ (223.2 GB)</span>
+              <span style={{ color: '#00f0ff' }}>63% USED</span>
+            </div>
+            <div className="drive-progress-bar">
+              <div className="drive-progress-fill" style={{ width: '63%' }} />
+            </div>
+          </div>
+
+          <div className="drive-card" onClick={() => handleDriveClick('E')}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: 'bold', color: '#fff' }}>
+              <span>DRIVE E:\ (184.8 GB)</span>
+              <span style={{ color: '#00f0ff' }}>47% USED</span>
+            </div>
+            <div className="drive-progress-bar">
+              <div className="drive-progress-fill" style={{ width: '47%' }} />
+            </div>
+          </div>
+
+          <div className="drive-card" onClick={() => handleDriveClick('F')}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: 'bold', color: '#fff' }}>
+              <span>DRIVE F:\ (321.5 GB)</span>
+              <span style={{ color: '#00f0ff' }}>35% USED</span>
+            </div>
+            <div className="drive-progress-bar">
+              <div className="drive-progress-fill" style={{ width: '35%' }} />
+            </div>
+          </div>
+
+          {/* Vertical Social & App Dock */}
+          <div className="app-dock-vertical">
+            <button className="dock-icon-btn" onClick={() => handleAppDockClick('youtube', 'https://youtube.com')} title="Open YouTube">
+              <Video size={16} />
+            </button>
+            <button className="dock-icon-btn" onClick={() => handleAppDockClick('google', 'https://google.com')} title="Open Google">
+              <Globe size={16} />
+            </button>
+            <button className="dock-icon-btn" onClick={() => handleAppDockClick('facebook', 'https://facebook.com')} title="Open Facebook">
+              <Tv size={16} />
+            </button>
+            <button className="dock-icon-btn" onClick={() => handleAppDockClick('notepad')} title="Open Notepad">
+              <Code size={16} />
+            </button>
+            <button className="dock-icon-btn" onClick={() => handleAppDockClick('calculator')} title="Open Calculator">
+              <Activity size={16} />
+            </button>
+          </div>
+
+          {/* Radar & Status Badge */}
+          <div style={{ padding: '0.5rem', background: 'rgba(0,240,255,0.03)', border: '1px dashed var(--border-hud)', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Compass size={20} color="#00f0ff" style={{ animation: 'spin 10s linear infinite' }} />
+            <div>
+              <div style={{ fontFamily: 'Orbitron', fontSize: '0.7rem', color: '#00f0ff', fontWeight: 'bold' }}>
+                ADVENTURE RADAR 11/55
+              </div>
+              <div style={{ fontSize: '0.62rem', color: 'var(--text-dim)' }}>
+                Boss Karthik Command Core
+              </div>
             </div>
           </div>
         </aside>
 
-        {/* Center Stage: Arc Reactor Visualizer + ChatGPT Stream */}
-        <section className="center-arc-stage">
-          {/* Rotating Holographic Arc Reactor Core */}
-          <div className="arc-reactor-card">
+        {/* Center Stage: Hazard Arc Reactor Eye Hub + ChatGPT Stream */}
+        <section className="center-stage-jarvis">
+          {/* Hazard Arc Reactor Eye Core Visualizer */}
+          <div className="arc-reactor-eye-box">
             <ArcReactorVisualizer
               state={appState}
               activeGesture={activeGesture}
@@ -372,7 +427,7 @@ export default function App() {
             />
           </div>
 
-          {/* ChatGPT Stream Console */}
+          {/* Floating ChatGPT Stream Console */}
           <ChatGPTConsole
             messages={messages}
             interimTranscript={interimTranscript}
@@ -426,38 +481,51 @@ export default function App() {
           </form>
         </section>
 
-        {/* Right Column: Weather Forecast & Audio Waveform Telemetry */}
-        <aside className="telemetry-column-right">
-          {/* Universal Galaxy & Earth Status Telemetry Radar */}
-          <div className="circular-gauge-card" style={{ alignItems: 'flex-start' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.4rem', width: '100%' }}>
-              <Globe size={22} color="#00f0ff" />
-              <div>
-                <div style={{ fontFamily: 'Orbitron', fontSize: '0.85rem', color: '#00f0ff', fontWeight: 'bold' }}>GALAXY RADAR CORE</div>
-                <div style={{ fontSize: '0.65rem', color: '#00ff66' }}>● SATELLITES 100% ONLINE</div>
-              </div>
-            </div>
-            <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>
-              Space Weather: Solar Flux 142 • Kp=1 (Quiet)<br />
-              Orbital Sync: ISS & James Webb L2 Streams Active
-            </div>
-          </div>
-
-          {/* Live Weather Forecast Widget */}
-          <div className="circular-gauge-card" style={{ alignItems: 'flex-start' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.5rem', width: '100%' }}>
+        {/* Right Column: Weather 6°C, Calendar May 2014, Network Monitor */}
+        <aside className="right-panel-jarvis">
+          {/* Weather 6°C Card */}
+          <div className="hud-box-card">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.3rem' }}>
               <CloudSun size={24} color="#00f0ff" />
               <div>
-                <div style={{ fontFamily: 'Orbitron', fontSize: '1rem', color: '#00f0ff', fontWeight: 'bold' }}>13°C</div>
-                <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Global Weather Sync</div>
+                <div style={{ fontFamily: 'Orbitron', fontSize: '1.1rem', color: '#00f0ff', fontWeight: 'bold' }}>6°C</div>
+                <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Rain Shower / Windy</div>
               </div>
             </div>
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-dim)', lineHeight: '1.4' }}>
-              Humidity: 77% • Wind: 3 km/h • Sunset: 10:18 PM
+            <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)', lineHeight: '1.4' }}>
+              Humidity: 100% • Visibility: 11.5 km • Sunrise: 5:45 AM • Sunset: 8:59 PM
             </div>
           </div>
 
-          {/* Telemetry Hardware Metrics Card */}
+          {/* Calendar Widget (May 2014) & CPU Dial */}
+          <div className="hud-box-card">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ fontFamily: 'Orbitron', fontSize: '0.8rem', color: '#00f0ff', fontWeight: 'bold' }}>MAY 2026</div>
+              <div style={{ fontSize: '0.65rem', color: '#00ff66', fontFamily: 'Orbitron' }}>CPU 14%</div>
+            </div>
+
+            <div className="calendar-grid-hud">
+              <div>SU</div><div>MO</div><div>TU</div><div>WE</div><div>TH</div><div>FR</div><div>SA</div>
+              <div>1</div><div>2</div><div>3</div><div>4</div><div>5</div><div>6</div><div>7</div>
+              <div>8</div><div>9</div><div>10</div><div>11</div><div>12</div><div>13</div><div>14</div>
+              <div>15</div><div>16</div><div>17</div><div>18</div><div>19</div><div>20</div><div>21</div>
+              <div>22</div><div>23</div><div>24</div><div>25</div><div className="today">26</div><div>27</div><div>28</div>
+            </div>
+          </div>
+
+          {/* Network & IP Monitor Card */}
+          <div className="hud-box-card">
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: '#00f0ff', fontFamily: 'Orbitron', marginBottom: '0.3rem' }}>
+              <span>NETWORK TRAFFIC</span>
+              <span style={{ color: '#00ff66' }}>30% CAPACITY</span>
+            </div>
+            <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>
+              IP: 192.168.100.100 • LAN: Active<br />
+              ⬇️ DOWNLOAD: 2.3 KB/s • ⬆️ UPLOAD: 1.5 KB/s
+            </div>
+          </div>
+
+          {/* Telemetry Component */}
           <TelemetryPanel
             soundMuted={soundMuted}
             onToggleSound={handleToggleSound}
@@ -465,6 +533,13 @@ export default function App() {
           />
         </aside>
       </main>
+
+      {/* Bottom System Usage Bar */}
+      <footer className="bottom-system-bar">
+        <div>SYSTEM STATUS: OPTIMAL</div>
+        <div>D:/ 309.8 M Used • C:/ 118.7 G Used</div>
+        <div>BOSS KARTHIK OMNI CORE</div>
+      </footer>
 
       {/* Retractable Glass Side Drawer */}
       <aside className={`stark-drawer ${isDrawerOpen ? 'open' : ''}`}>
@@ -477,7 +552,7 @@ export default function App() {
           </button>
         </div>
 
-        {/* Side Drawer Navigation Tabs */}
+        {/* Side Drawer Tabs */}
         <div style={{ display: 'flex', gap: '0.3rem', overflowX: 'auto', paddingBottom: '0.3rem' }}>
           <button className={`drawer-tab-btn ${drawerTab === 'cosmic' ? 'active' : ''}`} onClick={() => setDrawerTab('cosmic')}>
             <Globe size={13} /> Cosmic Core
