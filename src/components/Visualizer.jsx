@@ -1,8 +1,7 @@
 import React, { useEffect, useRef } from 'react';
-import { Mic, MicOff, Sparkles } from 'lucide-react';
-import { soundFx } from '../services/soundFx';
+import { Sparkles } from 'lucide-react';
 
-export default function Visualizer({ state, isListening, isHandsFree, activeGesture, onToggleListening, onStartWednesday }) {
+export default function Visualizer({ state, activeGesture }) {
   const canvasRef = useRef(null);
 
   useEffect(() => {
@@ -11,21 +10,7 @@ export default function Visualizer({ state, isListening, isHandsFree, activeGest
     const ctx = canvas.getContext('2d');
 
     let animationId;
-    let rotation = 0;
-    let pulseAngle = 0;
-
-    const particleCount = 90;
-    const particles = [];
-    for (let i = 0; i < particleCount; i++) {
-      particles.push({
-        x: (Math.random() - 0.5) * 160,
-        y: (Math.random() - 0.5) * 160,
-        size: Math.random() * 2.8 + 1,
-        speedX: (Math.random() - 0.5) * 0.8,
-        speedY: (Math.random() - 0.5) * 0.8,
-        opacity: Math.random() * 0.85 + 0.15
-      });
-    }
+    let time = 0;
 
     const render = () => {
       const width = canvas.parentElement.clientWidth;
@@ -41,111 +26,77 @@ export default function Visualizer({ state, isListening, isHandsFree, activeGest
       const centerY = height / 2;
 
       let speedMult = 1;
-      let glowColor = 'rgba(0, 240, 255, ';
-      let coreRadius = 55;
+      let primaryColor = '#06b6d4'; // Cyan
+      let secondaryColor = '#8b5cf6'; // Purple
+      let baseRadius = 50;
 
       if (activeGesture) {
-        speedMult = 3.5;
-        glowColor = 'rgba(168, 85, 247, '; // Electric purple when reacting to hand gesture
-        coreRadius = 72;
+        speedMult = 3.0;
+        primaryColor = '#8b5cf6';
+        secondaryColor = '#f43f5e';
+        baseRadius = 65;
       } else if (state === 'listening') {
-        speedMult = 2.5;
-        glowColor = 'rgba(255, 77, 109, '; // Warm pink when listening
-        coreRadius = 68;
+        speedMult = 2.2;
+        primaryColor = '#f43f5e'; // Rose
+        secondaryColor = '#f59e0b';
+        baseRadius = 62;
       } else if (state === 'processing') {
-        speedMult = 4.0;
-        glowColor = 'rgba(255, 183, 3, ';
-        coreRadius = 62;
+        speedMult = 3.5;
+        primaryColor = '#f59e0b'; // Amber
+        secondaryColor = '#06b6d4';
+        baseRadius = 55;
       } else if (state === 'speaking') {
-        speedMult = 2.0;
-        glowColor = 'rgba(0, 240, 255, ';
-        coreRadius = 75;
+        speedMult = 1.8;
+        primaryColor = '#10b981'; // Emerald
+        secondaryColor = '#06b6d4';
+        baseRadius = 68;
       }
 
-      rotation += 0.008 * speedMult;
-      pulseAngle += 0.04 * speedMult;
+      time += 0.015 * speedMult;
 
-      const dynamicRadius = coreRadius + Math.sin(pulseAngle) * 6;
-
-      // Glow Core
-      const gradient = ctx.createRadialGradient(
+      // Glow backdrop
+      const radialGlow = ctx.createRadialGradient(
         centerX, centerY, 5,
-        centerX, centerY, dynamicRadius * 1.6
+        centerX, centerY, baseRadius * 2
       );
-      gradient.addColorStop(0, `${glowColor}0.95)`);
-      gradient.addColorStop(0.4, `${glowColor}0.35)`);
-      gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      radialGlow.addColorStop(0, primaryColor + '66');
+      radialGlow.addColorStop(0.5, secondaryColor + '22');
+      radialGlow.addColorStop(1, 'rgba(0,0,0,0)');
 
-      ctx.fillStyle = gradient;
+      ctx.fillStyle = radialGlow;
       ctx.beginPath();
-      ctx.arc(centerX, centerY, dynamicRadius * 1.6, 0, Math.PI * 2);
+      ctx.arc(centerX, centerY, baseRadius * 2, 0, Math.PI * 2);
       ctx.fill();
 
-      // Rotating Arc Rings
-      ctx.save();
-      ctx.translate(centerX, centerY);
+      // Fluid Plasma Layers
+      for (let layer = 0; layer < 4; layer++) {
+        ctx.save();
+        ctx.translate(centerX, centerY);
 
-      ctx.save();
-      ctx.rotate(rotation);
-      ctx.strokeStyle = `${glowColor}0.75)`;
-      ctx.lineWidth = 2;
-
-      for (let i = 0; i < 4; i++) {
+        const currentRadius = baseRadius + layer * 6;
         ctx.beginPath();
-        ctx.arc(0, 0, dynamicRadius + 26, (i * Math.PI) / 2, (i * Math.PI) / 2 + Math.PI / 3);
-        ctx.stroke();
-      }
-      ctx.restore();
+        const points = 60;
 
-      ctx.save();
-      ctx.rotate(-rotation * 1.3);
-      ctx.strokeStyle = `${glowColor}0.5)`;
-      ctx.lineWidth = 1.5;
+        for (let i = 0; i <= points; i++) {
+          const angle = (i / points) * Math.PI * 2;
+          const offset = Math.sin(angle * (3 + layer) + time * (1.5 + layer * 0.3)) * (8 + layer * 2);
+          const r = currentRadius + offset;
 
-      for (let i = 0; i < 3; i++) {
-        ctx.beginPath();
-        ctx.arc(0, 0, dynamicRadius + 14, (i * 2 * Math.PI) / 3, (i * 2 * Math.PI) / 3 + Math.PI / 4);
-        ctx.stroke();
-      }
-      ctx.restore();
+          const x = Math.cos(angle) * r;
+          const y = Math.sin(angle) * r;
 
-      // Particles
-      particles.forEach(p => {
-        p.x += p.speedX * speedMult;
-        p.y += p.speedY * speedMult;
-
-        const dist = Math.sqrt(p.x * p.x + p.y * p.y);
-        if (dist > dynamicRadius + 50) {
-          p.x = (Math.random() - 0.5) * dynamicRadius;
-          p.y = (Math.random() - 0.5) * dynamicRadius;
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
         }
 
-        ctx.fillStyle = `${glowColor}${p.opacity})`;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fill();
-      });
-
-      // Sound Wave / Gesture Ripples
-      if (state === 'speaking' || state === 'listening' || activeGesture) {
-        ctx.strokeStyle = `${glowColor}0.85)`;
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        const waveCount = 36;
-        for (let i = 0; i <= waveCount; i++) {
-          const angle = (i / waveCount) * Math.PI * 2;
-          const amp = Math.sin(angle * 6 + pulseAngle * 2) * 8;
-          const r = dynamicRadius + 38 + amp;
-          const wx = Math.cos(angle) * r;
-          const wy = Math.sin(angle) * r;
-          if (i === 0) ctx.moveTo(wx, wy);
-          else ctx.lineTo(wx, wy);
-        }
         ctx.closePath();
+        ctx.strokeStyle = layer % 2 === 0 ? primaryColor + 'cc' : secondaryColor + 'aa';
+        ctx.lineWidth = 2 - layer * 0.3;
+        ctx.shadowColor = primaryColor;
+        ctx.shadowBlur = 15;
         ctx.stroke();
+        ctx.restore();
       }
-
-      ctx.restore();
 
       animationId = requestAnimationFrame(render);
     };
@@ -160,59 +111,12 @@ export default function Visualizer({ state, isListening, isHandsFree, activeGest
   return (
     <div className="canvas-container">
       <canvas ref={canvasRef} />
-      <div className="hud-target-reticle" />
 
       {activeGesture && (
-        <div style={{ position: 'absolute', top: '15px', padding: '0.3rem 0.8rem', background: 'rgba(168,85,247,0.2)', border: '1px solid #a855f7', color: '#a855f7', borderRadius: '20px', fontSize: '0.75rem', fontFamily: 'Orbitron', display: 'flex', alignItems: 'center', gap: '0.4rem', zIndex: 10, animation: 'pulse 1s infinite' }}>
+        <div style={{ position: 'absolute', top: '10px', padding: '0.3rem 0.8rem', background: 'rgba(139,92,246,0.2)', border: '1px solid #8b5cf6', color: '#c084fc', borderRadius: '20px', fontSize: '0.72rem', fontFamily: 'Orbitron', display: 'flex', alignItems: 'center', gap: '0.4rem', zIndex: 10 }}>
           <Sparkles size={12} /> GESTURE REACTIVE ORB ACTIVE
         </div>
       )}
-
-      {/* Interactive Hero Controls */}
-      <div style={{ position: 'absolute', bottom: '15px', display: 'flex', gap: '0.6rem', zIndex: 10 }}>
-        <button
-          className={`btn-start-wednesday ${isHandsFree ? 'active' : ''}`}
-          onClick={() => {
-            soundFx.playClick();
-            if (onStartWednesday) onStartWednesday();
-          }}
-          style={{
-            padding: '0.5rem 1.4rem',
-            borderRadius: '30px',
-            fontSize: '0.8rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem'
-          }}
-        >
-          ⚡ {isHandsFree ? 'W.E.D.N.E.S.D.A.Y. ACTIVE' : 'START W.E.D.N.E.S.D.A.Y.'}
-        </button>
-
-        <button
-          onClick={() => {
-            soundFx.playClick();
-            onToggleListening();
-          }}
-          style={{
-            padding: '0.5rem 1.2rem',
-            borderRadius: '30px',
-            background: isListening ? '#ff4d6d' : 'rgba(0, 240, 255, 0.2)',
-            border: `2px solid ${isListening ? '#ff4d6d' : 'var(--cyan-bright)'}`,
-            color: isListening ? '#ffffff' : 'var(--cyan-bright)',
-            fontFamily: 'Orbitron',
-            fontSize: '0.8rem',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            boxShadow: isListening ? '0 0 25px #ff4d6d' : '0 0 15px rgba(0, 240, 255, 0.3)',
-            transition: 'all 0.3s ease'
-          }}
-        >
-          {isListening ? <MicOff size={16} /> : <Mic size={16} />}
-          {isListening ? 'STOP MIC' : 'TALK (MIC)'}
-        </button>
-      </div>
     </div>
   );
 }

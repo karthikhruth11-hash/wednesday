@@ -13,7 +13,10 @@ import SettingsModal from './components/SettingsModal';
 import { speechEngine } from './services/speech';
 import { soundFx } from './services/soundFx';
 import { aiAgent } from './services/aiAgent';
-import { Sparkles, Settings, Folder, Terminal, BrainCircuit, Hand, Mic } from 'lucide-react';
+import {
+  Sparkles, Settings, Folder, Terminal, BrainCircuit, Hand, Mic, MicOff,
+  Send, Menu, X, Heart, Scale, Code, Bot, Activity
+} from 'lucide-react';
 
 export default function App() {
   const [appState, setAppState] = useState('idle'); // 'idle', 'listening', 'processing', 'speaking'
@@ -24,14 +27,15 @@ export default function App() {
   const [interimTranscript, setInterimTranscript] = useState('');
   const [activeGesture, setActiveGesture] = useState(null);
 
-  const [leftTab, setLeftTab] = useState('tools'); // 'tools', 'files', 'trainer', 'gestures', 'custom_voice'
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [drawerTab, setDrawerTab] = useState('gestures'); // 'gestures', 'custom_voice', 'tools', 'files', 'trainer', 'telemetry'
   const [personaMode, setPersonaMode] = useState(localStorage.getItem('wednesday_persona_mode') || 'jarvis');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const [messages, setMessages] = useState([
     {
       sender: 'assistant',
-      text: "Good day, Boss. W.E.D.N.E.S.D.A.Y. is fully pre-trained and upgraded with Real-Time Webcam Hand Gesture Control and Custom Voice Studio. Enable camera gestures or start voice mode below.",
+      text: "Good day, Boss. Welcome to W.E.D.N.E.S.D.A.Y. Official Omni AI Canvas. Start hands-free voice mode, test webcam hand gestures, or ask any question below.",
       timestamp: new Date().toLocaleTimeString()
     }
   ]);
@@ -136,16 +140,8 @@ export default function App() {
       handleSendMessage('Awesome job Wednesday!');
     } else if (gesture === 'PINCH_OK') {
       handleStartWednesday();
-    } else if (gesture === 'SWIPE_RIGHT') {
-      setLeftTab(prev => {
-        const tabs = ['tools', 'files', 'trainer', 'gestures', 'custom_voice'];
-        return tabs[(tabs.indexOf(prev) + 1) % tabs.length];
-      });
-    } else if (gesture === 'SWIPE_LEFT') {
-      setLeftTab(prev => {
-        const tabs = ['tools', 'files', 'trainer', 'gestures', 'custom_voice'];
-        return tabs[(tabs.indexOf(prev) - 1 + tabs.length) % tabs.length];
-      });
+    } else if (gesture === 'SWIPE_RIGHT' || gesture === 'SWIPE_LEFT') {
+      setIsDrawerOpen(prev => !prev);
     }
   }, [personaMode, handleStartWednesday, handleSendMessage]);
 
@@ -204,125 +200,196 @@ export default function App() {
     }
   };
 
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!inputText.trim()) return;
+    soundFx.playClick();
+    handleSendMessage(inputText);
+  };
+
+  const personas = [
+    { id: 'jarvis', label: 'ChatGPT Omni', icon: Sparkles, color: '#06b6d4' },
+    { id: 'girlfriend', label: 'Girlfriend', icon: Heart, color: '#f43f5e' },
+    { id: 'lawyer', label: 'Lawyer', icon: Scale, color: '#f59e0b' },
+    { id: 'polyglot', label: 'Coding', icon: Code, color: '#8b5cf6' }
+  ];
+
   return (
-    <div className="hud-wrapper">
-      {/* HUD Header Bar */}
-      <header className="hud-header">
-        <div className="brand-title">
-          <Sparkles className="cyan-glow" size={24} style={{ color: personaMode === 'girlfriend' ? '#ff4d6d' : 'var(--cyan-bright)' }} />
-          <h1>W.E.D.N.E.S.D.A.Y.</h1>
-          <span className="brand-badge">ULTRA OMNI CORE</span>
+    <div className="app-canvas">
+      {/* Floating Glass Header */}
+      <header className="canvas-header">
+        <div className="brand-section">
+          <Bot size={24} color={personaMode === 'girlfriend' ? '#f43f5e' : 'var(--accent-cyan)'} />
+          <h1 className="brand-name">W.E.D.N.E.S.D.A.Y.</h1>
+          <span className="pill-badge">CHATGPT OMNI</span>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+        {/* Persona Pill Group */}
+        <div className="persona-pill-group">
+          {personas.map((p) => {
+            const Icon = p.icon;
+            const isActive = personaMode === p.id;
+            return (
+              <button
+                key={p.id}
+                className={`btn-persona ${isActive ? 'active' : ''}`}
+                onClick={() => { soundFx.playClick(); handleSelectPersona(p.id); }}
+                style={{ background: isActive ? p.color : 'transparent' }}
+              >
+                <Icon size={12} /> {p.label}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="header-actions">
           <button
             className={`btn-start-wednesday ${isHandsFree ? 'active' : ''}`}
             onClick={handleStartWednesday}
-            style={{ fontSize: '0.75rem', padding: '0.4rem 0.9rem', borderRadius: '20px' }}
+            style={{ fontSize: '0.75rem', padding: '0.35rem 0.9rem', borderRadius: '20px' }}
           >
             ⚡ {isHandsFree ? 'VOICE ON' : 'START WEDNESDAY'}
           </button>
 
           <button
-            className={`btn-hud ${leftTab === 'tools' ? 'active' : ''}`}
-            onClick={() => { soundFx.playClick(); setLeftTab('tools'); }}
-            style={{ fontSize: '0.72rem', padding: '0.35rem 0.7rem' }}
-          >
-            <Terminal size={13} /> Subsystems
-          </button>
-
-          <button
-            className={`btn-hud ${leftTab === 'gestures' ? 'active' : ''}`}
-            onClick={() => { soundFx.playClick(); setLeftTab('gestures'); }}
-            style={{ fontSize: '0.72rem', padding: '0.35rem 0.7rem', borderColor: leftTab === 'gestures' ? '#00f0ff' : 'rgba(0,240,255,0.3)' }}
-          >
-            <Hand size={13} color="#00f0ff" /> Hand Gestures
-          </button>
-
-          <button
-            className={`btn-hud ${leftTab === 'custom_voice' ? 'active' : ''}`}
-            onClick={() => { soundFx.playClick(); setLeftTab('custom_voice'); }}
-            style={{ fontSize: '0.72rem', padding: '0.35rem 0.7rem', borderColor: leftTab === 'custom_voice' ? '#ff4d6d' : 'rgba(255,77,109,0.3)' }}
-          >
-            <Mic size={13} color="#ff4d6d" /> My Voice Studio
-          </button>
-
-          <button
-            className={`btn-hud ${leftTab === 'files' ? 'active' : ''}`}
-            onClick={() => { soundFx.playClick(); setLeftTab('files'); }}
-            style={{ fontSize: '0.72rem', padding: '0.35rem 0.7rem' }}
-          >
-            <Folder size={13} /> Desktop Files
-          </button>
-
-          <button
-            className={`btn-hud ${leftTab === 'trainer' ? 'active' : ''}`}
-            onClick={() => { soundFx.playClick(); setLeftTab('trainer'); }}
-            style={{ fontSize: '0.72rem', padding: '0.35rem 0.7rem' }}
-          >
-            <BrainCircuit size={13} /> Trainer
-          </button>
-
-          <button
-            className="btn-hud"
+            className="btn-icon-pill"
             onClick={() => { soundFx.playClick(); setIsSettingsOpen(true); }}
-            style={{ fontSize: '0.72rem', padding: '0.35rem 0.7rem' }}
+            title="Settings"
           >
-            <Settings size={13} /> Settings
+            <Settings size={16} />
           </button>
 
-          <div className="status-pill">
-            <div className="status-dot" />
-            AI & GESTURES ACTIVE
-          </div>
+          <button
+            className={`btn-icon-pill ${isDrawerOpen ? 'active' : ''}`}
+            onClick={() => { soundFx.playClick(); setIsDrawerOpen(prev => !prev); }}
+            title="Toggle Side Drawer"
+          >
+            {isDrawerOpen ? <X size={16} /> : <Menu size={16} />}
+          </button>
         </div>
       </header>
 
-      {/* Main HUD 3-Column Body */}
-      <main className="hud-body">
-        {/* Left Column */}
-        {leftTab === 'tools' && <AgentTools onRunCommand={handleSendMessage} />}
-        {leftTab === 'gestures' && <HandGesturePanel onGestureDetected={handleGestureDetected} />}
-        {leftTab === 'custom_voice' && <CustomVoiceStudio />}
-        {leftTab === 'files' && <FileSystemPanel />}
-        {leftTab === 'trainer' && <TrainingPanel />}
-
-        {/* Center Column: Visualizer Orb Stage & Pre-Trained ChatGPT Console */}
-        <section className="center-stage">
-          <div className="hud-card visualizer-card" style={{ flex: '0.8', minHeight: '220px' }}>
-            <Visualizer
-              state={appState}
-              isListening={isListening}
-              isHandsFree={isHandsFree}
-              activeGesture={activeGesture}
-              onToggleListening={handleToggleListening}
-              onStartWednesday={handleStartWednesday}
-            />
-          </div>
-
-          <ChatGPTConsole
-            messages={messages}
-            inputText={inputText}
-            setInputText={setInputText}
+      {/* Main AI Conversation Stream Stage */}
+      <main className="main-stage">
+        {/* Central Fluid Siri/ChatGPT Voice Orb Visualizer */}
+        <div className="orb-stage">
+          <Visualizer
+            state={appState}
             isListening={isListening}
             isHandsFree={isHandsFree}
-            state={appState}
-            interimTranscript={interimTranscript}
-            personaMode={personaMode}
-            onSelectPersona={handleSelectPersona}
-            onSendMessage={handleSendMessage}
-            onToggleListening={handleToggleListening}
-            onStartWednesday={handleStartWednesday}
+            activeGesture={activeGesture}
           />
-        </section>
+        </div>
 
-        {/* Right Column: Real OS Telemetry */}
-        <TelemetryPanel
-          soundMuted={soundMuted}
-          onToggleSound={handleToggleSound}
-          onOpenSettings={() => setIsSettingsOpen(true)}
+        {/* Stream Messages Area */}
+        <ChatGPTConsole
+          messages={messages}
+          interimTranscript={interimTranscript}
+          onSendMessage={handleSendMessage}
         />
       </main>
+
+      {/* Bottom Floating Prompt Bar */}
+      <div className="bottom-prompt-container">
+        <form onSubmit={handleSubmit} className="prompt-bar-floating">
+          <button
+            type="button"
+            className={`btn-icon-pill ${isHandsFree ? 'active' : ''}`}
+            onClick={handleStartWednesday}
+            title={isHandsFree ? 'Hands-Free Voice ON' : 'Start Hands-Free Voice'}
+            style={{ borderColor: isHandsFree ? '#f43f5e' : 'var(--accent-cyan)' }}
+          >
+            <Sparkles size={16} />
+          </button>
+
+          <button
+            type="button"
+            className={`btn-icon-pill ${isListening ? 'active' : ''}`}
+            onClick={handleToggleListening}
+            title={isListening ? 'Stop Listening' : 'Talk Microphone'}
+          >
+            {isListening ? <MicOff size={16} /> : <Mic size={16} />}
+          </button>
+
+          <input
+            type="text"
+            className="input-prompt"
+            placeholder="Ask Wednesday anything (like ChatGPT)..."
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
+          />
+
+          <button
+            type="button"
+            className={`btn-icon-pill ${drawerTab === 'gestures' && isDrawerOpen ? 'active' : ''}`}
+            onClick={() => {
+              soundFx.playClick();
+              setDrawerTab('gestures');
+              setIsDrawerOpen(true);
+            }}
+            title="Hand Gesture Camera AI"
+          >
+            <Hand size={16} />
+          </button>
+
+          <button type="submit" className="btn-submit-pill">
+            <Send size={14} /> Send
+          </button>
+        </form>
+      </div>
+
+      {/* Retractable Glass Side Drawer */}
+      <aside className={`side-drawer ${isDrawerOpen ? 'open' : ''}`}>
+        <div className="drawer-header">
+          <span className="drawer-title">
+            <Sparkles size={16} /> W.E.D.N.E.S.D.A.Y. Subsystem Drawer
+          </span>
+          <button
+            onClick={() => setIsDrawerOpen(false)}
+            style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        {/* Side Drawer Navigation Tabs */}
+        <div className="drawer-tabs">
+          <button className={`drawer-tab-btn ${drawerTab === 'gestures' ? 'active' : ''}`} onClick={() => setDrawerTab('gestures')}>
+            <Hand size={13} /> Gestures AI
+          </button>
+          <button className={`drawer-tab-btn ${drawerTab === 'custom_voice' ? 'active' : ''}`} onClick={() => setDrawerTab('custom_voice')}>
+            <Mic size={13} /> Voice Studio
+          </button>
+          <button className={`drawer-tab-btn ${drawerTab === 'tools' ? 'active' : ''}`} onClick={() => setDrawerTab('tools')}>
+            <Terminal size={13} /> Subsystems
+          </button>
+          <button className={`drawer-tab-btn ${drawerTab === 'files' ? 'active' : ''}`} onClick={() => setDrawerTab('files')}>
+            <Folder size={13} /> Desktop Files
+          </button>
+          <button className={`drawer-tab-btn ${drawerTab === 'trainer' ? 'active' : ''}`} onClick={() => setDrawerTab('trainer')}>
+            <BrainCircuit size={13} /> Trainer
+          </button>
+          <button className={`drawer-tab-btn ${drawerTab === 'telemetry' ? 'active' : ''}`} onClick={() => setDrawerTab('telemetry')}>
+            <Activity size={13} /> Telemetry
+          </button>
+        </div>
+
+        {/* Side Drawer Active Content View */}
+        <div className="drawer-content">
+          {drawerTab === 'gestures' && <HandGesturePanel onGestureDetected={handleGestureDetected} />}
+          {drawerTab === 'custom_voice' && <CustomVoiceStudio />}
+          {drawerTab === 'tools' && <AgentTools onRunCommand={handleSendMessage} />}
+          {drawerTab === 'files' && <FileSystemPanel />}
+          {drawerTab === 'trainer' && <TrainingPanel />}
+          {drawerTab === 'telemetry' && (
+            <TelemetryPanel
+              soundMuted={soundMuted}
+              onToggleSound={handleToggleSound}
+              onOpenSettings={() => setIsSettingsOpen(true)}
+            />
+          )}
+        </div>
+      </aside>
 
       <SettingsModal
         isOpen={isSettingsOpen}
