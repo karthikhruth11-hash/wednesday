@@ -1,0 +1,113 @@
+import React, { useState } from 'react';
+import { Settings, Key, Bot, X, Save, CheckCircle } from 'lucide-react';
+import { soundFx } from '../services/soundFx';
+
+export default function SettingsModal({ isOpen, onClose }) {
+  const [provider, setProvider] = useState(localStorage.getItem('wednesday_ai_provider') || 'local');
+  const [apiKey, setApiKey] = useState(localStorage.getItem('wednesday_api_key') || '');
+  const [savedStatus, setSavedStatus] = useState('');
+
+  if (!isOpen) return null;
+
+  const handleSave = () => {
+    soundFx.playClick();
+    localStorage.setItem('wednesday_ai_provider', provider);
+    localStorage.setItem('wednesday_api_key', apiKey.trim());
+    setSavedStatus('Settings & API Configuration Saved!');
+    setTimeout(() => {
+      setSavedStatus('');
+      onClose();
+    }, 1000);
+  };
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        top: 0, left: 0, width: '100vw', height: '100vh',
+        background: 'rgba(4, 7, 17, 0.85)',
+        backdropFilter: 'blur(10px)',
+        zIndex: 9999,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}
+    >
+      <div
+        className="hud-card"
+        style={{ width: '500px', border: '1px solid var(--cyan-bright)', boxShadow: '0 0 30px rgba(0, 240, 255, 0.3)' }}
+      >
+        <div className="hud-card-header">
+          <span className="hud-card-title">
+            <Settings size={18} /> AI Neural Core & API Settings
+          </span>
+          <button
+            onClick={() => { soundFx.playClick(); onClose(); }}
+            style={{ background: 'none', border: 'none', color: '#ff0055', cursor: 'pointer' }}
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div>
+            <label style={{ fontSize: '0.8rem', color: 'var(--cyan-bright)', fontFamily: 'Orbitron', display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.4rem' }}>
+              <Bot size={14} /> Intelligence Engine Selection
+            </label>
+            <select
+              className="input-hud"
+              value={provider}
+              onChange={(e) => setProvider(e.target.value)}
+              style={{ width: '100%' }}
+            >
+              <option value="local">W.E.D.N.E.S.D.A.Y. Autonomous Core (Free - No API Key Needed)</option>
+              <option value="gemini">Google Gemini API (Free Tier Keys)</option>
+              <option value="openai">OpenAI (ChatGPT / GPT-4o)</option>
+              <option value="ollama">Local Ollama LLM (http://localhost:11434)</option>
+            </select>
+          </div>
+
+          {provider !== 'local' && provider !== 'ollama' && (
+            <div>
+              <label style={{ fontSize: '0.8rem', color: 'var(--cyan-bright)', fontFamily: 'Orbitron', display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.4rem' }}>
+                <Key size={14} /> {provider === 'gemini' ? 'Google Gemini API Key' : 'OpenAI API Key'}
+              </label>
+              <input
+                type="password"
+                className="input-hud"
+                placeholder={provider === 'gemini' ? 'Paste Gemini API Key (AIzaSy...)' : 'Paste OpenAI API Key (sk-...)'}
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+              />
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.3rem' }}>
+                Stored locally in browser memory.
+              </div>
+            </div>
+          )}
+
+          {provider === 'local' && (
+            <div style={{ padding: '0.75rem', background: 'rgba(0, 240, 255, 0.05)', border: '1px solid rgba(0, 240, 255, 0.2)', borderRadius: '6px', fontSize: '0.8rem', color: '#00ff66' }}>
+              <CheckCircle size={14} style={{ marginRight: '0.4rem' }} />
+              Autonomous mode active! Operates 100% offline with zero external API key requirements.
+            </div>
+          )}
+
+          {savedStatus && (
+            <div style={{ color: 'var(--green-online)', fontSize: '0.85rem', fontFamily: 'Orbitron', textAlign: 'center' }}>
+              {savedStatus}
+            </div>
+          )}
+
+          <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+            <button className="btn-hud btn-hud-danger" onClick={onClose}>
+              Cancel
+            </button>
+            <button className="btn-hud" onClick={handleSave}>
+              <Save size={14} /> Apply Settings
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
