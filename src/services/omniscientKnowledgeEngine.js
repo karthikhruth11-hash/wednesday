@@ -53,19 +53,20 @@ export class OmniscientKnowledgeEngine {
     const raw = query.toLowerCase().trim();
     const clean = raw.replace(/[^a-z0-9\s]/gi, '').trim();
 
+    // Do not intercept if user is trying to perform an action
+    if (clean.includes('open') || clean.includes('play') || clean.includes('create') || clean.includes('launch') || clean.includes('close') || clean.includes('run')) {
+      return null;
+    }
+
     // Exact key lookup
     if (this.knowledgeBase[clean]) {
       return this.knowledgeBase[clean];
     }
 
-    // Exact phrase or word boundary matching
-    const words = clean.split(/\s+/);
+    // Multi-word phrase matching
     for (const [key, answer] of Object.entries(this.knowledgeBase)) {
       if (clean === key) return answer;
-      if (key.includes(' ') && clean.includes(key)) {
-        return answer;
-      }
-      if (!key.includes(' ') && words.includes(key)) {
+      if (key.includes(' ') && clean === key) {
         return answer;
       }
     }

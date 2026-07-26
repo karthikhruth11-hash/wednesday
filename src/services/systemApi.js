@@ -75,27 +75,24 @@ export const systemApi = {
   },
 
   async openUrl(url) {
-    const backendRes = await fetchWithFallback('/system/open-url', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url })
-    });
-    if (backendRes) return backendRes;
-
-    // Client-side fallback for Web / GitHub Pages
     let targetUrl = url.trim();
     if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) {
       targetUrl = `https://${targetUrl}`;
     }
 
+    const backendRes = await fetchWithFallback('/system/open-url', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: targetUrl })
+    });
+    if (backendRes && backendRes.success) return backendRes;
+
+    // Client-side fallback for Web / GitHub Pages
     try {
-      const link = document.createElement('a');
-      link.href = targetUrl;
-      link.target = '_blank';
-      link.rel = 'noopener,noreferrer';
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+      const win = window.open(targetUrl, '_blank');
+      if (!win) {
+        window.location.href = targetUrl;
+      }
     } catch {
       window.location.href = targetUrl;
     }

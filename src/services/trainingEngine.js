@@ -49,7 +49,11 @@ class NeuralTrainingEngine {
   // Check if a user query matches any trained trigger
   findMatch(query) {
     const q = query.toLowerCase().trim();
-    return this.trainedCommands.find(c => q.includes(c.trigger) || c.trigger.includes(q));
+    if (!q) return null;
+    return this.trainedCommands.find(c => {
+      const trig = c.trigger.toLowerCase().trim();
+      return q === trig || q.startsWith(trig + ' ');
+    });
   }
 }
 
