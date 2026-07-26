@@ -5,6 +5,7 @@
 import { systemApi } from './systemApi';
 import { trainingEngine } from './trainingEngine';
 import { autoMlEngine } from './autoMlEngine';
+import { omniscientKnowledgeEngine } from './omniscientKnowledgeEngine';
 
 export class AIAgentEngine {
   constructor() {
@@ -55,6 +56,15 @@ export class AIAgentEngine {
     const rawQuery = query.trim();
     const lower = rawQuery.toLowerCase();
     let result = null;
+
+    // 0. INSTANT OMNISCIENT KNOWLEDGE LOOKUP (ZERO DELAY)
+    const instantAns = omniscientKnowledgeEngine.findInstantAnswer(rawQuery);
+    if (instantAns) {
+      result = {
+        reply: instantAns,
+        toolUsed: 'OMNISCIENT_CORE'
+      };
+    }
 
     // 0. CHECK USER-TRAINED COMMANDS FIRST!
     const trainedMatch = trainingEngine.findMatch(rawQuery);

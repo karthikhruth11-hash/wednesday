@@ -7,6 +7,7 @@ import FileSystemPanel from './components/FileSystemPanel';
 import TrainingPanel from './components/TrainingPanel';
 import HandGesturePanel from './components/HandGesturePanel';
 import CustomVoiceStudio from './components/CustomVoiceStudio';
+import CosmicKnowledgePanel from './components/CosmicKnowledgePanel';
 import ChatGPTConsole from './components/ChatGPTConsole';
 import SettingsModal from './components/SettingsModal';
 
@@ -476,8 +477,11 @@ export default function App() {
           </button>
         </div>
 
-        {/* Side Drawer Tabs */}
+        {/* Side Drawer Navigation Tabs */}
         <div style={{ display: 'flex', gap: '0.3rem', overflowX: 'auto', paddingBottom: '0.3rem' }}>
+          <button className={`drawer-tab-btn ${drawerTab === 'cosmic' ? 'active' : ''}`} onClick={() => setDrawerTab('cosmic')}>
+            <Globe size={13} /> Cosmic Core
+          </button>
           <button className={`drawer-tab-btn ${drawerTab === 'gestures' ? 'active' : ''}`} onClick={() => setDrawerTab('gestures')}>
             <Hand size={13} /> Gestures AI
           </button>
@@ -497,6 +501,7 @@ export default function App() {
 
         {/* Drawer Content */}
         <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+          {drawerTab === 'cosmic' && <CosmicKnowledgePanel />}
           {drawerTab === 'gestures' && <HandGesturePanel onGestureDetected={handleGestureDetected} />}
           {drawerTab === 'custom_voice' && <CustomVoiceStudio />}
           {drawerTab === 'tools' && <AgentTools onRunCommand={handleSendMessage} />}
