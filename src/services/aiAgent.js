@@ -91,8 +91,14 @@ export class AIAgentEngine {
     }
 
     // 2. UNIVERSAL OPEN-ANYTHING ROUTER (WEBSITES, APPS, DESKTOP TOOLS)
-    if (!result && lower.startsWith('open ')) {
-      const target = lower.replace(/^open\s+/i, '').trim();
+    if (!result && (lower.includes('youtube') || lower.includes('google') || lower.includes('github') || lower.includes('spotify') || lower.includes('wikipedia') || lower.includes('instagram') || lower.startsWith('open '))) {
+      let target = lower.replace(/^(please\s+)?open\s+/i, '').trim();
+      if (lower.includes('youtube')) target = 'youtube';
+      if (lower.includes('google') && !lower.includes('search')) target = 'google';
+      if (lower.includes('spotify')) target = 'spotify';
+      if (lower.includes('github')) target = 'github';
+      if (lower.includes('wikipedia')) target = 'wikipedia';
+      if (lower.includes('instagram')) target = 'instagram';
 
       const commonSites = {
         'youtube': 'https://www.youtube.com',

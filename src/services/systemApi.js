@@ -81,8 +81,20 @@ export const systemApi = {
     if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) {
       targetUrl = `https://${targetUrl}`;
     }
-    window.open(targetUrl, '_blank');
-    return { success: true, message: `Opened URL in browser: ${targetUrl}` };
+
+    try {
+      const link = document.createElement('a');
+      link.href = targetUrl;
+      link.target = '_blank';
+      link.rel = 'noopener,noreferrer';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch {
+      window.location.href = targetUrl;
+    }
+
+    return { success: true, message: `Opened URL: ${targetUrl}` };
   },
 
   async createDir(dirPath) {
