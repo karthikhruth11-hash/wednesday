@@ -85,17 +85,28 @@ class SpeechEngine {
   }
 
   loadVoices() {
-    if (!this.synthesis) return;
+    if (!this.synthesis) return [];
     const voices = this.synthesis.getVoices();
-    // Search for preferred female AI assistant voices
-    const preferredNames = [
-      'Samantha', 'Zira', 'Victoria', 'Jenny', 'Google UK English Female',
-      'Google US English', 'Karen', 'Moira', 'Fiona', 'Natural'
+    const savedVoiceName = localStorage.getItem('wednesday_voice_name');
+
+    if (savedVoiceName) {
+      const matched = voices.find(v => v.name === savedVoiceName);
+      if (matched) {
+        this.selectedVoice = matched;
+        return voices;
+      }
+    }
+
+    // Search for natural high-quality human voices over metallic robotic synths
+    const preferredKeywords = [
+      'Natural', 'Online (Natural)', 'Neural', 'Google US English',
+      'Google UK English Female', 'Google UK English Male', 'Jenny',
+      'Aria', 'Ava', 'Emma', 'Ana', 'Guy', 'Samantha', 'Zira', 'Victoria'
     ];
 
     let found = null;
-    for (const name of preferredNames) {
-      found = voices.find(v => v.name.includes(name) && v.lang.startsWith('en'));
+    for (const keyword of preferredKeywords) {
+      found = voices.find(v => v.name.includes(keyword) && v.lang.startsWith('en'));
       if (found) break;
     }
 
@@ -104,6 +115,22 @@ class SpeechEngine {
     }
 
     this.selectedVoice = found;
+    return voices;
+  }
+
+  getAvailableVoices() {
+    if (!this.synthesis) return [];
+    return this.synthesis.getVoices();
+  }
+
+  setSelectedVoice(voiceName) {
+    if (!this.synthesis) return;
+    const voices = this.synthesis.getVoices();
+    const found = voices.find(v => v.name === voiceName);
+    if (found) {
+      this.selectedVoice = found;
+      localStorage.setItem('wednesday_voice_name', voiceName);
+    }
   }
 
   startListening() {
@@ -143,8 +170,11 @@ class SpeechEngine {
       utterance.voice = this.selectedVoice;
     }
 
-    utterance.rate = 1.05; // Slightly faster sci-fi pace
-    utterance.pitch = 1.1; // Clear AI assistant tone
+    const savedRate = parseFloat(localStorage.getItem('wednesday_speech_rate')) || 1.0;
+    const savedPitch = parseFloat(localStorage.getItem('wednesday_speech_pitch')) || 1.0;
+
+    utterance.rate = savedRate; // Natural human speech tempo
+    utterance.pitch = savedPitch; // Human pitch
 
     utterance.onstart = () => {
       this.isSpeaking = true;

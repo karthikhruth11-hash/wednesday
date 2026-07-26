@@ -1,19 +1,59 @@
-import React, { useState } from 'react';
-import { Settings, Key, Bot, X, Save, CheckCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Settings, Key, Bot, X, Save, Volume2 } from 'lucide-react';
 import { soundFx } from '../services/soundFx';
+import { speechEngine } from '../services/speech';
 
 export default function SettingsModal({ isOpen, onClose }) {
   const [provider, setProvider] = useState(localStorage.getItem('wednesday_ai_provider') || 'local');
   const [apiKey, setApiKey] = useState(localStorage.getItem('wednesday_api_key') || '');
+  const [voices, setVoices] = useState([]);
+  const [selectedVoiceName, setSelectedVoiceName] = useState(localStorage.getItem('wednesday_voice_name') || '');
+  const [speechRate, setSpeechRate] = useState(localStorage.getItem('wednesday_speech_rate') || '1.0');
+  const [speechPitch, setSpeechPitch] = useState(localStorage.getItem('wednesday_speech_pitch') || '1.0');
   const [savedStatus, setSavedStatus] = useState('');
 
+  useEffect(() => {
+    if (isOpen) {
+      const available = speechEngine.getAvailableVoices();
+      if (available && available.length > 0) {
+        setVoices(available);
+        if (!selectedVoiceName && available[0]) {
+          setSelectedVoiceName(available[0].name);
+        }
+      } else {
+        const timer = setTimeout(() => {
+          const recheck = speechEngine.getAvailableVoices();
+          setVoices(recheck);
+        }, 500);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [isOpen, selectedVoiceName]);
+
   if (!isOpen) return null;
+
+  const handleTestVoice = () => {
+    soundFx.playClick();
+    if (selectedVoiceName) {
+      speechEngine.setSelectedVoice(selectedVoiceName);
+    }
+    localStorage.setItem('wednesday_speech_rate', speechRate);
+    localStorage.setItem('wednesday_speech_pitch', speechPitch);
+    speechEngine.speak("Hello Boss! This is my natural voice. How does it sound?");
+  };
 
   const handleSave = () => {
     soundFx.playClick();
     localStorage.setItem('wednesday_ai_provider', provider);
     localStorage.setItem('wednesday_api_key', apiKey.trim());
-    setSavedStatus('Settings & API Configuration Saved!');
+
+    if (selectedVoiceName) {
+      speechEngine.setSelectedVoice(selectedVoiceName);
+    }
+    localStorage.setItem('wednesday_speech_rate', speechRate);
+    localStorage.setItem('wednesday_speech_pitch', speechPitch);
+
+    setSavedStatus('Settings & Human Voice Preference Saved!');
     setTimeout(() => {
       setSavedStatus('');
       onClose();
@@ -35,11 +75,11 @@ export default function SettingsModal({ isOpen, onClose }) {
     >
       <div
         className="hud-card"
-        style={{ width: '500px', border: '1px solid var(--cyan-bright)', boxShadow: '0 0 30px rgba(0, 240, 255, 0.3)' }}
+        style={{ width: '540px', maxHeight: '90vh', overflowY: 'auto', border: '1px solid var(--cyan-bright)', boxShadow: '0 0 30px rgba(0, 240, 255, 0.3)' }}
       >
         <div className="hud-card-header">
           <span className="hud-card-title">
-            <Settings size={18} /> AI Neural Core & API Settings
+            <Settings size={18} /> AI Neural Core & Voice Settings
           </span>
           <button
             onClick={() => { soundFx.playClick(); onClose(); }}
@@ -50,6 +90,7 @@ export default function SettingsModal({ isOpen, onClose }) {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          {/* Intelligence Engine Section */}
           <div>
             <label style={{ fontSize: '0.8rem', color: 'var(--cyan-bright)', fontFamily: 'Orbitron', display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.4rem' }}>
               <Bot size={14} /> Intelligence Engine Selection
@@ -85,12 +126,74 @@ export default function SettingsModal({ isOpen, onClose }) {
             </div>
           )}
 
-          {provider === 'local' && (
-            <div style={{ padding: '0.75rem', background: 'rgba(0, 240, 255, 0.05)', border: '1px solid rgba(0, 240, 255, 0.2)', borderRadius: '6px', fontSize: '0.8rem', color: '#00ff66' }}>
-              <CheckCircle size={14} style={{ marginRight: '0.4rem' }} />
-              Autonomous mode active! Operates 100% offline with zero external API key requirements.
-            </div>
-          )}
+          {/* Voice Customization Section (Human vs Robo Voice) */}
+          <div style={{ padding: '0.75rem', background: 'rgba(0, 240, 255, 0.04)', border: '1px solid rgba(0, 240, 255, 0.2)', borderRadius: '8px' }}>
+            <label style={{ fontSize: '0.8rem', color: '#00f0ff', fontFamily: 'Orbitron', display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.5rem' }}>
+              <Volume2 size={16} /> Human Natural Voice & Speech Synthesis
+            </label>
+
+            {voices.length > 0 ? (
+              <div>
+                <select
+                  className="input-hud"
+                  value={selectedVoiceName}
+                  onChange={(e) => setSelectedVoiceName(e.target.value)}
+                  style={{ width: '100%', marginBottom: '0.6rem' }}
+                >
+                  {voices.map((v, i) => (
+                    <option key={i} value={v.name}>
+                      {v.name} ({v.lang}) {v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Online') ? '✨ (Natural)' : ''}
+                    </option>
+                  ))}
+                </select>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.6rem' }}>
+                  <div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.2rem' }}>
+                      Speech Tempo / Rate: {speechRate}x
+                    </div>
+                    <input
+                      type="range"
+                      min="0.7"
+                      max="1.5"
+                      step="0.05"
+                      value={speechRate}
+                      onChange={(e) => setSpeechRate(e.target.value)}
+                      style={{ width: '100%', accentColor: 'var(--cyan-bright)' }}
+                    />
+                  </div>
+
+                  <div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.2rem' }}>
+                      Voice Pitch: {speechPitch}
+                    </div>
+                    <input
+                      type="range"
+                      min="0.5"
+                      max="1.5"
+                      step="0.05"
+                      value={speechPitch}
+                      onChange={(e) => setSpeechPitch(e.target.value)}
+                      style={{ width: '100%', accentColor: 'var(--cyan-bright)' }}
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  className="btn-hud"
+                  onClick={handleTestVoice}
+                  style={{ fontSize: '0.75rem', padding: '0.3rem 0.8rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
+                >
+                  <Volume2 size={14} /> 🔊 Test Selected Natural Voice
+                </button>
+              </div>
+            ) : (
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                Loading system speech synthesis voices...
+              </div>
+            )}
+          </div>
 
           {savedStatus && (
             <div style={{ color: 'var(--green-online)', fontSize: '0.85rem', fontFamily: 'Orbitron', textAlign: 'center' }}>
@@ -103,7 +206,7 @@ export default function SettingsModal({ isOpen, onClose }) {
               Cancel
             </button>
             <button className="btn-hud" onClick={handleSave}>
-              <Save size={14} /> Apply Settings
+              <Save size={14} /> Save & Apply
             </button>
           </div>
         </div>
