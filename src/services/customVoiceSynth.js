@@ -20,8 +20,14 @@ export class CustomVoiceSynth {
   }
 
   hasCustomVoice() {
+    const isEnabled = localStorage.getItem('wednesday_use_custom_voice') === 'true';
     const activeData = localStorage.getItem('wednesday_active_custom_voice');
-    return Boolean(activeData && activeData.startsWith('data:audio'));
+    return Boolean(isEnabled && activeData && activeData.startsWith('data:audio'));
+  }
+
+  disableCustomVoice() {
+    localStorage.removeItem('wednesday_use_custom_voice');
+    localStorage.removeItem('wednesday_active_custom_voice');
   }
 
   async speakCustomVoice(text, onStart, onEnd) {

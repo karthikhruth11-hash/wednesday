@@ -25,13 +25,26 @@ export default function CustomVoiceStudio() {
     localStorage.setItem('wednesday_custom_voices', JSON.stringify(voiceClips));
   }, [voiceClips]);
 
+  const removeMyVoice = () => {
+    soundFx.playClick();
+    localStorage.removeItem('wednesday_use_custom_voice');
+    localStorage.removeItem('wednesday_active_custom_voice');
+    localStorage.removeItem('wednesday_custom_voices');
+    setVoiceClips([]);
+    setActiveVoiceClip('');
+    setStatusMsg('Custom voice profile removed! Reverted to Web / ChatGPT Voice.');
+    setTimeout(() => setStatusMsg(''), 4000);
+  };
+
   const setAsActiveVoice = (clip) => {
     soundFx.playClick();
     if (activeVoiceClip === clip.audioData) {
+      localStorage.removeItem('wednesday_use_custom_voice');
       localStorage.removeItem('wednesday_active_custom_voice');
       setActiveVoiceClip('');
       setStatusMsg('Custom voice deactivated. Reverted to web speech synthesis voice.');
     } else {
+      localStorage.setItem('wednesday_use_custom_voice', 'true');
       localStorage.setItem('wednesday_active_custom_voice', clip.audioData);
       setActiveVoiceClip(clip.audioData);
       setStatusMsg(`Replaced AI Voice! W.E.D.N.E.S.D.A.Y. will now speak with "${clip.title}".`);
@@ -112,9 +125,9 @@ export default function CustomVoiceStudio() {
         <span className="hud-card-title">
           <Sparkles size={16} color="#ff4d6d" /> Custom Voice Studio & Recorder
         </span>
-        <span style={{ fontSize: '0.7rem', color: 'var(--cyan-bright)', fontFamily: 'Orbitron' }}>
-          {voiceClips.length} CUSTOM CLIPS
-        </span>
+        <button className="btn-hud btn-hud-danger" onClick={removeMyVoice} style={{ padding: '0.3rem 0.7rem', fontSize: '0.72rem' }}>
+          <Trash2 size={12} /> REMOVE MY VOICE
+        </button>
       </div>
 
       <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>
