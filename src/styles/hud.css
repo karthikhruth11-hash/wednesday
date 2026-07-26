@@ -185,8 +185,9 @@ body {
 }
 
 .arc-reactor-card {
-  flex: 0.85;
-  min-height: 240px;
+  height: 250px;
+  min-height: 250px;
+  flex-shrink: 0;
   background: var(--bg-hud);
   border: 1px solid var(--border-hud);
   border-radius: 16px;

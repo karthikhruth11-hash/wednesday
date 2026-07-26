@@ -136,17 +136,28 @@ export class GestureEngine {
     // Draw Skeleton Landmarks on overlay canvas
     this.drawLandmarks(ctx, landmarks);
 
+    // Calculate Index-Thumb Pinch Distance & Hand Cursor Position
+    const dx = landmarks[4].x - landmarks[8].x;
+    const dy = landmarks[4].y - landmarks[8].y;
+    const pinchDist = Math.sqrt(dx * dx + dy * dy);
+    const handPos = { x: landmarks[8].x, y: landmarks[8].y, pinchDist };
+
     // Classify Gesture
     const gesture = this.classifyHandGesture(landmarks);
-    if (gesture) {
-      const now = Date.now();
-      if (gesture !== this.lastGesture || now - this.lastGestureTime > 1200) {
-        this.lastGesture = gesture;
-        this.lastGestureTime = now;
-        if (this.onGesture) {
-          this.onGesture({ gesture, landmarks, timestamp: new Date().toLocaleTimeString() });
-        }
-      }
+
+    const now = Date.now();
+    if (this.onGesture) {
+      this.onGesture({
+        gesture: gesture || 'TRACKING',
+        handPos,
+        landmarks,
+        timestamp: new Date().toLocaleTimeString()
+      });
+    }
+
+    if (gesture && (gesture !== this.lastGesture || now - this.lastGestureTime > 1200)) {
+      this.lastGesture = gesture;
+      this.lastGestureTime = now;
     }
   }
 

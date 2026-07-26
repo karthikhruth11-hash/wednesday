@@ -15,7 +15,7 @@ import { soundFx } from './services/soundFx';
 import { aiAgent } from './services/aiAgent';
 import {
   Sparkles, Settings, Folder, Terminal, BrainCircuit, Hand, Mic, MicOff,
-  Send, Menu, X, Heart, Scale, Code, Bot, Activity, Cpu, HardDrive, Zap, CloudSun
+  Send, Menu, X, Heart, Scale, Code, Bot, Activity, Cpu, HardDrive, Zap, CloudSun, Globe
 } from 'lucide-react';
 
 export default function App() {
@@ -26,6 +26,7 @@ export default function App() {
   const [inputText, setInputText] = useState('');
   const [interimTranscript, setInterimTranscript] = useState('');
   const [activeGesture, setActiveGesture] = useState(null);
+  const [handPos, setHandPos] = useState(null);
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [drawerTab, setDrawerTab] = useState('gestures'); // 'gestures', 'custom_voice', 'tools', 'files', 'trainer', 'telemetry'
@@ -129,9 +130,16 @@ export default function App() {
   };
 
   // Hand Gesture Action Dispatcher
-  const handleGestureDetected = useCallback((gesture) => {
-    setActiveGesture(gesture);
-    setTimeout(() => setActiveGesture(null), 1500);
+  const handleGestureDetected = useCallback((data) => {
+    const gesture = typeof data === 'object' ? data.gesture : data;
+    if (typeof data === 'object' && data.handPos) {
+      setHandPos(data.handPos);
+    }
+
+    if (gesture && gesture !== 'TRACKING') {
+      setActiveGesture(gesture);
+      setTimeout(() => setActiveGesture(null), 1500);
+    }
 
     if (gesture === 'PEACE_SIGN') {
       const modes = ['jarvis', 'girlfriend', 'lawyer', 'polyglot'];
@@ -359,6 +367,7 @@ export default function App() {
             <ArcReactorVisualizer
               state={appState}
               activeGesture={activeGesture}
+              handPos={handPos}
             />
           </div>
 
@@ -418,6 +427,21 @@ export default function App() {
 
         {/* Right Column: Weather Forecast & Audio Waveform Telemetry */}
         <aside className="telemetry-column-right">
+          {/* Universal Galaxy & Earth Status Telemetry Radar */}
+          <div className="circular-gauge-card" style={{ alignItems: 'flex-start' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.4rem', width: '100%' }}>
+              <Globe size={22} color="#00f0ff" />
+              <div>
+                <div style={{ fontFamily: 'Orbitron', fontSize: '0.85rem', color: '#00f0ff', fontWeight: 'bold' }}>GALAXY RADAR CORE</div>
+                <div style={{ fontSize: '0.65rem', color: '#00ff66' }}>● SATELLITES 100% ONLINE</div>
+              </div>
+            </div>
+            <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>
+              Space Weather: Solar Flux 142 • Kp=1 (Quiet)<br />
+              Orbital Sync: ISS & James Webb L2 Streams Active
+            </div>
+          </div>
+
           {/* Live Weather Forecast Widget */}
           <div className="circular-gauge-card" style={{ alignItems: 'flex-start' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.5rem', width: '100%' }}>

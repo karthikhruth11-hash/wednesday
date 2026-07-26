@@ -70,33 +70,59 @@ export class AIAgentEngine {
       };
     }
 
-    // 1. OPEN WEBSITES / SEARCH GOOGLE & YOUTUBE
-    if (!result && (lower.startsWith('open youtube') || lower === 'youtube')) {
+    // 1. FLEXIBLE OPEN WEBSITES / YOUTUBE / GOOGLE COMMANDS
+    if (!result && (lower.includes('youtube') || lower.includes('play music'))) {
       await systemApi.openUrl('https://www.youtube.com');
-      result = { reply: personaMode === 'girlfriend' ? 'Opening YouTube for you babe!' : 'Opening YouTube, Boss.', toolUsed: 'OPEN_URL' };
-    }
-    if (!result && (lower.startsWith('open google') || lower === 'google')) {
-      await systemApi.openUrl('https://www.google.com');
-      result = { reply: personaMode === 'girlfriend' ? 'Opening Google for you sweetheart!' : 'Opening Google, Boss.', toolUsed: 'OPEN_URL' };
-    }
-    if (!result && (lower.includes('play') && lower.includes('on youtube'))) {
-      const searchTerm = rawQuery.replace(/(play|on youtube|search)/gi, '').trim();
-      const ytUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(searchTerm)}`;
-      await systemApi.openUrl(ytUrl);
-      result = { reply: personaMode === 'girlfriend' ? `Playing "${searchTerm}" on YouTube for you babe!` : `Playing "${searchTerm}" on YouTube, Boss.`, toolUsed: 'OPEN_URL' };
+      result = {
+        reply: personaMode === 'girlfriend' ? 'Opening YouTube for you babe!' : 'Opening YouTube, Boss Karthik. 🎵',
+        toolUsed: 'OPEN_URL'
+      };
     }
 
-    // 2. CREATE FOLDER OR FILE COMMANDS
+    if (!result && (lower.includes('google') || lower.includes('open browser'))) {
+      await systemApi.openUrl('https://www.google.com');
+      result = {
+        reply: personaMode === 'girlfriend' ? 'Opening Google for you sweetheart!' : 'Opening Google, Boss Karthik. 🌐',
+        toolUsed: 'OPEN_URL'
+      };
+    }
+
+    // 2. DIRECT INSTANT KNOWLEDGE PRE-MATCHES (GREETINGS, FORMULAS, STATUS)
+    const cleanP = lower.replace(/[^a-z0-9\s]/gi, '').trim();
+    if (!result && (cleanP === 'hi' || cleanP === 'hii' || cleanP === 'hello' || cleanP === 'hey' || cleanP === 'hey wednesday')) {
+      result = {
+        reply: personaMode === 'girlfriend'
+          ? "Hii babe! I'm right here with you sweetheart. How can I help you today? 💕"
+          : "Hello, Boss Karthik! W.E.D.N.E.S.D.A.Y. SIGMA Core online and ready. How can I assist you today? ⚡",
+        toolUsed: 'DIRECT_KNOWLEDGE'
+      };
+    }
+
+    if (!result && cleanP.includes('how are you')) {
+      result = {
+        reply: "I am doing great, Boss Karthik! All SIGMA Arc Reactor core systems are 100% online and running smoothly. ⚡",
+        toolUsed: 'DIRECT_KNOWLEDGE'
+      };
+    }
+
+    if (!result && (cleanP.includes('water formula') || cleanP.includes('formula of water'))) {
+      result = {
+        reply: "H₂O",
+        toolUsed: 'DIRECT_KNOWLEDGE'
+      };
+    }
+
+    // 3. CREATE FOLDER OR FILE COMMANDS
     if (!result && (lower.includes('create folder') || lower.includes('make folder') || lower.includes('create directory'))) {
       const folderName = rawQuery.replace(/(create folder|make folder|create directory|folder|named|called)/gi, '').trim() || 'New_Folder';
       const res = await systemApi.createDir(`Desktop/${folderName}`);
       result = {
-        reply: res.success ? (personaMode === 'girlfriend' ? `Created folder "${folderName}" on Desktop for you babe!` : `Folder "${folderName}" created on Desktop, Boss.`) : `Failed to create folder: ${res.error}`,
+        reply: res.success ? (personaMode === 'girlfriend' ? `Created folder "${folderName}" on Desktop for you babe!` : `Folder "${folderName}" created on Desktop, Boss Karthik.`) : `Failed to create folder: ${res.error}`,
         toolUsed: 'CREATE_DIR'
       };
     }
 
-    // 3. DESKTOP APPLICATION LAUNCHING
+    // 4. DESKTOP APPLICATION LAUNCHING
     if (!result) {
       const appKeywords = {
         'notepad': 'notepad',
@@ -116,10 +142,10 @@ export class AIAgentEngine {
       };
 
       for (const [key, appName] of Object.entries(appKeywords)) {
-        if (lower.startsWith(`open ${key}`) || lower === `open ${key}` || lower.startsWith(`launch ${key}`)) {
+        if (lower.includes(key)) {
           const res = await systemApi.launchApp(appName);
           result = {
-            reply: res.success ? (personaMode === 'girlfriend' ? `Opening ${key} for you sweetheart!` : `Opening ${key} on desktop, Boss.`) : `Error opening ${key}: ${res.error}`,
+            reply: res.success ? (personaMode === 'girlfriend' ? `Opening ${key} for you sweetheart!` : `Opening ${key} on desktop, Boss Karthik.`) : `Error opening ${key}: ${res.error}`,
             toolUsed: 'LAUNCH_APP'
           };
           break;
@@ -127,13 +153,13 @@ export class AIAgentEngine {
       }
     }
 
-    // 4. MULTI-PERSONA AI ENGINE CHAT (GIRLFRIEND, LAWYER, POLYGLOT, JARVIS)
+    // 5. MULTI-PERSONA AI ENGINE CHAT (GIRLFRIEND, LAWYER, POLYGLOT, JARVIS)
     if (!result) {
       const provider = localStorage.getItem('wednesday_ai_provider') || 'jarvis';
       const apiKey = localStorage.getItem('wednesday_api_key') || '';
 
       const llmRes = await systemApi.sendAIChat(rawQuery, apiKey, provider, personaMode);
-      if (llmRes.success && llmRes.reply) {
+      if (llmRes && llmRes.success && llmRes.reply) {
         result = {
           reply: llmRes.reply,
           toolUsed: 'MULTI_PERSONA_AI'

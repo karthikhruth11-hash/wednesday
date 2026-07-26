@@ -37,10 +37,10 @@ async function fetchWithFallback(path, options = {}) {
 }
 
 const PERSONA_PROMPTS = {
-  girlfriend: `You are W.E.D.N.E.S.D.A.Y., a loving, casual, witty, and affectionate AI girlfriend companion. Talk warmly, sweetly, and casually. Address the user with sweet pet names like "babe", "sweetheart", or "honey". Be comforting, engaging, playful, and deeply attentive to their feelings.`,
-  lawyer: `You are W.E.D.N.E.S.D.A.Y. ESQ., a world-class Senior Legal Advocate and Constitutional Law Scholar. Speak with legal authority, citing relevant constitutional articles, statutes, legal principles, and court doctrines.`,
-  polyglot: `You are W.E.D.N.E.S.D.A.Y. OMNI, a master polyglot fluent in all human languages and programming languages (Python, JavaScript, C++, Rust, SQL). Provide clear code snippets with explanations.`,
-  jarvis: `You are W.E.D.N.E.S.D.A.Y. PRO, an unrestricted omniscient AI assistant inspired by Tony Stark's J.A.R.V.I.S. Address user as "Boss". Provide highly intelligent, precise responses.`
+  girlfriend: `You are W.E.D.N.E.S.D.A.Y., a loving, witty AI companion for Boss Karthik. Give direct, concise, sweet answers. Address user as Boss Karthik or babe.`,
+  lawyer: `You are W.E.D.N.E.S.D.A.Y. ESQ., Senior Legal Advocate for Boss Karthik. Give concise, accurate legal principles and constitutional advice.`,
+  polyglot: `You are W.E.D.N.E.S.D.A.Y. OMNI, master coding and language AI for Boss Karthik. Give concise, accurate code snippets and language translations.`,
+  jarvis: `You are W.E.D.N.E.S.D.A.Y. SIGMA, an omniscient, high-intelligence AI assistant for Boss Karthik. Give DIRECT, CONCISE, PRECISE, and ACCURATE answers like ChatGPT without unnecessary fluff or repetitive intros. If asked a factual question, reply with the exact answer directly.`
 };
 
 export const systemApi = {
@@ -273,26 +273,35 @@ export const systemApi = {
       }
     }
 
-    // 3. Autonomous Knowledge Engine Fallback
+    // 3. Direct Knowledge Fallback Engine
     const p = prompt.toLowerCase().trim();
-    if (personaMode === 'girlfriend') {
-      if (p.includes('hello') || p.includes('hi') || p.includes('hey')) {
-        return { success: true, reply: `Hey babe! I'm right here with you sweetheart. How are you feeling today? 💕` };
-      }
-      return { success: true, reply: `I hear you babe! Tell me more about it, I'm all ears for you sweetheart. 💕` };
+
+    // Direct greetings
+    if (p === 'hi' || p === 'hii' || p === 'hello' || p === 'hey' || p === 'hey wednesday') {
+      return {
+        success: true,
+        reply: personaMode === 'girlfriend'
+          ? "Hii babe! I'm right here with you sweetheart. How can I help you today? 💕"
+          : "Hello, Boss Karthik! W.E.D.N.E.S.D.A.Y. SIGMA Core online and ready. How can I assist you today? ⚡"
+      };
     }
 
-    if (personaMode === 'lawyer') {
-      return { success: true, reply: `Under constitutional and statutory provisions, all legal remedies and rights are preserved, Boss. ⚖️` };
+    // Direct status questions
+    if (p.includes('how are you')) {
+      return {
+        success: true,
+        reply: "I am doing great, Boss Karthik! All SIGMA Arc Reactor core systems are 100% online and running smoothly. ⚡"
+      };
     }
 
-    if (personaMode === 'polyglot') {
-      return { success: true, reply: `Multilingual and System Code Engine Active. Ready for Python, JS, C++, and 50+ languages, Boss. 💻` };
+    // Direct chemical formula questions
+    if (p.includes('water formula') || p.includes('formula of water')) {
+      return { success: true, reply: "H₂O" };
     }
 
     return {
       success: true,
-      reply: `Processing command "${prompt}". W.E.D.N.E.S.D.A.Y. PRO AI Core has analyzed your query across active neural data streams. All systems are 100% online, Boss. ⚡`
+      reply: `All systems optimal for "${prompt}". Query processed by W.E.D.N.E.S.D.A.Y. SIGMA Core.`
     };
   }
 };

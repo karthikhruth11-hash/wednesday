@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Sparkles } from 'lucide-react';
 
-export default function ArcReactorVisualizer({ state, activeGesture }) {
+export default function ArcReactorVisualizer({ state, activeGesture, handPos }) {
   const canvasRef = useRef(null);
 
   useEffect(() => {
@@ -32,8 +32,14 @@ export default function ArcReactorVisualizer({ state, activeGesture }) {
 
       ctx.clearRect(0, 0, width, height);
 
-      const centerX = width / 2;
-      const centerY = height / 2;
+      let centerX = width / 2;
+      let centerY = height / 2;
+
+      // Track hand position live on screen if camera hand is active
+      if (handPos && handPos.x !== undefined && handPos.y !== undefined) {
+        centerX = (1 - handPos.x) * width; // Mirrored for natural hand tracking
+        centerY = handPos.y * height;
+      }
 
       let speedMult = 1;
       let coreColor = '#00f0ff'; // Cyan
@@ -197,7 +203,7 @@ export default function ArcReactorVisualizer({ state, activeGesture }) {
     return () => {
       cancelAnimationFrame(animationId);
     };
-  }, [state, activeGesture]);
+  }, [state, activeGesture, handPos]);
 
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
