@@ -80,21 +80,59 @@ export class AIAgentEngine {
       };
     }
 
-    // 1. FLEXIBLE OPEN WEBSITES / YOUTUBE / GOOGLE COMMANDS
-    if (!result && (lower.includes('youtube') || lower.includes('play music'))) {
-      await systemApi.openUrl('https://www.youtube.com');
+    // 1. UNIVERSAL CLOSE / SHUTDOWN PROCESS HANDLER
+    if (lower === 'close' || lower === 'close process' || lower === 'stop process' || lower === 'exit' || lower === 'shutdown' || lower === 'turn off') {
+      speechEngine.stopSpeaking();
+      speechEngine.stopListening();
       result = {
-        reply: personaMode === 'girlfriend' ? 'Opening YouTube for you babe!' : 'Opening YouTube, Boss Karthik. 🎵',
-        toolUsed: 'OPEN_URL'
+        reply: personaMode === 'girlfriend' ? 'Closing active processes. Bye babe! 💕' : 'Closing active processes and shutting down. Have a great day, Boss Karthik! ⚡',
+        toolUsed: 'SHUTDOWN_PROCESS'
       };
     }
 
-    if (!result && (lower.includes('google') || lower.includes('open browser'))) {
-      await systemApi.openUrl('https://www.google.com');
-      result = {
-        reply: personaMode === 'girlfriend' ? 'Opening Google for you sweetheart!' : 'Opening Google, Boss Karthik. 🌐',
-        toolUsed: 'OPEN_URL'
+    // 2. UNIVERSAL OPEN-ANYTHING ROUTER (WEBSITES, APPS, DESKTOP TOOLS)
+    if (!result && lower.startsWith('open ')) {
+      const target = lower.replace(/^open\s+/i, '').trim();
+
+      const commonSites = {
+        'youtube': 'https://www.youtube.com',
+        'google': 'https://www.google.com',
+        'github': 'https://www.github.com',
+        'wikipedia': 'https://www.wikipedia.org',
+        'spotify': 'https://open.spotify.com',
+        'instagram': 'https://www.instagram.com',
+        'whatsapp': 'https://web.whatsapp.com',
+        'facebook': 'https://www.facebook.com',
+        'twitter': 'https://www.x.com',
+        'x': 'https://www.x.com',
+        'netflix': 'https://www.netflix.com',
+        'maps': 'https://maps.google.com',
+        'gmail': 'https://mail.google.com'
       };
+
+      if (commonSites[target]) {
+        await systemApi.openUrl(commonSites[target]);
+        result = {
+          reply: personaMode === 'girlfriend' ? `Opening ${target} for you babe!` : `Opening ${target}, Boss Karthik. 🌐`,
+          toolUsed: 'OPEN_URL'
+        };
+      } else if (target.includes('.') || target.includes('www') || target.includes('http')) {
+        await systemApi.openUrl(target);
+        result = {
+          reply: `Opening ${target}, Boss Karthik. 🌐`,
+          toolUsed: 'OPEN_URL'
+        };
+      } else {
+        // Desktop App or generic URL fallback
+        const appRes = await systemApi.launchApp(target);
+        if (!appRes.success || appRes.message.includes('requires running')) {
+          await systemApi.openUrl(`https://www.google.com/search?q=${encodeURIComponent(target)}`);
+        }
+        result = {
+          reply: `Opening ${target}, Boss Karthik.`,
+          toolUsed: 'OPEN_APP_OR_WEB'
+        };
+      }
     }
 
     // 2. DIRECT INSTANT KNOWLEDGE PRE-MATCHES (GREETINGS, FORMULAS, STATUS)

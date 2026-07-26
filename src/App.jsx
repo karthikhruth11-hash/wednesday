@@ -181,9 +181,14 @@ export default function App() {
           <button className="dock-icon-btn" onClick={() => setIsSidebarCollapsed(prev => !prev)} title="Toggle Sidebar">
             <Menu size={18} />
           </button>
-          <div className="top-brand-title">
+          <div className="top-brand-title" style={{ cursor: 'pointer' }} onClick={() => setActiveNav('aichat')}>
             <Sparkles size={20} color="#00f0ff" /> Wednesday AI
           </div>
+          {activeNav !== 'aichat' && (
+            <button className="btn-stark-submit" onClick={() => setActiveNav('aichat')} style={{ padding: '0.3rem 0.8rem', fontSize: '0.75rem' }}>
+              🔙 COME BACK TO CHAT
+            </button>
+          )}
         </div>
 
         {/* Search Bar Input */}
@@ -215,6 +220,10 @@ export default function App() {
       <main className="ascii-main-body">
         {/* Left Sidebar Navigation Menu */}
         <aside className={`ascii-sidebar ${isSidebarCollapsed ? 'collapsed' : ''}`}>
+          <button className={`nav-item-btn ${activeNav === 'aichat' ? 'active' : ''}`} onClick={() => setActiveNav('aichat')} style={{ background: activeNav !== 'aichat' ? 'rgba(0,240,255,0.08)' : undefined }}>
+            <Sparkles size={18} color="#00f0ff" /> {!isSidebarCollapsed && '🔙 COME BACK TO CHAT'}
+          </button>
+
           <button className={`nav-item-btn ${activeNav === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveNav('dashboard')}>
             <Activity size={18} /> {!isSidebarCollapsed && 'Dashboard'}
           </button>
