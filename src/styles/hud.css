@@ -1,26 +1,20 @@
-/* W.E.D.N.E.S.D.A.Y. 1-to-1 Interactive JARVIS Holographic HUD Theme */
+/* W.E.D.N.E.S.D.A.Y. 1-to-1 Exact Pixel-Accurate Holographic JARVIS HUD Theme */
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800;900&family=Fira+Code:wght@400;500;700&family=Rajdhani:wght@500;600;700&display=swap');
 
 :root {
-  --bg-main: #030814;
-  --bg-hud: rgba(3, 14, 30, 0.82);
-  --bg-hud-solid: #041024;
-  --bg-drawer: rgba(3, 14, 30, 0.96);
+  --bg-main: #020712;
+  --bg-hud: rgba(2, 12, 28, 0.88);
+  --bg-hud-solid: #030d20;
 
   --cyan-bright: #00f0ff;
-  --cyan-glow: rgba(0, 240, 255, 0.45);
-  --blue-tech: #00a8ff;
-  --rose-alert: #f43f5e;
-  --green-online: #00ff66;
-  --amber-warn: #ffb703;
-  --purple-magic: #a855f7;
-
-  --text-main: #e2e8f0;
+  --cyan-glow: rgba(0, 240, 255, 0.5);
+  --blue-tech: #0099ff;
+  --text-main: #dbeafe;
   --text-muted: #64748b;
-  --text-dim: #475569;
+  --text-dim: #334155;
 
-  --border-hud: rgba(0, 240, 255, 0.35);
-  --border-subtle: rgba(0, 240, 255, 0.18);
+  --border-hud: rgba(0, 240, 255, 0.4);
+  --border-subtle: rgba(0, 240, 255, 0.2);
 
   --font-heading: 'Orbitron', sans-serif;
   --font-tech: 'Rajdhani', sans-serif;
@@ -37,17 +31,17 @@ body {
   background-color: var(--bg-main);
   color: var(--text-main);
   font-family: var(--font-tech);
-  font-size: 14px;
+  font-size: 13px;
   min-height: 100vh;
   overflow: hidden;
   background-image:
-    radial-gradient(circle at 50% 50%, rgba(0, 240, 255, 0.14) 0%, transparent 50%),
-    radial-gradient(circle at 20% 20%, rgba(0, 168, 255, 0.08) 0%, transparent 40%),
-    linear-gradient(to bottom, #030814, #01050d);
+    radial-gradient(circle at 50% 45%, rgba(0, 240, 255, 0.16) 0%, transparent 60%),
+    radial-gradient(circle at 80% 20%, rgba(0, 153, 255, 0.1) 0%, transparent 40%),
+    linear-gradient(to bottom, #020712, #01040a);
   background-attachment: fixed;
 }
 
-/* Main 1-to-1 HUD Workspace Canvas */
+/* Fullscreen Sci-Fi Vignette HUD Frame */
 .jarvis-workspace {
   display: flex;
   flex-direction: column;
@@ -55,110 +49,112 @@ body {
   width: 100vw;
   position: relative;
   overflow: hidden;
+  border: 2px solid var(--border-hud);
+  box-shadow: inset 0 0 50px rgba(0, 240, 255, 0.15);
   background:
-    linear-gradient(90deg, rgba(0, 240, 255, 0.025) 1px, transparent 1px) 0 0 / 30px 30px,
-    linear-gradient(0deg, rgba(0, 240, 255, 0.025) 1px, transparent 1px) 0 0 / 30px 30px;
+    linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px) 0 0 / 28px 28px,
+    linear-gradient(0deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px) 0 0 / 28px 28px;
 }
 
-/* 1-to-1 Top Header Bar */
+/* Top Header Bar Exact Screenshot Match */
 .jarvis-top-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.4rem 1rem;
-  background: rgba(3, 14, 30, 0.85);
+  padding: 0.3rem 0.8rem;
+  background: rgba(2, 12, 28, 0.92);
   border-bottom: 1px solid var(--border-hud);
-  backdrop-filter: blur(20px);
+  backdrop-filter: blur(16px);
   z-index: 100;
-  box-shadow: 0 4px 20px rgba(0, 240, 255, 0.2);
+  box-shadow: 0 4px 20px rgba(0, 240, 255, 0.25);
 }
 
 .top-atom-badge {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  padding: 0.2rem 0.6rem;
-  background: rgba(0, 240, 255, 0.05);
+  gap: 0.5rem;
+  padding: 0.2rem 0.5rem;
+  background: rgba(0, 240, 255, 0.06);
   border: 1px solid var(--border-hud);
-  border-radius: 6px;
+  border-radius: 4px;
 }
 
 .top-search-bar {
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.6);
   border: 1px solid var(--border-hud);
-  border-radius: 20px;
-  padding: 0.2rem 0.8rem;
-  width: 220px;
+  border-radius: 16px;
+  padding: 0.2rem 0.6rem;
+  width: 200px;
 }
 
 .top-chevron-group {
   display: flex;
-  gap: 0.4rem;
+  gap: 0.3rem;
 }
 
 .chevron-btn {
   font-family: var(--font-heading);
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 700;
-  padding: 0.3rem 0.8rem;
+  padding: 0.25rem 0.75rem;
   background: rgba(0, 240, 255, 0.08);
   border: 1px solid var(--border-hud);
   color: var(--cyan-bright);
-  clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+  clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .chevron-btn:hover, .chevron-btn.active {
   background: var(--cyan-bright);
-  color: #030814;
+  color: #020712;
   box-shadow: 0 0 16px var(--cyan-bright);
 }
 
-/* Main 3-Column Body */
+/* Main 3-Column Layout */
 .jarvis-main-body {
   flex: 1;
   display: grid;
-  grid-template-columns: 290px 1fr 310px;
-  gap: 0.8rem;
-  padding: 0.75rem;
+  grid-template-columns: 280px 1fr 300px;
+  gap: 0.75rem;
+  padding: 0.6rem;
   overflow: hidden;
   position: relative;
 }
 
-/* Left Panel: Drive Status Cards & App Dock */
+/* Left Panel */
 .left-panel-jarvis {
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: 0.55rem;
   overflow-y: auto;
 }
 
 .hud-box-card {
   background: var(--bg-hud);
   border: 1px solid var(--border-hud);
-  border-radius: 8px;
-  padding: 0.6rem 0.8rem;
+  border-radius: 6px;
+  padding: 0.55rem 0.75rem;
   backdrop-filter: blur(12px);
-  box-shadow: 0 0 12px rgba(0, 240, 255, 0.08);
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.1);
 }
 
 .drive-card {
-  background: rgba(0, 240, 255, 0.04);
+  background: rgba(0, 240, 255, 0.05);
   border: 1px solid var(--border-subtle);
-  border-radius: 6px;
-  padding: 0.5rem;
-  margin-bottom: 0.4rem;
+  border-radius: 4px;
+  padding: 0.45rem;
+  margin-bottom: 0.35rem;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .drive-card:hover {
   border-color: var(--cyan-bright);
-  background: rgba(0, 240, 255, 0.1);
+  background: rgba(0, 240, 255, 0.12);
 }
 
 .drive-progress-bar {
@@ -166,7 +162,7 @@ body {
   background: rgba(255, 255, 255, 0.1);
   border-radius: 3px;
   overflow: hidden;
-  margin-top: 0.3rem;
+  margin-top: 0.25rem;
 }
 
 .drive-progress-fill {
@@ -175,20 +171,20 @@ body {
   box-shadow: 0 0 8px var(--cyan-bright);
 }
 
-/* Vertical Social & App Dock */
+/* App Dock Icons */
 .app-dock-vertical {
   display: flex;
   gap: 0.4rem;
-  padding: 0.4rem;
-  background: rgba(0, 0, 0, 0.4);
+  padding: 0.35rem;
+  background: rgba(0, 0, 0, 0.5);
   border: 1px solid var(--border-subtle);
   border-radius: 6px;
   justify-content: space-around;
 }
 
 .dock-icon-btn {
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   border: 1px solid var(--border-hud);
   background: rgba(0, 240, 255, 0.08);
@@ -202,39 +198,39 @@ body {
 
 .dock-icon-btn:hover {
   background: var(--cyan-bright);
-  color: #030814;
+  color: #020712;
   box-shadow: 0 0 14px var(--cyan-bright);
   transform: scale(1.1);
 }
 
-/* Center Stage: Hazard Arc Reactor Eye & Chat Stream */
+/* Center Stage */
 .center-stage-jarvis {
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: 0.55rem;
   height: 100%;
   overflow: hidden;
   position: relative;
 }
 
 .arc-reactor-eye-box {
-  height: 220px;
-  min-height: 220px;
+  height: 240px;
+  min-height: 240px;
   flex-shrink: 0;
   background: var(--bg-hud);
   border: 1px solid var(--cyan-bright);
-  border-radius: 12px;
+  border-radius: 10px;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 0 24px rgba(0, 240, 255, 0.2);
+  box-shadow: 0 0 26px rgba(0, 240, 255, 0.22);
   backdrop-filter: blur(16px);
 }
 
-/* Right Panel: Weather 6°C, Calendar May 2014, Network */
+/* Right Panel */
 .right-panel-jarvis {
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: 0.55rem;
   overflow-y: auto;
 }
 
@@ -255,7 +251,7 @@ body {
 .calendar-grid-hud .today {
   color: var(--cyan-bright);
   font-weight: bold;
-  background: rgba(0, 240, 255, 0.15);
+  background: rgba(0, 240, 255, 0.2);
   border-radius: 2px;
 }
 
@@ -264,11 +260,11 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.35rem 1rem;
-  background: rgba(3, 14, 30, 0.9);
+  padding: 0.3rem 0.8rem;
+  background: rgba(2, 12, 28, 0.92);
   border-top: 1px solid var(--border-hud);
   font-family: var(--font-heading);
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   color: var(--cyan-bright);
   backdrop-filter: blur(16px);
   z-index: 90;
