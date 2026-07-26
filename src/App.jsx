@@ -173,6 +173,18 @@ export default function App() {
     setSearchBarInput('');
   };
 
+  const centerStageRef = useRef(null);
+
+  const scrollToTop = () => {
+    soundFx.playClick();
+    centerStageRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const scrollToBottom = () => {
+    soundFx.playClick();
+    centerStageRef.current?.scrollTo({ top: centerStageRef.current.scrollHeight, behavior: 'smooth' });
+  };
+
   return (
     <div className="ascii-app-container">
       {/* Top Header Bar */}
@@ -253,8 +265,17 @@ export default function App() {
           </button>
         </aside>
 
-        {/* Center Main Stage */}
-        <section className="ascii-center-stage">
+        {/* Center Main Stage with Full Top-to-Bottom Scrolling */}
+        <section className="ascii-center-stage" ref={centerStageRef}>
+          {/* Floating Scroll Controls */}
+          <div style={{ position: 'fixed', right: '25px', top: '70px', zIndex: 120, display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+            <button className="btn-stark-submit" onClick={scrollToTop} style={{ padding: '0.35rem 0.75rem', fontSize: '0.72rem', borderRadius: '16px' }} title="Scroll to Top">
+              🔝 TOP
+            </button>
+            <button className="btn-stark-submit" onClick={scrollToBottom} style={{ padding: '0.35rem 0.75rem', fontSize: '0.72rem', borderRadius: '16px' }} title="Scroll to Bottom">
+              ⬇️ BOTTOM
+            </button>
+          </div>
           {activeNav === 'aichat' && (
             <>
               {/* ✨ GALAXY CORE Canvas ✨ */}
