@@ -13,13 +13,16 @@ export default function ArcReactorVisualizer({ state, activeGesture, handPos }) 
     let rotation1 = 0;
     let rotation2 = 0;
     let rotation3 = 0;
+    let galaxyAngle = 0;
 
     const orbitalNodes = [
       'ChatGPT Core',
       'Gestures AI',
       'Voice Synth',
       'Sigma OS',
-      'Auto ML'
+      'Auto ML',
+      'Galaxy Radar',
+      'Atomic Core'
     ];
 
     const render = () => {
@@ -43,171 +46,150 @@ export default function ArcReactorVisualizer({ state, activeGesture, handPos }) 
 
       let speedMult = 1;
       let coreColor = '#00f0ff'; // Cyan
-      let outerColor = '#00a8ff';
 
-      if (activeGesture) {
-        speedMult = 2.8;
-        coreColor = '#a855f7'; // Purple
-        outerColor = '#f43f5e';
-      } else if (state === 'listening') {
+      if (state === 'listening') {
         speedMult = 2.2;
-        coreColor = '#f43f5e'; // Rose
-        outerColor = '#ffb703';
+        coreColor = '#00ff66'; // Green
       } else if (state === 'processing') {
-        speedMult = 3.2;
-        coreColor = '#ffb703'; // Yellow
-        outerColor = '#00f0ff';
+        speedMult = 3.5;
+        coreColor = '#a855f7'; // Purple
       } else if (state === 'speaking') {
-        speedMult = 1.6;
-        coreColor = '#00ff66'; // Emerald
-        outerColor = '#00f0ff';
+        speedMult = 1.8;
+        coreColor = '#f43f5e'; // Pink/Rose
       }
 
       rotation1 += 0.008 * speedMult;
       rotation2 -= 0.012 * speedMult;
-      rotation3 += 0.005 * speedMult;
+      rotation3 += 0.018 * speedMult;
+      galaxyAngle += 0.005 * speedMult;
 
-      // Outer Arc Ring (Degree Notches & Reticles)
+      const pinchScale = (handPos && handPos.pinchDist) ? Math.max(0.6, Math.min(1.8, handPos.pinchDist * 6)) : 1;
+
+      // --- 1. GALAXY SPIRAL ARMS BACKGROUND ---
+      ctx.save();
+      ctx.translate(centerX, centerY);
+      ctx.rotate(galaxyAngle);
+
+      for (let arm = 0; arm < 4; arm++) {
+        const armOffset = (arm * Math.PI) / 2;
+        ctx.beginPath();
+        for (let i = 0; i < 120; i++) {
+          const r = (i * 1.5 + 20) * pinchScale;
+          const a = armOffset + i * 0.06;
+          const x = Math.cos(a) * r;
+          const y = Math.sin(a) * r;
+
+          ctx.fillStyle = i % 2 === 0 ? coreColor : 'rgba(0, 240, 255, 0.4)';
+          ctx.beginPath();
+          ctx.arc(x, y, (i % 3 === 0 ? 2 : 1) * pinchScale, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      ctx.restore();
+
+      // --- 2. OUTER RETICLE ROTATING RINGS ---
       ctx.save();
       ctx.translate(centerX, centerY);
       ctx.rotate(rotation1);
 
-      ctx.strokeStyle = outerColor + '77';
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = coreColor;
+      ctx.lineWidth = 2 * pinchScale;
+      ctx.shadowColor = coreColor;
+      ctx.shadowBlur = 20;
       ctx.beginPath();
-      ctx.arc(0, 0, 105, 0, Math.PI * 2);
+      ctx.arc(0, 0, 115 * pinchScale, 0, Math.PI * 2);
       ctx.stroke();
 
-      // Degree Notches
-      const notchCount = 72;
-      for (let i = 0; i < notchCount; i++) {
-        const angle = (i / notchCount) * Math.PI * 2;
-        const isLong = i % 6 === 0;
-        const r1 = 105;
-        const r2 = isLong ? 116 : 110;
-
-        ctx.strokeStyle = isLong ? coreColor : 'rgba(0, 240, 255, 0.4)';
-        ctx.lineWidth = isLong ? 2 : 1;
+      // Outer Degree Tick Marks
+      for (let i = 0; i < 36; i++) {
+        const angle = (i / 36) * Math.PI * 2;
+        const len = i % 3 === 0 ? 12 : 6;
+        ctx.strokeStyle = i % 3 === 0 ? coreColor : 'rgba(0, 240, 255, 0.5)';
+        ctx.lineWidth = i % 3 === 0 ? 2 : 1;
         ctx.beginPath();
-        ctx.moveTo(Math.cos(angle) * r1, Math.sin(angle) * r1);
-        ctx.lineTo(Math.cos(angle) * r2, Math.sin(angle) * r2);
+        ctx.moveTo(Math.cos(angle) * (115 * pinchScale), Math.sin(angle) * (115 * pinchScale));
+        ctx.lineTo(Math.cos(angle) * ((115 + len) * pinchScale), Math.sin(angle) * ((115 + len) * pinchScale));
         ctx.stroke();
       }
-
-      // Segmented Arc Gauges
-      ctx.strokeStyle = coreColor;
-      ctx.lineWidth = 5;
-      ctx.beginPath();
-      ctx.arc(0, 0, 92, 0, Math.PI * 0.7);
-      ctx.stroke();
-
-      ctx.strokeStyle = '#f43f5e';
-      ctx.lineWidth = 5;
-      ctx.beginPath();
-      ctx.arc(0, 0, 92, Math.PI * 0.85, Math.PI * 1.3);
-      ctx.stroke();
-
       ctx.restore();
 
-      // Counter-Rotating Inner Ring with Hazard Dashes & Ticks
+      // --- 3. INNER HAZARD-STRIPED RING ---
       ctx.save();
       ctx.translate(centerX, centerY);
       ctx.rotate(rotation2);
 
-      ctx.strokeStyle = 'rgba(0, 240, 255, 0.6)';
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = 'rgba(0, 240, 255, 0.7)';
+      ctx.lineWidth = 2.5 * pinchScale;
       ctx.beginPath();
-      ctx.arc(0, 0, 78, 0, Math.PI * 2);
+      ctx.arc(0, 0, 85 * pinchScale, 0, Math.PI * 2);
       ctx.stroke();
 
-      // Inner Hazard Stripes Ring
-      ctx.setLineDash([6, 6]);
+      // Hazard dashed ring
+      ctx.setLineDash([8 * pinchScale, 8 * pinchScale]);
       ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 4;
+      ctx.lineWidth = 5 * pinchScale;
       ctx.beginPath();
-      ctx.arc(0, 0, 68, 0, Math.PI * 2);
+      ctx.arc(0, 0, 75 * pinchScale, 0, Math.PI * 2);
       ctx.stroke();
-      ctx.setLineDash([]); // Reset dash
-
-      // Inner Reticle Teeth
-      for (let i = 0; i < 24; i++) {
-        const angle = (i / 24) * Math.PI * 2;
-        ctx.strokeStyle = coreColor;
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(Math.cos(angle) * 60, Math.sin(angle) * 60);
-        ctx.lineTo(Math.cos(angle) * 68, Math.sin(angle) * 68);
-        ctx.stroke();
-      }
+      ctx.setLineDash([]);
 
       ctx.restore();
 
-      // Floating Orbital Satellite Nodes with Text Labels
+      // --- 4. ORBITAL SATELLITE NODES ---
       ctx.save();
       ctx.translate(centerX, centerY);
       ctx.rotate(rotation3);
 
-      const orbitR = 140;
-      orbitalNodes.forEach((label, idx) => {
+      orbitalNodes.forEach((nodeText, idx) => {
         const angle = (idx / orbitalNodes.length) * Math.PI * 2;
-        const nx = Math.cos(angle) * orbitR;
-        const ny = Math.sin(angle) * orbitR;
+        const r = 145 * pinchScale;
+        const nx = Math.cos(angle) * r;
+        const ny = Math.sin(angle) * r;
 
-        // Satellite Dot
         ctx.fillStyle = coreColor;
         ctx.shadowColor = coreColor;
-        ctx.shadowBlur = 10;
+        ctx.shadowBlur = 12;
         ctx.beginPath();
-        ctx.arc(nx, ny, 4, 0, Math.PI * 2);
+        ctx.arc(nx, ny, 4 * pinchScale, 0, Math.PI * 2);
         ctx.fill();
 
-        // Connecting Line
-        ctx.strokeStyle = 'rgba(0, 240, 255, 0.2)';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.lineTo(nx, ny);
-        ctx.stroke();
-
-        // Label Text
-        ctx.font = '10px Orbitron, sans-serif';
-        ctx.fillStyle = '#00f0ff';
-        ctx.fillText(label, nx + 8, ny + 3);
+        ctx.font = 'bold 9px Orbitron, sans-serif';
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(nodeText, nx + 8, ny + 3);
       });
-
       ctx.restore();
 
-      // Central Arc Reactor Core Sphere
+      // --- 5. CENTRAL ATOMIC POWER PLASMA CORE ---
       ctx.save();
       ctx.translate(centerX, centerY);
 
-      // Core Radial Glow
-      const glowGrad = ctx.createRadialGradient(0, 0, 2, 0, 0, 55);
-      glowGrad.addColorStop(0, '#ffffff');
-      glowGrad.addColorStop(0.3, coreColor);
-      glowGrad.addColorStop(0.7, 'rgba(0, 168, 255, 0.4)');
-      glowGrad.addColorStop(1, 'rgba(0,0,0,0)');
+      const pulseRadius = (35 + Math.sin(Date.now() * 0.005) * 4) * pinchScale;
+      const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, pulseRadius * 1.8);
+      gradient.addColorStop(0, '#ffffff');
+      gradient.addColorStop(0.3, coreColor);
+      gradient.addColorStop(0.7, 'rgba(0, 240, 255, 0.3)');
+      gradient.addColorStop(1, 'transparent');
 
-      ctx.fillStyle = glowGrad;
+      ctx.fillStyle = gradient;
       ctx.beginPath();
-      ctx.arc(0, 0, 55, 0, Math.PI * 2);
+      ctx.arc(0, 0, pulseRadius * 1.8, 0, Math.PI * 2);
       ctx.fill();
 
-      // Core Glass Shading Ring
+      // Core Glass Ring
       ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 2.5;
+      ctx.lineWidth = 3 * pinchScale;
       ctx.shadowColor = coreColor;
-      ctx.shadowBlur = 16;
+      ctx.shadowBlur = 24;
       ctx.beginPath();
-      ctx.arc(0, 0, 32, 0, Math.PI * 2);
+      ctx.arc(0, 0, 38 * pinchScale, 0, Math.PI * 2);
       ctx.stroke();
 
-      // Digital 8 Center Counter
-      ctx.font = 'bold 20px Orbitron, sans-serif';
+      // Central Atomic Symbol ⚛️
+      ctx.font = `bold ${Math.round(24 * pinchScale)}px Orbitron, sans-serif`;
       ctx.fillStyle = '#00f0ff';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('8', 0, 0);
+      ctx.fillText('⚛️', 0, 0);
 
       ctx.restore();
 
@@ -226,8 +208,8 @@ export default function ArcReactorVisualizer({ state, activeGesture, handPos }) 
       <canvas ref={canvasRef} />
 
       {activeGesture && (
-        <div style={{ position: 'absolute', top: '8px', padding: '0.2rem 0.6rem', background: 'rgba(168,85,247,0.2)', border: '1px solid #a855f7', color: '#c084fc', borderRadius: '14px', fontSize: '0.65rem', fontFamily: 'Orbitron', display: 'flex', alignItems: 'center', gap: '0.3rem', zIndex: 10 }}>
-          <Sparkles size={11} /> ARC REACTOR GESTURE REACTION
+        <div style={{ position: 'absolute', top: '10px', padding: '0.3rem 0.8rem', background: 'rgba(168,85,247,0.2)', border: '1px solid #a855f7', color: '#c084fc', borderRadius: '16px', fontSize: '0.7rem', fontFamily: 'Orbitron', display: 'flex', alignItems: 'center', gap: '0.4rem', zIndex: 10 }}>
+          <Sparkles size={12} /> GALAXY ARC REACTOR REACTING: {activeGesture}
         </div>
       )}
     </div>

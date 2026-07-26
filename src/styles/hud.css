@@ -1,24 +1,16 @@
-/* W.E.D.N.E.S.D.A.Y. 1-to-1 Exact Pixel-Accurate Holographic JARVIS HUD Theme */
+/* W.E.D.N.E.S.D.A.Y. Big Galaxy Arc Reactor & Atomic Power Theme */
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800;900&family=Fira+Code:wght@400;500;700&family=Rajdhani:wght@500;600;700&display=swap');
 
 :root {
-  --bg-main: #020712;
-  --bg-hud: rgba(2, 12, 28, 0.88);
-  --bg-hud-solid: #030d20;
-
+  --bg-main: #010510;
+  --bg-hud: rgba(2, 10, 24, 0.85);
   --cyan-bright: #00f0ff;
   --cyan-glow: rgba(0, 240, 255, 0.5);
-  --blue-tech: #0099ff;
-  --text-main: #dbeafe;
-  --text-muted: #64748b;
-  --text-dim: #334155;
-
+  --blue-tech: #00a8ff;
+  --text-main: #e2e8f0;
   --border-hud: rgba(0, 240, 255, 0.4);
-  --border-subtle: rgba(0, 240, 255, 0.2);
-
   --font-heading: 'Orbitron', sans-serif;
   --font-tech: 'Rajdhani', sans-serif;
-  --font-code: 'Fira Code', monospace;
 }
 
 * {
@@ -31,17 +23,15 @@ body {
   background-color: var(--bg-main);
   color: var(--text-main);
   font-family: var(--font-tech);
-  font-size: 13px;
+  font-size: 14px;
   min-height: 100vh;
   overflow: hidden;
   background-image:
-    radial-gradient(circle at 50% 45%, rgba(0, 240, 255, 0.16) 0%, transparent 60%),
-    radial-gradient(circle at 80% 20%, rgba(0, 153, 255, 0.1) 0%, transparent 40%),
-    linear-gradient(to bottom, #020712, #01040a);
-  background-attachment: fixed;
+    radial-gradient(circle at 50% 40%, rgba(0, 240, 255, 0.22) 0%, transparent 65%),
+    radial-gradient(circle at 20% 80%, rgba(0, 168, 255, 0.12) 0%, transparent 50%),
+    linear-gradient(to bottom, #010510, #000208);
 }
 
-/* Fullscreen Sci-Fi Vignette HUD Frame */
 .jarvis-workspace {
   display: flex;
   flex-direction: column;
@@ -50,222 +40,68 @@ body {
   position: relative;
   overflow: hidden;
   border: 2px solid var(--border-hud);
-  box-shadow: inset 0 0 50px rgba(0, 240, 255, 0.15);
-  background:
-    linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px) 0 0 / 28px 28px,
-    linear-gradient(0deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px) 0 0 / 28px 28px;
+  box-shadow: inset 0 0 60px rgba(0, 240, 255, 0.2);
 }
 
-/* Top Header Bar Exact Screenshot Match */
+/* Header with Atomic Power Core */
 .jarvis-top-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.3rem 0.8rem;
-  background: rgba(2, 12, 28, 0.92);
+  padding: 0.4rem 1.2rem;
+  background: rgba(2, 10, 24, 0.92);
   border-bottom: 1px solid var(--border-hud);
-  backdrop-filter: blur(16px);
+  backdrop-filter: blur(20px);
   z-index: 100;
-  box-shadow: 0 4px 20px rgba(0, 240, 255, 0.25);
 }
 
-.top-atom-badge {
+.atomic-power-badge {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.2rem 0.5rem;
-  background: rgba(0, 240, 255, 0.06);
-  border: 1px solid var(--border-hud);
-  border-radius: 4px;
-}
-
-.top-search-bar {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  background: rgba(0, 0, 0, 0.6);
-  border: 1px solid var(--border-hud);
-  border-radius: 16px;
-  padding: 0.2rem 0.6rem;
-  width: 200px;
-}
-
-.top-chevron-group {
-  display: flex;
-  gap: 0.3rem;
-}
-
-.chevron-btn {
-  font-family: var(--font-heading);
-  font-size: 0.7rem;
-  font-weight: 700;
-  padding: 0.25rem 0.75rem;
+  gap: 0.6rem;
+  padding: 0.3rem 0.8rem;
   background: rgba(0, 240, 255, 0.08);
-  border: 1px solid var(--border-hud);
+  border: 1px solid var(--cyan-bright);
+  border-radius: 20px;
+  font-family: var(--font-heading);
   color: var(--cyan-bright);
-  clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
-  cursor: pointer;
-  transition: all 0.2s ease;
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.3);
 }
 
-.chevron-btn:hover, .chevron-btn.active {
-  background: var(--cyan-bright);
-  color: #020712;
-  box-shadow: 0 0 16px var(--cyan-bright);
-}
-
-/* Main 3-Column Layout */
+/* Center Stage for Big Galaxy Arc Reactor */
 .jarvis-main-body {
   flex: 1;
-  display: grid;
-  grid-template-columns: 280px 1fr 300px;
-  gap: 0.75rem;
-  padding: 0.6rem;
-  overflow: hidden;
-  position: relative;
-}
-
-/* Left Panel */
-.left-panel-jarvis {
   display: flex;
   flex-direction: column;
-  gap: 0.55rem;
-  overflow-y: auto;
-}
-
-.hud-box-card {
-  background: var(--bg-hud);
-  border: 1px solid var(--border-hud);
-  border-radius: 6px;
-  padding: 0.55rem 0.75rem;
-  backdrop-filter: blur(12px);
-  box-shadow: 0 0 14px rgba(0, 240, 255, 0.1);
-}
-
-.drive-card {
-  background: rgba(0, 240, 255, 0.05);
-  border: 1px solid var(--border-subtle);
-  border-radius: 4px;
-  padding: 0.45rem;
-  margin-bottom: 0.35rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.drive-card:hover {
-  border-color: var(--cyan-bright);
-  background: rgba(0, 240, 255, 0.12);
-}
-
-.drive-progress-bar {
-  height: 6px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
+  gap: 0.8rem;
+  padding: 1rem 2rem;
   overflow: hidden;
-  margin-top: 0.25rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
 }
 
-.drive-progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--cyan-bright), var(--blue-tech));
-  box-shadow: 0 0 8px var(--cyan-bright);
-}
-
-/* App Dock Icons */
-.app-dock-vertical {
-  display: flex;
-  gap: 0.4rem;
-  padding: 0.35rem;
-  background: rgba(0, 0, 0, 0.5);
-  border: 1px solid var(--border-subtle);
-  border-radius: 6px;
-  justify-content: space-around;
-}
-
-.dock-icon-btn {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  border: 1px solid var(--border-hud);
-  background: rgba(0, 240, 255, 0.08);
-  color: var(--cyan-bright);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.dock-icon-btn:hover {
-  background: var(--cyan-bright);
-  color: #020712;
-  box-shadow: 0 0 14px var(--cyan-bright);
-  transform: scale(1.1);
-}
-
-/* Center Stage */
-.center-stage-jarvis {
-  display: flex;
-  flex-direction: column;
-  gap: 0.55rem;
-  height: 100%;
-  overflow: hidden;
-  position: relative;
-}
-
-.arc-reactor-eye-box {
-  height: 240px;
-  min-height: 240px;
+.big-galaxy-arc-card {
+  height: 320px;
+  min-height: 320px;
   flex-shrink: 0;
   background: var(--bg-hud);
   border: 1px solid var(--cyan-bright);
-  border-radius: 10px;
+  border-radius: 16px;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 0 26px rgba(0, 240, 255, 0.22);
-  backdrop-filter: blur(16px);
+  box-shadow: 0 0 35px rgba(0, 240, 255, 0.25);
+  backdrop-filter: blur(20px);
 }
 
-/* Right Panel */
-.right-panel-jarvis {
-  display: flex;
-  flex-direction: column;
-  gap: 0.55rem;
-  overflow-y: auto;
-}
-
-.calendar-grid-hud {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 2px;
-  font-size: 0.65rem;
-  text-align: center;
-  color: var(--text-muted);
-  margin-top: 0.3rem;
-}
-
-.calendar-grid-hud div {
-  padding: 0.15rem;
-}
-
-.calendar-grid-hud .today {
-  color: var(--cyan-bright);
-  font-weight: bold;
-  background: rgba(0, 240, 255, 0.2);
-  border-radius: 2px;
-}
-
-/* Bottom System Usage Bar */
 .bottom-system-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.3rem 0.8rem;
-  background: rgba(2, 12, 28, 0.92);
+  padding: 0.4rem 1.2rem;
+  background: rgba(2, 10, 24, 0.92);
   border-top: 1px solid var(--border-hud);
   font-family: var(--font-heading);
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   color: var(--cyan-bright);
-  backdrop-filter: blur(16px);
-  z-index: 90;
 }
