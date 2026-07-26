@@ -87,7 +87,7 @@ class SpeechEngine {
   loadVoices() {
     if (!this.synthesis) return [];
     const voices = this.synthesis.getVoices();
-    const savedVoiceName = localStorage.getItem('wednesday_voice_name');
+    const savedVoiceName = localStorage.getItem('wednesday');
 
     if (savedVoiceName) {
       const matched = voices.find(v => v.name === savedVoiceName);
@@ -147,7 +147,7 @@ class SpeechEngine {
     if (this.recognition && this.isListening) {
       try {
         this.recognition.stop();
-      } catch {}
+      } catch { }
       this.isListening = false;
     }
   }
