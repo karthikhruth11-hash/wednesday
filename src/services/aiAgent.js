@@ -179,7 +179,7 @@ export class AIAgentEngine {
 
     if (!result) {
       result = {
-        reply: `Processing command "${rawQuery}". Action executed via W.E.D.N.E.S.D.A.Y. neural core.`,
+        reply: `I have processed your request for "${rawQuery}", Boss Karthik. Is there anything specific you would like me to analyze further?`,
         toolUsed: 'GENERAL'
       };
     }

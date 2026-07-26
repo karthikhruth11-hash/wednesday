@@ -256,20 +256,20 @@ export const systemApi = {
       }
     }
 
-    // 2. Free High-Speed Public LLM Engine
-    const freeModels = ['mistral', 'openai', 'qwen-coder'];
+    // 2. Multi-Tier Free High-Speed Public LLM Gateway (Unlimited ChatGPT Quality Responses)
+    const freeModels = ['openai', 'mistral', 'qwen-coder', 'llama'];
     for (const model of freeModels) {
       try {
         const fetchUrl = `https://text.pollinations.ai/${encodeURIComponent(prompt)}?system=${encodeURIComponent(activeSystemPrompt)}&model=${model}`;
         const response = await fetch(fetchUrl);
         if (response.ok) {
           const textReply = await response.text();
-          if (textReply && textReply.trim().length > 10 && !textReply.includes('<html>') && !textReply.includes('PAYMENT_REQUIRED')) {
+          if (textReply && textReply.trim().length > 3 && !textReply.includes('<html>') && !textReply.includes('PAYMENT_REQUIRED')) {
             return { success: true, reply: textReply.trim() };
           }
         }
       } catch {
-        // continue
+        // try next model
       }
     }
 
