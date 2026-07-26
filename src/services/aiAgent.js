@@ -80,6 +80,36 @@ export class AIAgentEngine {
       };
     }
 
+    // 0.5 MUSIC & PLAY SONG COMMAND ENGINE
+    if (!result && (lower.startsWith('play ') || lower.startsWith('sing ') || lower.includes('play song') || lower.includes('play music') || lower.includes('listen to'))) {
+      let songQuery = rawQuery
+        .replace(/^(please\s+)?(play\s+song|play\s+music|play|sing\s+song|sing|listen\s+to)\s+/i, '')
+        .trim();
+
+      if (!songQuery || songQuery.toLowerCase() === 'songs' || songQuery.toLowerCase() === 'music' || songQuery.toLowerCase() === 'some songs' || songQuery.toLowerCase() === 'some music') {
+        songQuery = 'top trending songs';
+      }
+
+      let platform = 'YouTube';
+      let playUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(songQuery)}`;
+
+      if (lower.includes('on spotify') || lower.startsWith('spotify ')) {
+        platform = 'Spotify';
+        songQuery = songQuery.replace(/\s+on\s+spotify$/i, '').replace(/^spotify\s+/i, '').trim();
+        playUrl = `https://open.spotify.com/search/${encodeURIComponent(songQuery)}`;
+      } else if (lower.includes('on youtube')) {
+        songQuery = songQuery.replace(/\s+on\s+youtube$/i, '').trim();
+      }
+
+      await systemApi.openUrl(playUrl);
+      result = {
+        reply: personaMode === 'girlfriend'
+          ? `Playing "${songQuery}" for you babe on ${platform}! 🎵`
+          : `Playing "${songQuery}" on ${platform}, Boss Karthik! 🎵`,
+        toolUsed: 'PLAY_SONG'
+      };
+    }
+
     // 1. UNIVERSAL CLOSE / SHUTDOWN PROCESS HANDLER
     if (lower === 'close' || lower === 'close process' || lower === 'stop process' || lower === 'exit' || lower === 'shutdown' || lower === 'turn off') {
       speechEngine.stopSpeaking();
@@ -95,7 +125,7 @@ export class AIAgentEngine {
       let target = lower.replace(/^(please\s+)?open\s+/i, '').trim();
       if (lower.includes('youtube')) target = 'youtube';
       if (lower.includes('google') && !lower.includes('search')) target = 'google';
-      if (lower.includes('spotify')) target = 'spotify';
+      if (lower.includes('spotify') && !lower.includes('play')) target = 'spotify';
       if (lower.includes('github')) target = 'github';
       if (lower.includes('wikipedia')) target = 'wikipedia';
       if (lower.includes('instagram')) target = 'instagram';
@@ -116,11 +146,55 @@ export class AIAgentEngine {
         'gmail': 'https://mail.google.com'
       };
 
+      const knownAppsMap = {
+        'cmd': 'cmd',
+        'command prompt': 'cmd',
+        'prompt': 'cmd',
+        'terminal': 'terminal',
+        'powershell': 'powershell',
+        'file manager': 'file manager',
+        'my file manager': 'my file manager',
+        'file explorer': 'file explorer',
+        'explorer': 'explorer',
+        'files': 'files',
+        'my files': 'my files',
+        'downloads': 'downloads',
+        'my downloads': 'downloads',
+        'documents': 'documents',
+        'my documents': 'documents',
+        'desktop': 'desktop',
+        'my desktop': 'desktop',
+        'calculator': 'calc',
+        'calc': 'calc',
+        'notepad': 'notepad',
+        'paint': 'paint',
+        'task manager': 'taskmgr',
+        'taskmgr': 'taskmgr',
+        'control panel': 'control',
+        'settings': 'settings',
+        'pc settings': 'settings',
+        'vscode': 'vscode',
+        'vs code': 'vscode',
+        'code': 'vscode',
+        'snipping tool': 'snipping tool',
+        'screenshot': 'snipping tool',
+        'lock': 'lock',
+        'lock pc': 'lock'
+      };
+
       if (commonSites[target]) {
         await systemApi.openUrl(commonSites[target]);
         result = {
           reply: personaMode === 'girlfriend' ? `Opening ${target} for you babe!` : `Opening ${target}, Boss Karthik. 🌐`,
           toolUsed: 'OPEN_URL'
+        };
+      } else if (knownAppsMap[target]) {
+        const appRes = await systemApi.launchApp(knownAppsMap[target]);
+        result = {
+          reply: appRes.success
+            ? (personaMode === 'girlfriend' ? `Opening ${target} for you babe!` : `Opening ${target} on PC, Boss Karthik. ⚡`)
+            : `Error opening ${target}: ${appRes.error}`,
+          toolUsed: 'LAUNCH_APP'
         };
       } else if (target.includes('.') || target.includes('www') || target.includes('http')) {
         await systemApi.openUrl(target);
@@ -135,7 +209,7 @@ export class AIAgentEngine {
           await systemApi.openUrl(`https://www.google.com/search?q=${encodeURIComponent(target)}`);
         }
         result = {
-          reply: `Opening ${target}, Boss Karthik.`,
+          reply: `Opening ${target}, Boss Karthik. ⚡`,
           toolUsed: 'OPEN_APP_OR_WEB'
         };
       }
@@ -176,32 +250,39 @@ export class AIAgentEngine {
       };
     }
 
-    // 4. DESKTOP APPLICATION LAUNCHING
+    // 4. DESKTOP APPLICATION LAUNCHING FALLBACK
     if (!result) {
       const appKeywords = {
-        'notepad': 'notepad',
-        'calculator': 'calculator',
-        'calc': 'calculator',
+        'my file manager': 'my file manager',
+        'file manager': 'file manager',
+        'file explorer': 'file explorer',
         'explorer': 'explorer',
-        'files': 'explorer',
-        'terminal': 'terminal',
+        'my files': 'my files',
+        'files': 'files',
         'command prompt': 'cmd',
         'prompt': 'cmd',
         'cmd': 'cmd',
+        'terminal': 'terminal',
+        'powershell': 'powershell',
+        'notepad': 'notepad',
+        'calculator': 'calculator',
+        'calc': 'calculator',
         'paint': 'paint',
         'control panel': 'control',
         'chrome': 'chrome',
         'browser': 'browser',
         'vs code': 'vscode',
         'vscode': 'vscode',
-        'task manager': 'taskmgr'
+        'task manager': 'taskmgr',
+        'taskmgr': 'taskmgr',
+        'settings': 'settings'
       };
 
       for (const [key, appName] of Object.entries(appKeywords)) {
         if (lower.includes(key)) {
           const res = await systemApi.launchApp(appName);
           result = {
-            reply: res.success ? (personaMode === 'girlfriend' ? `Opening ${key} for you sweetheart!` : `Opening ${key} on desktop, Boss Karthik.`) : `Error opening ${key}: ${res.error}`,
+            reply: res.success ? (personaMode === 'girlfriend' ? `Opening ${key} for you sweetheart!` : `Opening ${key} on desktop, Boss Karthik. ⚡`) : `Error opening ${key}: ${res.error}`,
             toolUsed: 'LAUNCH_APP'
           };
           break;

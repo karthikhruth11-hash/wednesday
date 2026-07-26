@@ -54,13 +54,19 @@ export const systemApi = {
 
     // Client-side fallback for Web / GitHub Pages
     const name = appName.toLowerCase().trim();
-    if (name.includes('chrome') || name.includes('browser')) {
+    if (name.includes('chrome') || name.includes('browser') || name.includes('edge')) {
       window.open('https://www.google.com', '_blank');
       return { success: true, message: 'Opened Web Browser tab.' };
     }
     if (name.includes('youtube')) {
       window.open('https://www.youtube.com', '_blank');
       return { success: true, message: 'Opened YouTube.' };
+    }
+    if (name.includes('file') || name.includes('explorer') || name.includes('manager')) {
+      return { success: true, message: 'File Explorer requested. Active on desktop server mode.' };
+    }
+    if (name.includes('cmd') || name.includes('terminal') || name.includes('prompt')) {
+      return { success: true, message: 'Command Prompt requested. Active on desktop server mode.' };
     }
     return {
       success: true,

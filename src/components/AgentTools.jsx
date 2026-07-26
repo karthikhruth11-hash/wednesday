@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Terminal, Code, CheckSquare, Search, Play, Trash2, Plus, FolderPlus, Globe, Cpu } from 'lucide-react';
+import { Terminal, Code, CheckSquare, Search, Play, Trash2, Plus, FolderPlus, Globe, Cpu, Folder, Music } from 'lucide-react';
 import { aiAgent } from '../services/aiAgent';
 import { soundFx } from '../services/soundFx';
 
@@ -187,18 +187,24 @@ export default function AgentTools({ onRunCommand }) {
           <div style={{ fontSize: '0.7rem', color: 'var(--cyan-bright)', fontFamily: 'Orbitron', marginBottom: '0.3rem' }}>
             JARVIS PRO INSTANT VOICE COMMAND PRESETS
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.35rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.35rem' }}>
+            <button className="btn-hud" style={{ fontSize: '0.7rem', padding: '0.3rem 0.5rem' }} onClick={() => onRunCommand('play believer')}>
+              <Music size={12} /> Play Song
+            </button>
+            <button className="btn-hud" style={{ fontSize: '0.7rem', padding: '0.3rem 0.5rem' }} onClick={() => onRunCommand('open cmd')}>
+              <Terminal size={12} /> Open CMD
+            </button>
+            <button className="btn-hud" style={{ fontSize: '0.7rem', padding: '0.3rem 0.5rem' }} onClick={() => onRunCommand('open my file manager')}>
+              <Folder size={12} /> File Manager
+            </button>
             <button className="btn-hud" style={{ fontSize: '0.7rem', padding: '0.3rem 0.5rem' }} onClick={() => onRunCommand('Open YouTube')}>
               <Globe size={12} /> Open YouTube
             </button>
             <button className="btn-hud" style={{ fontSize: '0.7rem', padding: '0.3rem 0.5rem' }} onClick={() => onRunCommand('Create folder Stark_Projects')}>
               <FolderPlus size={12} /> Create Folder
             </button>
-            <button className="btn-hud" style={{ fontSize: '0.7rem', padding: '0.3rem 0.5rem' }} onClick={() => onRunCommand('Show my IP address')}>
-              <Cpu size={12} /> Show IP Address
-            </button>
-            <button className="btn-hud" style={{ fontSize: '0.7rem', padding: '0.3rem 0.5rem' }} onClick={() => onRunCommand('Open Google')}>
-              <Globe size={12} /> Open Google
+            <button className="btn-hud" style={{ fontSize: '0.7rem', padding: '0.3rem 0.5rem' }} onClick={() => onRunCommand('open calculator')}>
+              <Cpu size={12} /> Calculator
             </button>
           </div>
         </div>
