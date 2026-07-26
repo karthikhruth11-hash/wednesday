@@ -141,6 +141,8 @@ export class AIAgentEngine {
         'explorer': 'explorer',
         'files': 'explorer',
         'terminal': 'terminal',
+        'command prompt': 'cmd',
+        'prompt': 'cmd',
         'cmd': 'cmd',
         'paint': 'paint',
         'control panel': 'control',

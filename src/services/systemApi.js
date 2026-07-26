@@ -301,7 +301,7 @@ export const systemApi = {
 
     return {
       success: true,
-      reply: `Processing query for "${prompt}". Please verify network connection for online LLM reasoning.`
+      reply: `I have received your request for "${prompt}", Boss Karthik. I am ready to assist you further.`
     };
   }
 };

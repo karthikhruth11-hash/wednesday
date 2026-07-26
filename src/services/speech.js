@@ -173,11 +173,8 @@ class SpeechEngine {
       return;
     }
 
-    // Pause mic while speaking to avoid hearing itself
-    if (this.isListening) {
-      this.stopListening();
-    }
-
+    this.isSpeaking = true;
+    this.stopListening();
     this.synthesis.cancel(); // Stop ongoing speech
 
     const utterance = new SpeechSynthesisUtterance(text);
