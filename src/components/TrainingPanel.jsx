@@ -1,168 +1,113 @@
-import React, { useState } from 'react';
-import { BrainCircuit, Plus, Trash2, Save, CheckCircle } from 'lucide-react';
-import { trainingEngine } from '../services/trainingEngine';
+import React, { useState, useEffect } from 'react';
+import { BrainCircuit, Cpu, Sparkles, RefreshCw, CheckCircle } from 'lucide-react';
+import { autoMlEngine } from '../services/autoMlEngine';
 import { soundFx } from '../services/soundFx';
 
 export default function TrainingPanel() {
-  const [triggerInput, setTriggerInput] = useState('');
-  const [responseInput, setResponseInput] = useState('');
-  const [actionType, setActionType] = useState('SPEAK');
-  const [actionValue, setActionValue] = useState('');
-  const [trainedList, setTrainedList] = useState(trainingEngine.trainedCommands);
-  const [personalityInput, setPersonalityInput] = useState(trainingEngine.customPersonality);
-  const [statusMsg, setStatusMsg] = useState('');
+  const [metrics, setMetrics] = useState(autoMlEngine.getMetrics());
 
-  const handleTrainCommand = (e) => {
-    e.preventDefault();
-    if (!triggerInput.trim() || !responseInput.trim()) return;
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setMetrics(autoMlEngine.getMetrics());
+    }, 1500);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleRefresh = () => {
     soundFx.playClick();
-
-    trainingEngine.addTrainedCommand(triggerInput, responseInput, actionType, actionValue);
-    setTrainedList([...trainingEngine.trainedCommands]);
-
-    setStatusMsg(`Successfully trained trigger: "${triggerInput.trim()}"`);
-    setTriggerInput('');
-    setResponseInput('');
-    setActionValue('');
-    setTimeout(() => setStatusMsg(''), 3000);
-  };
-
-  const handleDelete = (id) => {
-    soundFx.playClick();
-    trainingEngine.deleteCommand(id);
-    setTrainedList([...trainingEngine.trainedCommands]);
-  };
-
-  const handleSavePersonality = () => {
-    soundFx.playClick();
-    trainingEngine.setPersonality(personalityInput);
-    setStatusMsg('AI Personality updated!');
-    setTimeout(() => setStatusMsg(''), 2500);
+    setMetrics(autoMlEngine.getMetrics());
   };
 
   return (
-    <div className="hud-card" style={{ flex: 1 }}>
+    <div className="hud-card" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
       <div className="hud-card-header">
         <span className="hud-card-title">
-          <BrainCircuit size={18} /> Neural Command Trainer
+          <BrainCircuit size={18} color="#06b6d4" /> Autonomous Self-Learning ML Monitor
         </span>
-        <span style={{ fontSize: '0.75rem', color: 'var(--cyan-bright)', fontFamily: 'Orbitron' }}>
-          TRAINING ENGINE
-        </span>
+        <button className="btn-hud" onClick={handleRefresh} style={{ padding: '0.2rem 0.5rem', fontSize: '0.7rem' }}>
+          <RefreshCw size={12} /> Sync ML
+        </button>
       </div>
 
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.75rem', minHeight: 0, overflowY: 'auto' }}>
-        {/* Train New Voice Command Form */}
-        <form onSubmit={handleTrainCommand} style={{ background: 'rgba(0, 240, 255, 0.04)', padding: '0.75rem', border: '1px solid var(--border-hud)', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <div style={{ fontSize: '0.75rem', color: 'var(--cyan-bright)', fontFamily: 'Orbitron' }}>
-            + TRAIN NEW VOICE TRIGGER
-          </div>
+      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>
+        No manual training required! W.E.D.N.E.S.D.A.Y. continuously analyzes your prompts, intent vectors, and command frequency to learn and adapt automatically in real-time.
+      </div>
 
-          <input
-            type="text"
-            className="input-hud"
-            placeholder="When I say (e.g. 'protocol 7' or 'who is my boss')..."
-            value={triggerInput}
-            onChange={(e) => setTriggerInput(e.target.value)}
-          />
-
-          <input
-            type="text"
-            className="input-hud"
-            placeholder="WEDNESDAY will respond (e.g. 'Executing Protocol 7, Lord Stark')..."
-            value={responseInput}
-            onChange={(e) => setResponseInput(e.target.value)}
-          />
-
-          <div style={{ display: 'flex', gap: '0.4rem' }}>
-            <select className="input-hud" value={actionType} onChange={(e) => setActionType(e.target.value)} style={{ flex: 1 }}>
-              <option value="SPEAK">Speak Answer Only</option>
-              <option value="LAUNCH_APP">Launch App (e.g. notepad, chrome)</option>
-              <option value="OPEN_URL">Open Website URL (e.g. youtube.com)</option>
-            </select>
-
-            {actionType !== 'SPEAK' && (
-              <input
-                type="text"
-                className="input-hud"
-                placeholder={actionType === 'LAUNCH_APP' ? 'App name (e.g. notepad)' : 'URL (e.g. youtube.com)'}
-                value={actionValue}
-                onChange={(e) => setActionValue(e.target.value)}
-                style={{ flex: 1 }}
-              />
-            )}
-          </div>
-
-          <button type="submit" className="btn-hud" style={{ justifyContent: 'center', marginTop: '0.2rem' }}>
-            <Plus size={16} /> Train Voice Command
-          </button>
-        </form>
-
-        {statusMsg && (
-          <div style={{ fontSize: '0.8rem', color: 'var(--green-online)', fontFamily: 'Orbitron', textAlign: 'center' }}>
-            <CheckCircle size={14} style={{ marginRight: '0.3rem', verticalAlign: 'middle' }} /> {statusMsg}
-          </div>
-        )}
-
-        {/* Trained Voice Triggers List */}
+      {/* Autonomous ML Status Banner */}
+      <div style={{ padding: '0.75rem', background: 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+        <CheckCircle size={18} color="#10b981" />
         <div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontFamily: 'Orbitron', marginBottom: '0.4rem' }}>
-            TRAINED CUSTOM COMMANDS ({trainedList.length})
+          <div style={{ fontSize: '0.8rem', color: '#10b981', fontFamily: 'Orbitron', fontWeight: 'bold' }}>
+            AUTONOMOUS SELF-LEARNING ENGINE: ACTIVE
           </div>
-          <div className="messages-list" style={{ maxHeight: '180px' }}>
-            {trainedList.map((cmd) => (
-              <div
-                key={cmd.id}
-                style={{
-                  padding: '0.5rem 0.75rem',
-                  background: 'rgba(0, 240, 255, 0.05)',
-                  border: '1px solid rgba(0, 240, 255, 0.2)',
-                  borderRadius: '6px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: '0.5rem',
-                  marginBottom: '0.4rem'
-                }}
-              >
-                <div style={{ fontSize: '0.8rem', overflow: 'hidden' }}>
-                  <div style={{ color: 'var(--cyan-bright)', fontFamily: 'Orbitron', fontSize: '0.75rem' }}>
-                    🎤 "{cmd.trigger}"
-                  </div>
-                  <div style={{ color: '#e2e8f0', fontSize: '0.75rem' }}>
-                    ➔ {cmd.response}
-                  </div>
-                </div>
-                <button
-                  className="btn-hud btn-hud-danger"
-                  onClick={() => handleDelete(cmd.id)}
-                  style={{ padding: '0.25rem 0.4rem' }}
-                >
-                  <Trash2 size={12} />
-                </button>
-              </div>
-            ))}
+          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+            Continuously optimizing neural parameters from active interactions.
           </div>
-        </div>
-
-        {/* AI Persona Customization Box */}
-        <div style={{ borderTop: '1px dashed var(--border-hud)', paddingTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-          <div style={{ fontSize: '0.75rem', color: 'var(--cyan-bright)', fontFamily: 'Orbitron' }}>
-            AI PERSONALITY & INSTRUCTION TRAINER
-          </div>
-          <textarea
-            rows={2}
-            className="input-hud"
-            value={personalityInput}
-            onChange={(e) => setPersonalityInput(e.target.value)}
-            placeholder="e.g. Address me as Creator. Always give detailed coding and sci-fi answers."
-            style={{ fontSize: '0.75rem', resize: 'none' }}
-          />
-          <button className="btn-hud" onClick={handleSavePersonality} style={{ fontSize: '0.75rem', justifyContent: 'center' }}>
-            <Save size={12} /> Save AI Personality
-          </button>
         </div>
       </div>
+
+      {/* Real-time ML Metrics Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
+        <div style={{ padding: '0.5rem', background: 'rgba(6, 182, 212, 0.05)', border: '1px solid rgba(6, 182, 212, 0.2)', borderRadius: '6px', textAlign: 'center' }}>
+          <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)', fontFamily: 'Orbitron' }}>CONFIDENCE</div>
+          <div style={{ fontSize: '1.1rem', color: '#06b6d4', fontWeight: 'bold' }}>{metrics.confidenceScore}%</div>
+        </div>
+
+        <div style={{ padding: '0.5rem', background: 'rgba(139, 92, 246, 0.05)', border: '1px solid rgba(139, 92, 246, 0.2)', borderRadius: '6px', textAlign: 'center' }}>
+          <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)', fontFamily: 'Orbitron' }}>PARAMETERS</div>
+          <div style={{ fontSize: '1.1rem', color: '#8b5cf6', fontWeight: 'bold' }}>{metrics.parametersCount}</div>
+        </div>
+
+        <div style={{ padding: '0.5rem', background: 'rgba(244, 63, 94, 0.05)', border: '1px solid rgba(244, 63, 94, 0.2)', borderRadius: '6px', textAlign: 'center' }}>
+          <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)', fontFamily: 'Orbitron' }}>INTERACTIONS</div>
+          <div style={{ fontSize: '1.1rem', color: '#f43f5e', fontWeight: 'bold' }}>{metrics.totalInteractions}</div>
+        </div>
+      </div>
+
+      {/* Learned Intent Clusters & Pattern Weights */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.4rem', minHeight: 0 }}>
+        <div style={{ fontSize: '0.75rem', color: 'var(--accent-cyan)', fontFamily: 'Orbitron', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+          <Cpu size={14} /> SELF-LEARNED INTENT PATTERN CLUSTERS ({metrics.learnedIntents.length})
+        </div>
+
+        <div className="messages-list" style={{ flex: 1, maxHeight: '180px', overflowY: 'auto' }}>
+          {metrics.learnedIntents.map((cluster, idx) => (
+            <div
+              key={idx}
+              style={{
+                padding: '0.45rem 0.6rem',
+                background: 'rgba(255, 255, 255, 0.03)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: '6px',
+                marginBottom: '0.35rem'
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '0.2rem' }}>
+                <span style={{ color: '#fff', fontWeight: 'bold' }}>{cluster.intent}</span>
+                <span style={{ color: '#10b981', fontFamily: 'Orbitron' }}>{(cluster.weight * 100).toFixed(0)}% Weight</span>
+              </div>
+              <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)' }}>
+                Keywords: {cluster.keywords.join(', ')} • Usage: {cluster.count}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Recent Self-Learned Interactions */}
+      {metrics.recentHistory.length > 0 && (
+        <div style={{ borderTop: '1px dashed var(--border-subtle)', paddingTop: '0.5rem', fontSize: '0.72rem' }}>
+          <div style={{ fontFamily: 'Orbitron', color: 'var(--text-muted)', marginBottom: '0.3rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+            <Sparkles size={12} color="#f59e0b" /> RECENTLY LEARNED CONVERSATIONAL PROMPTS:
+          </div>
+          {metrics.recentHistory.slice(0, 3).map((item, i) => (
+            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-dim)', padding: '0.15rem 0' }}>
+              <span>"{item.query}"</span>
+              <span>{item.timestamp}</span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

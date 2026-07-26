@@ -17,9 +17,27 @@ export default function CustomVoiceStudio() {
   const audioChunksRef = useRef([]);
   const timerRef = useRef(null);
 
+  const [activeVoiceClip, setActiveVoiceClip] = useState(() => {
+    return localStorage.getItem('wednesday_active_custom_voice') || '';
+  });
+
   useEffect(() => {
     localStorage.setItem('wednesday_custom_voices', JSON.stringify(voiceClips));
   }, [voiceClips]);
+
+  const setAsActiveVoice = (clip) => {
+    soundFx.playClick();
+    if (activeVoiceClip === clip.audioData) {
+      localStorage.removeItem('wednesday_active_custom_voice');
+      setActiveVoiceClip('');
+      setStatusMsg('Custom voice deactivated. Reverted to web speech synthesis voice.');
+    } else {
+      localStorage.setItem('wednesday_active_custom_voice', clip.audioData);
+      setActiveVoiceClip(clip.audioData);
+      setStatusMsg(`Replaced AI Voice! W.E.D.N.E.S.D.A.Y. will now speak with "${clip.title}".`);
+    }
+    setTimeout(() => setStatusMsg(''), 4000);
+  };
 
   const startRecording = async () => {
     soundFx.playClick();
@@ -86,13 +104,6 @@ export default function CustomVoiceStudio() {
   const deleteClip = (id) => {
     soundFx.playClick();
     setVoiceClips(prev => prev.filter(c => c.id !== id));
-  };
-
-  const setAsActiveVoice = (clip) => {
-    soundFx.playClick();
-    localStorage.setItem('wednesday_active_custom_voice', clip.audioData);
-    setStatusMsg(`Set "${clip.title}" as active voice prompt!`);
-    setTimeout(() => setStatusMsg(''), 3000);
   };
 
   return (
@@ -195,13 +206,20 @@ export default function CustomVoiceStudio() {
                 justifyContent: 'space-between',
                 padding: '0.5rem 0.75rem',
                 marginBottom: '0.4rem',
-                border: '1px solid rgba(0,240,255,0.15)',
+                border: `1px solid ${activeVoiceClip === clip.audioData ? '#10b981' : 'rgba(0,240,255,0.15)'}`,
                 borderRadius: '6px',
-                background: 'rgba(0,240,255,0.02)'
+                background: activeVoiceClip === clip.audioData ? 'rgba(16,185,129,0.08)' : 'rgba(0,240,255,0.02)'
               }}
             >
               <div>
-                <div style={{ fontSize: '0.85rem', color: '#fff', fontWeight: 'bold' }}>{clip.title}</div>
+                <div style={{ fontSize: '0.85rem', color: '#fff', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  {clip.title}
+                  {activeVoiceClip === clip.audioData && (
+                    <span style={{ fontSize: '0.65rem', color: '#10b981', background: 'rgba(16,185,129,0.2)', padding: '0.1rem 0.4rem', borderRadius: '10px', fontFamily: 'Orbitron' }}>
+                      ACTIVE AI VOICE
+                    </span>
+                  )}
+                </div>
                 <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
                   Recorded on {clip.date} • {clip.duration}s
                 </div>
@@ -211,8 +229,13 @@ export default function CustomVoiceStudio() {
                 <button className="btn-hud" onClick={() => playClip(clip)} style={{ fontSize: '0.7rem', padding: '0.3rem 0.6rem' }} title="Play Voice Clip">
                   <Play size={12} /> Listen
                 </button>
-                <button className="btn-hud" onClick={() => setAsActiveVoice(clip)} style={{ fontSize: '0.7rem', padding: '0.3rem 0.6rem', color: '#00ff66' }} title="Set as Active AI Voice">
-                  <CheckCircle size={12} /> Set Active
+                <button
+                  className={`btn-hud ${activeVoiceClip === clip.audioData ? 'active' : ''}`}
+                  onClick={() => setAsActiveVoice(clip)}
+                  style={{ fontSize: '0.7rem', padding: '0.3rem 0.6rem', color: activeVoiceClip === clip.audioData ? '#08090d' : '#10b981', background: activeVoiceClip === clip.audioData ? '#10b981' : 'rgba(16,185,129,0.1)' }}
+                  title="Use My Voice for All AI Responses"
+                >
+                  <CheckCircle size={12} /> {activeVoiceClip === clip.audioData ? 'AI VOICE ACTIVE' : 'USE AS AI VOICE'}
                 </button>
                 <button className="btn-hud btn-hud-danger" onClick={() => deleteClip(clip.id)} style={{ fontSize: '0.7rem', padding: '0.3rem 0.5rem' }}>
                   <Trash2 size={12} />

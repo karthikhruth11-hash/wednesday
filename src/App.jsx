@@ -367,7 +367,7 @@ export default function App() {
             <Folder size={13} /> Desktop Files
           </button>
           <button className={`drawer-tab-btn ${drawerTab === 'trainer' ? 'active' : ''}`} onClick={() => setDrawerTab('trainer')}>
-            <BrainCircuit size={13} /> Trainer
+            <BrainCircuit size={13} /> Auto ML
           </button>
           <button className={`drawer-tab-btn ${drawerTab === 'telemetry' ? 'active' : ''}`} onClick={() => setDrawerTab('telemetry')}>
             <Activity size={13} /> Telemetry

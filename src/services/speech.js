@@ -1,6 +1,4 @@
-/**
- * Speech Recognition and Speech Synthesis Service for W.E.D.N.E.S.D.A.Y.
- */
+import { customVoiceSynth } from './customVoiceSynth';
 
 class SpeechEngine {
   constructor() {
@@ -152,7 +150,24 @@ class SpeechEngine {
     }
   }
 
-  speak(text, onStart, onEnd) {
+  async speak(text, onStart, onEnd) {
+    // Check if recorded user voice replacement is active
+    if (customVoiceSynth.hasCustomVoice()) {
+      if (this.isListening) this.stopListening();
+      this.isSpeaking = true;
+      const success = await customVoiceSynth.speakCustomVoice(
+        text,
+        () => {
+          if (onStart) onStart();
+        },
+        () => {
+          this.isSpeaking = false;
+          if (onEnd) onEnd();
+        }
+      );
+      if (success) return;
+    }
+
     if (!this.synthesis) {
       if (onEnd) onEnd();
       return;
