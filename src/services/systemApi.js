@@ -80,22 +80,32 @@ export const systemApi = {
       targetUrl = `https://${targetUrl}`;
     }
 
+    // 1. Instant Client-Side Browser Tab Opening
+    if (typeof window !== 'undefined') {
+      try {
+        const win = window.open(targetUrl, '_blank');
+        if (!win) {
+          // If popup blocked, create link click
+          const link = document.createElement('a');
+          link.href = targetUrl;
+          link.target = '_blank';
+          link.rel = 'noopener,noreferrer';
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+        }
+      } catch {
+        // continue to backend
+      }
+    }
+
+    // 2. Also notify OS Backend Server to launch default desktop browser
     const backendRes = await fetchWithFallback('/system/open-url', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ url: targetUrl })
     });
     if (backendRes && backendRes.success) return backendRes;
-
-    // Client-side fallback for Web / GitHub Pages
-    try {
-      const win = window.open(targetUrl, '_blank');
-      if (!win) {
-        window.location.href = targetUrl;
-      }
-    } catch {
-      window.location.href = targetUrl;
-    }
 
     return { success: true, message: `Opened URL: ${targetUrl}` };
   },

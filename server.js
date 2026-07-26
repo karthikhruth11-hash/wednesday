@@ -113,14 +113,13 @@ app.post('/api/system/open-url', (req, res) => {
     targetUrl = `https://${targetUrl}`;
   }
 
-  const launchCmd = process.platform === 'win32'
-    ? `powershell -Command "Start-Process '${targetUrl}'"`
+  const openCmd = process.platform === 'win32'
+    ? `start "" "${targetUrl}"`
     : `open "${targetUrl}" || xdg-open "${targetUrl}"`;
 
-  exec(launchCmd, (error) => {
+  exec(openCmd, (error) => {
     if (error) {
-      const fallbackCmd = `start "" "${targetUrl.replace(/&/g, '^&')}"`;
-      exec(fallbackCmd, (err2) => {
+      exec(`explorer "${targetUrl}"`, (err2) => {
         if (err2) return res.status(500).json({ success: false, error: err2.message });
         res.json({ success: true, message: `Opened URL: ${targetUrl}` });
       });
