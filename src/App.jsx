@@ -6,16 +6,17 @@ import FileSystemPanel from './components/FileSystemPanel';
 import TrainingPanel from './components/TrainingPanel';
 import HandGesturePanel from './components/HandGesturePanel';
 import CustomVoiceStudio from './components/CustomVoiceStudio';
-import CosmicKnowledgePanel from './components/CosmicKnowledgePanel';
+import TelemetryPanel from './components/TelemetryPanel';
 import ChatGPTConsole from './components/ChatGPTConsole';
 import SettingsModal from './components/SettingsModal';
 
 import { speechEngine } from './services/speech';
 import { soundFx } from './services/soundFx';
 import { aiAgent } from './services/aiAgent';
+import { systemApi } from './services/systemApi';
 import {
-  Sparkles, Folder, Terminal, BrainCircuit, Hand, Mic, MicOff,
-  Send, Menu, X, Globe, Atom
+  Sparkles, Folder, BrainCircuit, Mic, MicOff,
+  Send, Menu, Globe, Search, Settings, User, MessageSquare, Activity
 } from 'lucide-react';
 
 export default function App() {
@@ -23,40 +24,23 @@ export default function App() {
   const [isListening, setIsListening] = useState(false);
   const [isHandsFree, setIsHandsFree] = useState(false);
   const [inputText, setInputText] = useState('');
+  const [searchBarInput, setSearchBarInput] = useState('');
   const [interimTranscript, setInterimTranscript] = useState('');
   const [activeGesture, setActiveGesture] = useState(null);
   const [handPos, setHandPos] = useState(null);
 
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [drawerTab, setDrawerTab] = useState('cosmic');
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [activeNav, setActiveNav] = useState('aichat'); // 'dashboard', 'aichat', 'voice', 'memory', 'files', 'browser', 'settings'
   const [personaMode] = useState(localStorage.getItem('wednesday_persona_mode') || 'jarvis');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-
-  const [availableVoices, setAvailableVoices] = useState([]);
-  const [selectedVoiceName, setSelectedVoiceName] = useState('');
 
   const [messages, setMessages] = useState([
     {
       sender: 'assistant',
-      text: "Welcome, our Boss Karthik! W.E.D.N.E.S.D.A.Y. SIGMA Galaxy Arc Reactor Core online and ready for your command.",
+      text: "Hello, I'm Wednesday. Welcome, Boss Karthik! ✨ GALAXY CORE active.",
       timestamp: new Date().toLocaleTimeString()
     }
   ]);
-
-  useEffect(() => {
-    const voices = speechEngine.getAvailableVoices();
-    setAvailableVoices(voices);
-    if (speechEngine.selectedVoice) {
-      setSelectedVoiceName(speechEngine.selectedVoice.name);
-    }
-  }, []);
-
-  const handleVoiceChange = (e) => {
-    const vName = e.target.value;
-    setSelectedVoiceName(vName);
-    speechEngine.setSelectedVoice(vName);
-    soundFx.playClick();
-  };
 
   const handleStartWednesday = useCallback(() => {
     soundFx.playListeningChime();
@@ -65,7 +49,7 @@ export default function App() {
       speechEngine.setContinuousVoiceMode(nextHandsFree);
 
       if (nextHandsFree) {
-        const greeting = "Welcome, our Boss Karthik! W.E.D.N.E.S.D.A.Y. SIGMA Galaxy Arc Reactor core online. How can I assist you today, Boss? ⚡";
+        const greeting = "Hello, I'm Wednesday. Welcome, Boss Karthik! ✨ GALAXY CORE active. How can I help you? ⚡";
 
         setMessages(msgs => [...msgs, {
           sender: 'assistant',
@@ -140,8 +124,6 @@ export default function App() {
       handleSendMessage('Awesome job Wednesday!');
     } else if (gesture === 'PINCH_OK') {
       handleStartWednesday();
-    } else if (gesture === 'SWIPE_RIGHT' || gesture === 'SWIPE_LEFT') {
-      setIsDrawerOpen(prev => !prev);
     }
   }, [handleStartWednesday, handleSendMessage]);
 
@@ -183,151 +165,155 @@ export default function App() {
     handleSendMessage(inputText);
   };
 
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (!searchBarInput.trim()) return;
+    soundFx.playClick();
+    systemApi.openUrl(`https://www.google.com/search?q=${encodeURIComponent(searchBarInput)}`);
+    setSearchBarInput('');
+  };
+
   return (
-    <div className="jarvis-workspace">
-      {/* Top Header with Atomic Power Core & Voice Selector */}
-      <header className="jarvis-top-header">
-        <div className="atomic-power-badge">
-          <Atom size={22} color="#00f0ff" style={{ animation: 'spin 8s linear infinite' }} />
-          <span>⚛️ ATOMIC POWER CORE: 100% ONLINE</span>
-        </div>
-
-        {/* Voice Selector */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(0,0,0,0.5)', padding: '0.3rem 0.6rem', borderRadius: '20px', border: '1px solid var(--border-hud)' }}>
-          <Mic size={14} color="#00f0ff" />
-          <select
-            value={selectedVoiceName}
-            onChange={handleVoiceChange}
-            style={{ background: 'transparent', border: 'none', color: '#00f0ff', fontFamily: 'Orbitron', fontSize: '0.72rem', outline: 'none', cursor: 'pointer' }}
-          >
-            {availableVoices.map((v, i) => (
-              <option key={i} value={v.name} style={{ background: '#041024', color: '#fff' }}>
-                {v.name} ({v.lang})
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <button className={`btn-start-wednesday ${isHandsFree ? 'active' : ''}`} onClick={handleStartWednesday} style={{ fontSize: '0.75rem', padding: '0.4rem 1rem', borderRadius: '20px' }}>
-          ⚡ {isHandsFree ? 'VOICE ON' : 'START WEDNESDAY'}
-        </button>
-
-        <button className="dock-icon-btn" onClick={() => setIsDrawerOpen(prev => !prev)} title="Toggle Drawer">
-          <Menu size={16} />
-        </button>
-      </header>
-
-      {/* Center Stage: Big Galaxy Arc Reactor Core & Chat Console */}
-      <main className="jarvis-main-body">
-        {/* Massive 3D Galaxy Arc Reactor Sphere */}
-        <div className="big-galaxy-arc-card">
-          <ArcReactorVisualizer
-            state={appState}
-            activeGesture={activeGesture}
-            handPos={handPos}
-          />
-        </div>
-
-        {/* Floating Output Console */}
-        <ChatGPTConsole
-          messages={messages}
-          interimTranscript={interimTranscript}
-          onSendMessage={handleSendMessage}
-        />
-
-        {/* Floating Bottom Prompt Bar */}
-        <form onSubmit={handleSubmit} className="bottom-prompt-stark">
-          <button
-            type="button"
-            className={`btn-stark-icon ${isHandsFree ? 'active' : ''}`}
-            onClick={handleStartWednesday}
-          >
-            <Sparkles size={16} />
+    <div className="ascii-app-container">
+      {/* Top Header Bar */}
+      <header className="ascii-top-header">
+        <div className="top-brand-group">
+          <button className="dock-icon-btn" onClick={() => setIsSidebarCollapsed(prev => !prev)} title="Toggle Sidebar">
+            <Menu size={18} />
           </button>
+          <div className="top-brand-title">
+            <Sparkles size={20} color="#00f0ff" /> Wednesday AI
+          </div>
+        </div>
 
-          <button
-            type="button"
-            className={`btn-stark-icon ${isListening ? 'active' : ''}`}
-            onClick={() => {
-              if (isListening) speechEngine.stopListening();
-              else speechEngine.startListening();
-            }}
-          >
-            {isListening ? <MicOff size={16} /> : <Mic size={16} />}
-          </button>
-
+        {/* Search Bar Input */}
+        <form onSubmit={handleSearchSubmit} className="top-search-input-box">
+          <Search size={14} color="#00f0ff" />
           <input
             type="text"
-            className="input-stark"
-            placeholder="Ask Wednesday anything, Boss Karthik..."
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
+            placeholder="Search..."
+            value={searchBarInput}
+            onChange={(e) => setSearchBarInput(e.target.value)}
+            style={{ background: 'transparent', border: 'none', outline: 'none', color: '#fff', fontSize: '0.8rem', width: '100%' }}
           />
-
-          <button
-            type="button"
-            className={`btn-stark-icon ${drawerTab === 'gestures' && isDrawerOpen ? 'active' : ''}`}
-            onClick={() => {
-              setDrawerTab('gestures');
-              setIsDrawerOpen(true);
-            }}
-          >
-            <Hand size={16} />
-          </button>
-
-          <button type="submit" className="btn-stark-submit">
-            <Send size={14} /> Send
-          </button>
         </form>
+
+        {/* Settings & User Profile Badge */}
+        <div className="top-actions-group">
+          <button className="dock-icon-btn" onClick={() => setIsSettingsOpen(true)} title="Settings">
+            <Settings size={18} />
+          </button>
+
+          <div className="user-profile-badge">
+            <User size={16} color="#00f0ff" />
+            <span>Boss Karthik</span>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Body: Left Sidebar + Center Stage */}
+      <main className="ascii-main-body">
+        {/* Left Sidebar Navigation Menu */}
+        <aside className={`ascii-sidebar ${isSidebarCollapsed ? 'collapsed' : ''}`}>
+          <button className={`nav-item-btn ${activeNav === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveNav('dashboard')}>
+            <Activity size={18} /> {!isSidebarCollapsed && 'Dashboard'}
+          </button>
+
+          <button className={`nav-item-btn ${activeNav === 'aichat' ? 'active' : ''}`} onClick={() => setActiveNav('aichat')}>
+            <MessageSquare size={18} /> {!isSidebarCollapsed && 'AI Chat'}
+          </button>
+
+          <button className={`nav-item-btn ${activeNav === 'voice' ? 'active' : ''}`} onClick={() => setActiveNav('voice')}>
+            <Mic size={18} /> {!isSidebarCollapsed && 'Voice'}
+          </button>
+
+          <button className={`nav-item-btn ${activeNav === 'memory' ? 'active' : ''}`} onClick={() => setActiveNav('memory')}>
+            <BrainCircuit size={18} /> {!isSidebarCollapsed && 'Memory'}
+          </button>
+
+          <button className={`nav-item-btn ${activeNav === 'files' ? 'active' : ''}`} onClick={() => setActiveNav('files')}>
+            <Folder size={18} /> {!isSidebarCollapsed && 'Files'}
+          </button>
+
+          <button className={`nav-item-btn ${activeNav === 'browser' ? 'active' : ''}`} onClick={() => setActiveNav('browser')}>
+            <Globe size={18} /> {!isSidebarCollapsed && 'Browser'}
+          </button>
+
+          <button className={`nav-item-btn ${activeNav === 'settings' ? 'active' : ''}`} onClick={() => setIsSettingsOpen(true)}>
+            <Settings size={18} /> {!isSidebarCollapsed && 'Settings'}
+          </button>
+        </aside>
+
+        {/* Center Main Stage */}
+        <section className="ascii-center-stage">
+          {activeNav === 'aichat' && (
+            <>
+              {/* ✨ GALAXY CORE Canvas ✨ */}
+              <div className="galaxy-core-card">
+                <ArcReactorVisualizer
+                  state={appState}
+                  activeGesture={activeGesture}
+                  handPos={handPos}
+                />
+              </div>
+
+              {/* Stream Conversation Console */}
+              <ChatGPTConsole
+                messages={messages}
+                interimTranscript={interimTranscript}
+                onSendMessage={handleSendMessage}
+              />
+            </>
+          )}
+
+          {activeNav === 'dashboard' && <TelemetryPanel soundMuted={false} onToggleSound={() => {}} onOpenSettings={() => setIsSettingsOpen(true)} />}
+          {activeNav === 'voice' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <CustomVoiceStudio />
+              <HandGesturePanel onGestureDetected={handleGestureDetected} />
+            </div>
+          )}
+          {activeNav === 'memory' && <TrainingPanel />}
+          {activeNav === 'files' && <FileSystemPanel />}
+          {activeNav === 'browser' && <AgentTools onRunCommand={handleSendMessage} />}
+        </section>
       </main>
 
-      {/* Bottom Status Bar */}
-      <footer className="bottom-system-bar">
-        <div>SYSTEM STATUS: ATOMIC GALAXY ONLINE</div>
-        <div>BOSS KARTHIK COMMAND CORE</div>
-      </footer>
+      {/* Bottom Full-Width Prompt Pill Bar */}
+      <form onSubmit={handleSubmit} className="ascii-bottom-bar">
+        <input
+          type="text"
+          className="input-prompt-full"
+          placeholder="💬 Ask anything..."
+          value={inputText}
+          onChange={(e) => setInputText(e.target.value)}
+        />
 
-      {/* Subsystem Side Drawer */}
-      <aside className={`stark-drawer ${isDrawerOpen ? 'open' : ''}`}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '0.6rem', borderBottom: '1px solid var(--border-hud)' }}>
-          <span style={{ fontFamily: 'Orbitron', fontSize: '0.85rem', color: '#00f0ff', fontWeight: 'bold' }}>
-            <Sparkles size={16} /> Subsystem Drawer
-          </span>
-          <button onClick={() => setIsDrawerOpen(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
-            <X size={18} />
-          </button>
-        </div>
+        <button
+          type="button"
+          className={`btn-prompt-icon ${isHandsFree ? 'active' : ''}`}
+          onClick={handleStartWednesday}
+          title={isHandsFree ? 'Hands-Free Voice ON' : 'Start Hands-Free Voice'}
+        >
+          <Sparkles size={18} />
+        </button>
 
-        <div style={{ display: 'flex', gap: '0.3rem', overflowX: 'auto', paddingBottom: '0.3rem' }}>
-          <button className={`drawer-tab-btn ${drawerTab === 'cosmic' ? 'active' : ''}`} onClick={() => setDrawerTab('cosmic')}>
-            <Globe size={13} /> Cosmic Core
-          </button>
-          <button className={`drawer-tab-btn ${drawerTab === 'gestures' ? 'active' : ''}`} onClick={() => setDrawerTab('gestures')}>
-            <Hand size={13} /> Gestures AI
-          </button>
-          <button className={`drawer-tab-btn ${drawerTab === 'custom_voice' ? 'active' : ''}`} onClick={() => setDrawerTab('custom_voice')}>
-            <Mic size={13} /> Voice Studio
-          </button>
-          <button className={`drawer-tab-btn ${drawerTab === 'tools' ? 'active' : ''}`} onClick={() => setDrawerTab('tools')}>
-            <Terminal size={13} /> Subsystems
-          </button>
-          <button className={`drawer-tab-btn ${drawerTab === 'files' ? 'active' : ''}`} onClick={() => setDrawerTab('files')}>
-            <Folder size={13} /> Desktop Files
-          </button>
-          <button className={`drawer-tab-btn ${drawerTab === 'trainer' ? 'active' : ''}`} onClick={() => setDrawerTab('trainer')}>
-            <BrainCircuit size={13} /> Auto ML
-          </button>
-        </div>
+        <button
+          type="button"
+          className={`btn-prompt-icon ${isListening ? 'active' : ''}`}
+          onClick={() => {
+            if (isListening) speechEngine.stopListening();
+            else speechEngine.startListening();
+          }}
+          title={isListening ? 'Stop Listening' : 'Talk Microphone'}
+        >
+          {isListening ? <MicOff size={18} /> : <Mic size={18} />}
+        </button>
 
-        <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
-          {drawerTab === 'cosmic' && <CosmicKnowledgePanel />}
-          {drawerTab === 'gestures' && <HandGesturePanel onGestureDetected={handleGestureDetected} />}
-          {drawerTab === 'custom_voice' && <CustomVoiceStudio />}
-          {drawerTab === 'tools' && <AgentTools onRunCommand={handleSendMessage} />}
-          {drawerTab === 'files' && <FileSystemPanel />}
-          {drawerTab === 'trainer' && <TrainingPanel />}
-        </div>
-      </aside>
+        <button type="submit" className="btn-prompt-submit">
+          <Send size={14} /> Send
+        </button>
+      </form>
 
       <SettingsModal
         isOpen={isSettingsOpen}

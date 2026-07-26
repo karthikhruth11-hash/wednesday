@@ -1,16 +1,21 @@
-/* W.E.D.N.E.S.D.A.Y. Big Galaxy Arc Reactor & Atomic Power Theme */
+/* W.E.D.N.E.S.D.A.Y. 1-to-1 ASCII Wireframe Match Theme */
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800;900&family=Fira+Code:wght@400;500;700&family=Rajdhani:wght@500;600;700&display=swap');
 
 :root {
-  --bg-main: #010510;
-  --bg-hud: rgba(2, 10, 24, 0.85);
+  --bg-main: #020712;
+  --bg-card: rgba(4, 15, 32, 0.85);
+  --bg-sidebar: rgba(2, 10, 22, 0.94);
+  
   --cyan-bright: #00f0ff;
-  --cyan-glow: rgba(0, 240, 255, 0.5);
+  --cyan-glow: rgba(0, 240, 255, 0.45);
   --blue-tech: #00a8ff;
   --text-main: #e2e8f0;
-  --border-hud: rgba(0, 240, 255, 0.4);
+  --text-muted: #64748b;
+  --border-hud: rgba(0, 240, 255, 0.35);
+
   --font-heading: 'Orbitron', sans-serif;
   --font-tech: 'Rajdhani', sans-serif;
+  --font-code: 'Fira Code', monospace;
 }
 
 * {
@@ -27,81 +32,222 @@ body {
   min-height: 100vh;
   overflow: hidden;
   background-image:
-    radial-gradient(circle at 50% 40%, rgba(0, 240, 255, 0.22) 0%, transparent 65%),
-    radial-gradient(circle at 20% 80%, rgba(0, 168, 255, 0.12) 0%, transparent 50%),
-    linear-gradient(to bottom, #010510, #000208);
+    radial-gradient(circle at 50% 40%, rgba(0, 240, 255, 0.18) 0%, transparent 60%),
+    linear-gradient(to bottom, #020712, #00030a);
 }
 
-.jarvis-workspace {
+.ascii-app-container {
   display: flex;
   flex-direction: column;
   height: 100vh;
   width: 100vw;
   position: relative;
   overflow: hidden;
-  border: 2px solid var(--border-hud);
-  box-shadow: inset 0 0 60px rgba(0, 240, 255, 0.2);
+  border: 1px solid var(--border-hud);
 }
 
-/* Header with Atomic Power Core */
-.jarvis-top-header {
+/* 1-to-1 Top Header Bar */
+.ascii-top-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0.4rem 1.2rem;
-  background: rgba(2, 10, 24, 0.92);
+  background: var(--bg-sidebar);
   border-bottom: 1px solid var(--border-hud);
-  backdrop-filter: blur(20px);
+  backdrop-filter: blur(16px);
   z-index: 100;
 }
 
-.atomic-power-badge {
+.top-brand-group {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  padding: 0.3rem 0.8rem;
-  background: rgba(0, 240, 255, 0.08);
-  border: 1px solid var(--cyan-bright);
-  border-radius: 20px;
-  font-family: var(--font-heading);
-  color: var(--cyan-bright);
-  box-shadow: 0 0 16px rgba(0, 240, 255, 0.3);
+  gap: 0.8rem;
 }
 
-/* Center Stage for Big Galaxy Arc Reactor */
-.jarvis-main-body {
+.top-brand-title {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--cyan-bright);
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.top-search-input-box {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid var(--border-hud);
+  border-radius: 20px;
+  padding: 0.25rem 0.8rem;
+  width: 240px;
+}
+
+.top-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.user-profile-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.75rem;
+  background: rgba(0, 240, 255, 0.08);
+  border: 1px solid var(--border-hud);
+  border-radius: 16px;
+  font-family: var(--font-heading);
+  font-size: 0.72rem;
+  color: var(--cyan-bright);
+}
+
+/* Main Body: Left Sidebar + Center Stage */
+.ascii-main-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Left Sidebar Menu */
+.ascii-sidebar {
+  width: 210px;
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border-hud);
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.8rem 0.6rem;
+  backdrop-filter: blur(16px);
+  z-index: 90;
+  transition: all 0.3s ease;
+}
+
+.ascii-sidebar.collapsed {
+  width: 60px;
+}
+
+.nav-item-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.9rem;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-main);
+  font-family: var(--font-heading);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.nav-item-btn:hover, .nav-item-btn.active {
+  background: rgba(0, 240, 255, 0.12);
+  border-color: var(--cyan-bright);
+  color: var(--cyan-bright);
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.2);
+}
+
+/* Center Stage */
+.ascii-center-stage {
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: 0.8rem;
-  padding: 1rem 2rem;
+  padding: 1rem 1.5rem;
   overflow: hidden;
-  max-width: 1200px;
-  margin: 0 auto;
-  width: 100%;
+  position: relative;
 }
 
-.big-galaxy-arc-card {
-  height: 320px;
-  min-height: 320px;
+/* Galaxy Core Card */
+.galaxy-core-card {
+  height: 300px;
+  min-height: 300px;
   flex-shrink: 0;
-  background: var(--bg-hud);
+  background: var(--bg-card);
   border: 1px solid var(--cyan-bright);
-  border-radius: 16px;
+  border-radius: 14px;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 0 35px rgba(0, 240, 255, 0.25);
-  backdrop-filter: blur(20px);
+  box-shadow: 0 0 30px rgba(0, 240, 255, 0.25);
+  backdrop-filter: blur(16px);
 }
 
-.bottom-system-bar {
+/* Bottom Full-Width Prompt Bar */
+.ascii-bottom-bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0.4rem 1.2rem;
-  background: rgba(2, 10, 24, 0.92);
+  gap: 0.8rem;
+  padding: 0.6rem 1.2rem;
+  background: var(--bg-sidebar);
   border-top: 1px solid var(--border-hud);
-  font-family: var(--font-heading);
-  font-size: 0.72rem;
+  backdrop-filter: blur(16px);
+  z-index: 100;
+}
+
+.input-prompt-full {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid var(--border-hud);
+  border-radius: 24px;
+  padding: 0.55rem 1.2rem;
+  color: #ffffff;
+  font-family: var(--font-tech);
+  font-size: 0.95rem;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.input-prompt-full:focus {
+  border-color: var(--cyan-bright);
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.3);
+}
+
+.btn-prompt-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--border-hud);
+  background: rgba(0, 240, 255, 0.08);
   color: var(--cyan-bright);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-prompt-icon:hover, .btn-prompt-icon.active {
+  background: var(--cyan-bright);
+  color: #020712;
+  box-shadow: 0 0 16px var(--cyan-bright);
+  transform: scale(1.08);
+}
+
+.btn-prompt-submit {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1.2rem;
+  background: linear-gradient(135deg, var(--cyan-bright), var(--blue-tech));
+  border: none;
+  border-radius: 24px;
+  color: #020712;
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 0 18px rgba(0, 240, 255, 0.4);
+  transition: all 0.2s ease;
+}
+
+.btn-prompt-submit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 24px rgba(0, 240, 255, 0.6);
 }

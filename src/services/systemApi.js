@@ -301,7 +301,7 @@ export const systemApi = {
 
     return {
       success: true,
-      reply: `All systems optimal for "${prompt}". Query processed by W.E.D.N.E.S.D.A.Y. SIGMA Core.`
+      reply: `Processing query for "${prompt}". Please verify network connection for online LLM reasoning.`
     };
   }
 };

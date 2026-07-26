@@ -58,9 +58,14 @@ export class OmniscientKnowledgeEngine {
       return this.knowledgeBase[clean];
     }
 
-    // Partial key matching
+    // Exact phrase or word boundary matching
+    const words = clean.split(/\s+/);
     for (const [key, answer] of Object.entries(this.knowledgeBase)) {
-      if (clean.includes(key) || key.includes(clean)) {
+      if (clean === key) return answer;
+      if (key.includes(' ') && clean.includes(key)) {
+        return answer;
+      }
+      if (!key.includes(' ') && words.includes(key)) {
         return answer;
       }
     }
