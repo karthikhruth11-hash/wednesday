@@ -1,8 +1,8 @@
 import React, { useEffect, useRef } from 'react';
-import { Mic, MicOff } from 'lucide-react';
+import { Mic, MicOff, Sparkles } from 'lucide-react';
 import { soundFx } from '../services/soundFx';
 
-export default function Visualizer({ state, isListening, isHandsFree, onToggleListening, onStartWednesday }) {
+export default function Visualizer({ state, isListening, isHandsFree, activeGesture, onToggleListening, onStartWednesday }) {
   const canvasRef = useRef(null);
 
   useEffect(() => {
@@ -14,16 +14,16 @@ export default function Visualizer({ state, isListening, isHandsFree, onToggleLi
     let rotation = 0;
     let pulseAngle = 0;
 
-    const particleCount = 70;
+    const particleCount = 90;
     const particles = [];
     for (let i = 0; i < particleCount; i++) {
       particles.push({
-        x: (Math.random() - 0.5) * 140,
-        y: (Math.random() - 0.5) * 140,
-        size: Math.random() * 2.5 + 1,
-        speedX: (Math.random() - 0.5) * 0.7,
-        speedY: (Math.random() - 0.5) * 0.7,
-        opacity: Math.random() * 0.8 + 0.2
+        x: (Math.random() - 0.5) * 160,
+        y: (Math.random() - 0.5) * 160,
+        size: Math.random() * 2.8 + 1,
+        speedX: (Math.random() - 0.5) * 0.8,
+        speedY: (Math.random() - 0.5) * 0.8,
+        opacity: Math.random() * 0.85 + 0.15
       });
     }
 
@@ -44,14 +44,18 @@ export default function Visualizer({ state, isListening, isHandsFree, onToggleLi
       let glowColor = 'rgba(0, 240, 255, ';
       let coreRadius = 55;
 
-      if (state === 'listening') {
+      if (activeGesture) {
+        speedMult = 3.5;
+        glowColor = 'rgba(168, 85, 247, '; // Electric purple when reacting to hand gesture
+        coreRadius = 72;
+      } else if (state === 'listening') {
         speedMult = 2.5;
-        glowColor = 'rgba(255, 77, 109, '; // Warm pink/pink glow when listening
-        coreRadius = 70;
+        glowColor = 'rgba(255, 77, 109, '; // Warm pink when listening
+        coreRadius = 68;
       } else if (state === 'processing') {
         speedMult = 4.0;
         glowColor = 'rgba(255, 183, 3, ';
-        coreRadius = 60;
+        coreRadius = 62;
       } else if (state === 'speaking') {
         speedMult = 2.0;
         glowColor = 'rgba(0, 240, 255, ';
@@ -61,20 +65,20 @@ export default function Visualizer({ state, isListening, isHandsFree, onToggleLi
       rotation += 0.008 * speedMult;
       pulseAngle += 0.04 * speedMult;
 
-      const dynamicRadius = coreRadius + Math.sin(pulseAngle) * 5;
+      const dynamicRadius = coreRadius + Math.sin(pulseAngle) * 6;
 
       // Glow Core
       const gradient = ctx.createRadialGradient(
         centerX, centerY, 5,
-        centerX, centerY, dynamicRadius * 1.5
+        centerX, centerY, dynamicRadius * 1.6
       );
-      gradient.addColorStop(0, `${glowColor}0.9)`);
-      gradient.addColorStop(0.4, `${glowColor}0.3)`);
+      gradient.addColorStop(0, `${glowColor}0.95)`);
+      gradient.addColorStop(0.4, `${glowColor}0.35)`);
       gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
 
       ctx.fillStyle = gradient;
       ctx.beginPath();
-      ctx.arc(centerX, centerY, dynamicRadius * 1.5, 0, Math.PI * 2);
+      ctx.arc(centerX, centerY, dynamicRadius * 1.6, 0, Math.PI * 2);
       ctx.fill();
 
       // Rotating Arc Rings
@@ -83,12 +87,12 @@ export default function Visualizer({ state, isListening, isHandsFree, onToggleLi
 
       ctx.save();
       ctx.rotate(rotation);
-      ctx.strokeStyle = `${glowColor}0.7)`;
+      ctx.strokeStyle = `${glowColor}0.75)`;
       ctx.lineWidth = 2;
 
       for (let i = 0; i < 4; i++) {
         ctx.beginPath();
-        ctx.arc(0, 0, dynamicRadius + 25, (i * Math.PI) / 2, (i * Math.PI) / 2 + Math.PI / 3);
+        ctx.arc(0, 0, dynamicRadius + 26, (i * Math.PI) / 2, (i * Math.PI) / 2 + Math.PI / 3);
         ctx.stroke();
       }
       ctx.restore();
@@ -100,7 +104,7 @@ export default function Visualizer({ state, isListening, isHandsFree, onToggleLi
 
       for (let i = 0; i < 3; i++) {
         ctx.beginPath();
-        ctx.arc(0, 0, dynamicRadius + 12, (i * 2 * Math.PI) / 3, (i * 2 * Math.PI) / 3 + Math.PI / 4);
+        ctx.arc(0, 0, dynamicRadius + 14, (i * 2 * Math.PI) / 3, (i * 2 * Math.PI) / 3 + Math.PI / 4);
         ctx.stroke();
       }
       ctx.restore();
@@ -111,7 +115,7 @@ export default function Visualizer({ state, isListening, isHandsFree, onToggleLi
         p.y += p.speedY * speedMult;
 
         const dist = Math.sqrt(p.x * p.x + p.y * p.y);
-        if (dist > dynamicRadius + 45) {
+        if (dist > dynamicRadius + 50) {
           p.x = (Math.random() - 0.5) * dynamicRadius;
           p.y = (Math.random() - 0.5) * dynamicRadius;
         }
@@ -122,16 +126,16 @@ export default function Visualizer({ state, isListening, isHandsFree, onToggleLi
         ctx.fill();
       });
 
-      // Sound Wave Ripples
-      if (state === 'speaking' || state === 'listening') {
-        ctx.strokeStyle = `${glowColor}0.8)`;
+      // Sound Wave / Gesture Ripples
+      if (state === 'speaking' || state === 'listening' || activeGesture) {
+        ctx.strokeStyle = `${glowColor}0.85)`;
         ctx.lineWidth = 2;
         ctx.beginPath();
         const waveCount = 36;
         for (let i = 0; i <= waveCount; i++) {
           const angle = (i / waveCount) * Math.PI * 2;
-          const amp = Math.sin(angle * 6 + pulseAngle * 2) * 6;
-          const r = dynamicRadius + 35 + amp;
+          const amp = Math.sin(angle * 6 + pulseAngle * 2) * 8;
+          const r = dynamicRadius + 38 + amp;
           const wx = Math.cos(angle) * r;
           const wy = Math.sin(angle) * r;
           if (i === 0) ctx.moveTo(wx, wy);
@@ -151,12 +155,18 @@ export default function Visualizer({ state, isListening, isHandsFree, onToggleLi
     return () => {
       cancelAnimationFrame(animationId);
     };
-  }, [state]);
+  }, [state, activeGesture]);
 
   return (
     <div className="canvas-container">
       <canvas ref={canvasRef} />
       <div className="hud-target-reticle" />
+
+      {activeGesture && (
+        <div style={{ position: 'absolute', top: '15px', padding: '0.3rem 0.8rem', background: 'rgba(168,85,247,0.2)', border: '1px solid #a855f7', color: '#a855f7', borderRadius: '20px', fontSize: '0.75rem', fontFamily: 'Orbitron', display: 'flex', alignItems: 'center', gap: '0.4rem', zIndex: 10, animation: 'pulse 1s infinite' }}>
+          <Sparkles size={12} /> GESTURE REACTIVE ORB ACTIVE
+        </div>
+      )}
 
       {/* Interactive Hero Controls */}
       <div style={{ position: 'absolute', bottom: '15px', display: 'flex', gap: '0.6rem', zIndex: 10 }}>

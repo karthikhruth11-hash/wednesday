@@ -5,13 +5,15 @@ import TelemetryPanel from './components/TelemetryPanel';
 import AgentTools from './components/AgentTools';
 import FileSystemPanel from './components/FileSystemPanel';
 import TrainingPanel from './components/TrainingPanel';
+import HandGesturePanel from './components/HandGesturePanel';
+import CustomVoiceStudio from './components/CustomVoiceStudio';
 import ChatGPTConsole from './components/ChatGPTConsole';
 import SettingsModal from './components/SettingsModal';
 
 import { speechEngine } from './services/speech';
 import { soundFx } from './services/soundFx';
 import { aiAgent } from './services/aiAgent';
-import { Sparkles, Settings, Folder, Terminal, BrainCircuit } from 'lucide-react';
+import { Sparkles, Settings, Folder, Terminal, BrainCircuit, Hand, Mic } from 'lucide-react';
 
 export default function App() {
   const [appState, setAppState] = useState('idle'); // 'idle', 'listening', 'processing', 'speaking'
@@ -20,15 +22,16 @@ export default function App() {
   const [isHandsFree, setIsHandsFree] = useState(false);
   const [inputText, setInputText] = useState('');
   const [interimTranscript, setInterimTranscript] = useState('');
+  const [activeGesture, setActiveGesture] = useState(null);
 
-  const [leftTab, setLeftTab] = useState('tools'); // Default to Subsystems / Tools
+  const [leftTab, setLeftTab] = useState('tools'); // 'tools', 'files', 'trainer', 'gestures', 'custom_voice'
   const [personaMode, setPersonaMode] = useState(localStorage.getItem('wednesday_persona_mode') || 'jarvis');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const [messages, setMessages] = useState([
     {
       sender: 'assistant',
-      text: "Good day, Boss. W.E.D.N.E.S.D.A.Y. is fully pre-trained out of the box (like ChatGPT). Click 'START W.E.D.N.E.S.D.A.Y.' to launch hands-free voice mode, or ask any question below.",
+      text: "Good day, Boss. W.E.D.N.E.S.D.A.Y. is fully pre-trained and upgraded with Real-Time Webcam Hand Gesture Control and Custom Voice Studio. Enable camera gestures or start voice mode below.",
       timestamp: new Date().toLocaleTimeString()
     }
   ]);
@@ -115,6 +118,37 @@ export default function App() {
     speechEngine.speak(intro);
   };
 
+  // Hand Gesture Action Dispatcher
+  const handleGestureDetected = useCallback((gesture) => {
+    setActiveGesture(gesture);
+    setTimeout(() => setActiveGesture(null), 1500);
+
+    if (gesture === 'PEACE_SIGN') {
+      const modes = ['jarvis', 'girlfriend', 'lawyer', 'polyglot'];
+      const nextIndex = (modes.indexOf(personaMode) + 1) % modes.length;
+      handleSelectPersona(modes[nextIndex]);
+    } else if (gesture === 'CLOSED_FIST') {
+      speechEngine.stopListening();
+      setIsListening(false);
+      setAppState('idle');
+      soundFx.playClick();
+    } else if (gesture === 'THUMBS_UP') {
+      handleSendMessage('Awesome job Wednesday!');
+    } else if (gesture === 'PINCH_OK') {
+      handleStartWednesday();
+    } else if (gesture === 'SWIPE_RIGHT') {
+      setLeftTab(prev => {
+        const tabs = ['tools', 'files', 'trainer', 'gestures', 'custom_voice'];
+        return tabs[(tabs.indexOf(prev) + 1) % tabs.length];
+      });
+    } else if (gesture === 'SWIPE_LEFT') {
+      setLeftTab(prev => {
+        const tabs = ['tools', 'files', 'trainer', 'gestures', 'custom_voice'];
+        return tabs[(tabs.indexOf(prev) - 1 + tabs.length) % tabs.length];
+      });
+    }
+  }, [personaMode, handleStartWednesday, handleSendMessage]);
+
   // Speech Engine Wiring
   useEffect(() => {
     speechEngine.onSpeechStart = () => {
@@ -136,7 +170,6 @@ export default function App() {
         const cleaned = final.trim();
         setInterimTranscript('');
 
-        // Check wake words
         const lower = cleaned.toLowerCase();
         if (lower.startsWith('start wednesday') || lower.startsWith('hey wednesday') || lower === 'wednesday') {
           handleStartWednesday();
@@ -178,53 +211,69 @@ export default function App() {
         <div className="brand-title">
           <Sparkles className="cyan-glow" size={24} style={{ color: personaMode === 'girlfriend' ? '#ff4d6d' : 'var(--cyan-bright)' }} />
           <h1>W.E.D.N.E.S.D.A.Y.</h1>
-          <span className="brand-badge">CHATGPT OMNI CORE</span>
+          <span className="brand-badge">ULTRA OMNI CORE</span>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
           <button
             className={`btn-start-wednesday ${isHandsFree ? 'active' : ''}`}
             onClick={handleStartWednesday}
-            style={{ fontSize: '0.75rem', padding: '0.4rem 1rem', borderRadius: '20px' }}
+            style={{ fontSize: '0.75rem', padding: '0.4rem 0.9rem', borderRadius: '20px' }}
           >
-            ⚡ {isHandsFree ? 'W.E.D.N.E.S.D.A.Y. VOICE ON' : 'START W.E.D.N.E.S.D.A.Y.'}
+            ⚡ {isHandsFree ? 'VOICE ON' : 'START WEDNESDAY'}
           </button>
 
           <button
             className={`btn-hud ${leftTab === 'tools' ? 'active' : ''}`}
             onClick={() => { soundFx.playClick(); setLeftTab('tools'); }}
-            style={{ fontSize: '0.75rem', padding: '0.4rem 0.8rem' }}
+            style={{ fontSize: '0.72rem', padding: '0.35rem 0.7rem' }}
           >
-            <Terminal size={14} /> Subsystems
+            <Terminal size={13} /> Subsystems
+          </button>
+
+          <button
+            className={`btn-hud ${leftTab === 'gestures' ? 'active' : ''}`}
+            onClick={() => { soundFx.playClick(); setLeftTab('gestures'); }}
+            style={{ fontSize: '0.72rem', padding: '0.35rem 0.7rem', borderColor: leftTab === 'gestures' ? '#00f0ff' : 'rgba(0,240,255,0.3)' }}
+          >
+            <Hand size={13} color="#00f0ff" /> Hand Gestures
+          </button>
+
+          <button
+            className={`btn-hud ${leftTab === 'custom_voice' ? 'active' : ''}`}
+            onClick={() => { soundFx.playClick(); setLeftTab('custom_voice'); }}
+            style={{ fontSize: '0.72rem', padding: '0.35rem 0.7rem', borderColor: leftTab === 'custom_voice' ? '#ff4d6d' : 'rgba(255,77,109,0.3)' }}
+          >
+            <Mic size={13} color="#ff4d6d" /> My Voice Studio
           </button>
 
           <button
             className={`btn-hud ${leftTab === 'files' ? 'active' : ''}`}
             onClick={() => { soundFx.playClick(); setLeftTab('files'); }}
-            style={{ fontSize: '0.75rem', padding: '0.4rem 0.8rem' }}
+            style={{ fontSize: '0.72rem', padding: '0.35rem 0.7rem' }}
           >
-            <Folder size={14} /> Desktop Files
+            <Folder size={13} /> Desktop Files
           </button>
 
           <button
             className={`btn-hud ${leftTab === 'trainer' ? 'active' : ''}`}
             onClick={() => { soundFx.playClick(); setLeftTab('trainer'); }}
-            style={{ fontSize: '0.75rem', padding: '0.4rem 0.8rem' }}
+            style={{ fontSize: '0.72rem', padding: '0.35rem 0.7rem' }}
           >
-            <BrainCircuit size={14} /> Trainer
+            <BrainCircuit size={13} /> Trainer
           </button>
 
           <button
             className="btn-hud"
             onClick={() => { soundFx.playClick(); setIsSettingsOpen(true); }}
-            style={{ fontSize: '0.75rem', padding: '0.4rem 0.8rem' }}
+            style={{ fontSize: '0.72rem', padding: '0.35rem 0.7rem' }}
           >
-            <Settings size={14} /> Settings
+            <Settings size={13} /> Settings
           </button>
 
           <div className="status-pill">
             <div className="status-dot" />
-            CHATGPT AI ACTIVE
+            AI & GESTURES ACTIVE
           </div>
         </div>
       </header>
@@ -233,6 +282,8 @@ export default function App() {
       <main className="hud-body">
         {/* Left Column */}
         {leftTab === 'tools' && <AgentTools onRunCommand={handleSendMessage} />}
+        {leftTab === 'gestures' && <HandGesturePanel onGestureDetected={handleGestureDetected} />}
+        {leftTab === 'custom_voice' && <CustomVoiceStudio />}
         {leftTab === 'files' && <FileSystemPanel />}
         {leftTab === 'trainer' && <TrainingPanel />}
 
@@ -243,6 +294,7 @@ export default function App() {
               state={appState}
               isListening={isListening}
               isHandsFree={isHandsFree}
+              activeGesture={activeGesture}
               onToggleListening={handleToggleListening}
               onStartWednesday={handleStartWednesday}
             />
