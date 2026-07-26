@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import './styles/hud.css';
 import ArcReactorVisualizer from './components/ArcReactorVisualizer';
 import AgentTools from './components/AgentTools';
