@@ -88,19 +88,29 @@ app.post('/api/system/launch-app', (req, res) => {
   const { appName } = req.body;
   if (!appName) return res.status(400).json({ error: 'appName is required' });
 
-  const targetApp = APP_MAP[appName.toLowerCase().trim()] || appName;
+  const raw = appName.toLowerCase().trim();
+  const targetApp = APP_MAP[raw] || raw;
 
-  exec(targetApp, (error) => {
+  let launchCmd = targetApp;
+  if (raw.includes('calc')) {
+    launchCmd = 'start calc.exe';
+  } else if (raw.includes('cmd') || raw.includes('terminal')) {
+    launchCmd = 'start cmd.exe';
+  } else if (!targetApp.startsWith('start ') && !targetApp.endsWith('.exe')) {
+    launchCmd = `start ${targetApp}`;
+  }
+
+  exec(launchCmd, { shell: true }, (error) => {
     if (error) {
-      exec(`start ${targetApp}`, (err2) => {
+      exec(`start ${targetApp}`, { shell: true }, (err2) => {
         if (err2) {
           return res.status(500).json({ success: false, error: err2.message });
         }
         res.json({ success: true, message: `Launched ${appName} successfully.` });
       });
-      return;
+    } else {
+      res.json({ success: true, message: `Launched ${appName} successfully.` });
     }
-    res.json({ success: true, message: `Launched ${appName} successfully.` });
   });
 });
 

@@ -9,6 +9,8 @@ import CustomVoiceStudio from './components/CustomVoiceStudio';
 import TelemetryPanel from './components/TelemetryPanel';
 import ChatGPTConsole from './components/ChatGPTConsole';
 import SettingsModal from './components/SettingsModal';
+import TerminalModal from './components/TerminalModal';
+import CalculatorModal from './components/CalculatorModal';
 
 import { speechEngine } from './services/speech';
 import { soundFx } from './services/soundFx';
@@ -16,7 +18,8 @@ import { aiAgent } from './services/aiAgent';
 import { systemApi } from './services/systemApi';
 import {
   Sparkles, Folder, BrainCircuit, Mic, MicOff,
-  Send, Menu, Globe, Search, Settings, User, MessageSquare, Activity
+  Send, Menu, Globe, Search, Settings, User, MessageSquare, Activity,
+  Terminal, Cpu
 } from 'lucide-react';
 
 export default function App() {
@@ -33,6 +36,13 @@ export default function App() {
   const [activeNav, setActiveNav] = useState('aichat'); // 'dashboard', 'aichat', 'voice', 'memory', 'files', 'browser', 'settings'
   const [personaMode] = useState(localStorage.getItem('wednesday_persona_mode') || 'jarvis');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isTerminalOpen, setIsTerminalOpen] = useState(false);
+  const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
+
+  useEffect(() => {
+    systemApi.onOpenTerminal = () => setIsTerminalOpen(true);
+    systemApi.onOpenCalculator = () => setIsCalculatorOpen(true);
+  }, []);
 
   const [messages, setMessages] = useState([
     {
@@ -215,8 +225,14 @@ export default function App() {
           />
         </form>
 
-        {/* Settings & User Profile Badge */}
+        {/* Quick Action Buttons & Settings & User Profile Badge */}
         <div className="top-actions-group">
+          <button className="dock-icon-btn" onClick={() => setIsTerminalOpen(true)} title="Open Terminal / CMD">
+            <Terminal size={18} color="#00f0ff" />
+          </button>
+          <button className="dock-icon-btn" onClick={() => setIsCalculatorOpen(true)} title="Open Calculator">
+            <Cpu size={18} color="#00f0ff" />
+          </button>
           <button className="dock-icon-btn" onClick={() => setIsSettingsOpen(true)} title="Settings">
             <Settings size={18} />
           </button>
@@ -348,6 +364,17 @@ export default function App() {
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
+      />
+
+      <TerminalModal
+        isOpen={isTerminalOpen}
+        onClose={() => setIsTerminalOpen(false)}
+        onOpenCalculator={() => setIsCalculatorOpen(true)}
+      />
+
+      <CalculatorModal
+        isOpen={isCalculatorOpen}
+        onClose={() => setIsCalculatorOpen(false)}
       />
     </div>
   );

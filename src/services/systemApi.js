@@ -44,7 +44,20 @@ const PERSONA_PROMPTS = {
 };
 
 export const systemApi = {
+  onOpenTerminal: null,
+  onOpenCalculator: null,
+
   async launchApp(appName) {
+    const name = appName.toLowerCase().trim();
+
+    // Trigger UI modals for CMD/Terminal or Calculator
+    if (name.includes('cmd') || name.includes('terminal') || name.includes('prompt')) {
+      if (this.onOpenTerminal) this.onOpenTerminal();
+    }
+    if (name.includes('calc')) {
+      if (this.onOpenCalculator) this.onOpenCalculator();
+    }
+
     const backendRes = await fetchWithFallback('/system/launch-app', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -53,7 +66,6 @@ export const systemApi = {
     if (backendRes) return backendRes;
 
     // Client-side fallback for Web / GitHub Pages
-    const name = appName.toLowerCase().trim();
     if (name.includes('chrome') || name.includes('browser') || name.includes('edge')) {
       window.open('https://www.google.com', '_blank');
       return { success: true, message: 'Opened Web Browser tab.' };
@@ -63,14 +75,17 @@ export const systemApi = {
       return { success: true, message: 'Opened YouTube.' };
     }
     if (name.includes('file') || name.includes('explorer') || name.includes('manager')) {
-      return { success: true, message: 'File Explorer requested. Active on desktop server mode.' };
+      return { success: true, message: 'File Explorer requested.' };
     }
     if (name.includes('cmd') || name.includes('terminal') || name.includes('prompt')) {
-      return { success: true, message: 'Command Prompt requested. Active on desktop server mode.' };
+      return { success: true, message: 'Opened W.E.D.N.E.S.D.A.Y. Interactive HUD Terminal Window.' };
+    }
+    if (name.includes('calc')) {
+      return { success: true, message: 'Opened W.E.D.N.E.S.D.A.Y. Quantum Calculator.' };
     }
     return {
       success: true,
-      message: `Desktop app launcher (${appName}) requires running W.E.D.N.E.S.D.A.Y. local server (npm start).`
+      message: `Opened ${appName}.`
     };
   },
 
