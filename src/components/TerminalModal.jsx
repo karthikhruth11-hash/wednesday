@@ -1,24 +1,32 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Terminal, X, Minimize2, Maximize2, Trash2, Send, Play } from 'lucide-react';
+import { Terminal, X, Minimize2, Maximize2, Trash2, Send, ExternalLink, Cpu } from 'lucide-react';
 import { soundFx } from '../services/soundFx';
 import { aiAgent } from '../services/aiAgent';
 import { systemApi } from '../services/systemApi';
 
 export default function TerminalModal({ isOpen, onClose, onOpenCalculator }) {
+  const [currentCwd, setCurrentCwd] = useState('C:\\WEDNESDAY\\JARVIS');
   const [history, setHistory] = useState([
-    { type: 'sys', text: 'W.E.D.N.E.S.D.A.Y. PRO TERMINAL CORE v3.6 [ONLINE]' },
-    { type: 'sys', text: 'Type "help" to view interactive commands or type any query.' }
+    { type: 'sys', text: 'W.E.D.N.E.S.D.A.Y. SYSTEM TERMINAL CORE v3.6 [ONLINE]' },
+    { type: 'sys', text: 'Real OS Shell Execution & Desktop Integration Active.' },
+    { type: 'sys', text: 'Type system commands (python -V, dir, node -v, npm, etc.) or click "Open Original CMD" for native terminal.' }
   ]);
   const [inputVal, setInputVal] = useState('');
   const [commandHistory, setCommandHistory] = useState([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [isMaximized, setIsMaximized] = useState(false);
+  const [isExecuting, setIsExecuting] = useState(false);
   const terminalEndRef = useRef(null);
   const inputRef = useRef(null);
 
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => inputRef.current?.focus(), 100);
+      systemApi.getTelemetry().then(data => {
+        if (data && data.userHome) {
+          setCurrentCwd(data.userHome);
+        }
+      }).catch(() => {});
     }
   }, [isOpen]);
 
@@ -28,37 +36,57 @@ export default function TerminalModal({ isOpen, onClose, onOpenCalculator }) {
 
   if (!isOpen) return null;
 
+  const handleLaunchNative = async () => {
+    soundFx.playClick();
+    setHistory(prev => [...prev, { type: 'sys', text: 'Launching Original Windows Native CMD Terminal on Desktop...' }]);
+    const res = await systemApi.launchApp('cmd');
+    if (res && res.success) {
+      setHistory(prev => [...prev, { type: 'out', text: `⚡ Native CMD Window opened: ${res.message}` }]);
+    } else {
+      setHistory(prev => [...prev, { type: 'err', text: `Failed to launch native terminal: ${res?.error || 'Unknown error'}` }]);
+    }
+  };
+
   const handleCommand = async (cmd) => {
     const trimmed = cmd.trim();
     if (!trimmed) return;
 
     soundFx.playClick();
-    setHistory(prev => [...prev, { type: 'user', text: `C:\\WEDNESDAY\\JARVIS> ${trimmed}` }]);
+    const promptPath = currentCwd || 'C:\\WEDNESDAY\\JARVIS';
+    setHistory(prev => [...prev, { type: 'user', text: `${promptPath}> ${trimmed}` }]);
     setCommandHistory(prev => [trimmed, ...prev]);
     setHistoryIndex(-1);
     setInputVal('');
 
     const lower = trimmed.toLowerCase();
 
-    // 1. Internal CLI Commands
+    // 1. Clear Screen
     if (lower === 'clear' || lower === 'cls') {
       setHistory([]);
       return;
     }
 
+    // 2. Launch Native Terminal Commands
+    if (lower === 'native' || lower === 'cmd' || lower === 'terminal' || lower === 'powershell' || lower === 'wt' || lower === 'original') {
+      await handleLaunchNative();
+      return;
+    }
+
+    // 3. Help Command
     if (lower === 'help') {
       setHistory(prev => [
         ...prev,
-        { type: 'out', text: 'AVAILABLE TERMINAL COMMANDS:' },
-        { type: 'out', text: '  calc / calculator   - Launch Quantum Calculator' },
-        { type: 'out', text: '  open <site/app>     - Open website or app (e.g. open youtube)' },
-        { type: 'out', text: '  play <song>         - Play music on YouTube/Spotify' },
-        { type: 'out', text: '  date / time         - Show current system timestamp' },
-        { type: 'out', text: '  sys / status        - Display W.E.D.N.E.S.D.A.Y. core telemetry' },
-        { type: 'out', text: '  cls / clear         - Clear terminal console' },
-        { type: 'out', text: '  eval <code>         - Execute JS code snippet' },
-        { type: 'out', text: '  native              - Launch Windows Native CMD Prompt' },
-        { type: 'out', text: '  <any text>          - Query AI Core agent directly' }
+        { type: 'sys', text: '==================== W.E.D.N.E.S.D.A.Y. TERMINAL HELP ====================' },
+        { type: 'out', text: '  original / cmd / native  - Launch real Windows Command Prompt window' },
+        { type: 'out', text: '  python -V / node -v / dir- Execute real system commands directly' },
+        { type: 'out', text: '  cd <path>               - Navigate directories' },
+        { type: 'out', text: '  calc / calculator       - Launch Quantum Calculator' },
+        { type: 'out', text: '  date / time             - Display current system timestamp' },
+        { type: 'out', text: '  sys / status            - Display core telemetry status' },
+        { type: 'out', text: '  clear / cls             - Clear terminal console history' },
+        { type: 'out', text: '  eval <code>             - Execute client JavaScript snippet' },
+        { type: 'out', text: '  ai <question>           - Query AI Assistant directly' },
+        { type: 'sys', text: '========================================================================' }
       ]);
       return;
     }
@@ -79,18 +107,10 @@ export default function TerminalModal({ isOpen, onClose, onOpenCalculator }) {
         ...prev,
         { type: 'out', text: '----------------------------------------' },
         { type: 'out', text: 'SYSTEM ENGINE STATUS: 100% OPTIMAL' },
-        { type: 'out', text: 'CORE: SIGMA Arc Reactor (Deep Llama 70B / GPT-4o)' },
-        { type: 'out', text: 'LATENCY: 12ms | MEMORY: 64MB Allocation' },
-        { type: 'out', text: 'AUDIO SPEECH ENGINE: Active' },
+        { type: 'out', text: `WORKING DIRECTORY: ${promptPath}` },
+        { type: 'out', text: 'EXECUTION MODE: Real OS Shell & Subprocess Bridge' },
         { type: 'out', text: '----------------------------------------' }
       ]);
-      return;
-    }
-
-    if (lower === 'native') {
-      setHistory(prev => [...prev, { type: 'sys', text: 'Attempting to launch Windows Native CMD prompt...' }]);
-      const res = await systemApi.launchApp('cmd');
-      setHistory(prev => [...prev, { type: res.success ? 'out' : 'err', text: res.message || res.error }]);
       return;
     }
 
@@ -106,12 +126,57 @@ export default function TerminalModal({ isOpen, onClose, onOpenCalculator }) {
       return;
     }
 
-    // 2. Query AI Agent
+    if (lower.startsWith('ai ') || lower.startsWith('ask ')) {
+      const aiPrompt = trimmed.replace(/^(ai|ask)\s+/i, '');
+      try {
+        const res = await aiAgent.processQuery(aiPrompt, 'jarvis');
+        setHistory(prev => [...prev, { type: 'out', text: res.reply }]);
+      } catch (err) {
+        setHistory(prev => [...prev, { type: 'err', text: `AI Error: ${err.message}` }]);
+      }
+      return;
+    }
+
+    // 4. Execute Real System OS Command
+    setIsExecuting(true);
     try {
-      const res = await aiAgent.processQuery(trimmed, 'jarvis');
-      setHistory(prev => [...prev, { type: 'out', text: res.reply }]);
+      const res = await systemApi.execCommand(trimmed, currentCwd);
+      setIsExecuting(false);
+
+      if (res) {
+        if (res.cwd) {
+          setCurrentCwd(res.cwd);
+        }
+
+        if (res.stdout) {
+          const lines = res.stdout.trimEnd().split('\n');
+          lines.forEach(line => {
+            setHistory(prev => [...prev, { type: 'out', text: line }]);
+          });
+        }
+
+        if (res.stderr) {
+          const lines = res.stderr.trimEnd().split('\n');
+          lines.forEach(line => {
+            setHistory(prev => [...prev, { type: 'err', text: line }]);
+          });
+        }
+
+        if (!res.stdout && !res.stderr && res.error) {
+          setHistory(prev => [...prev, { type: 'err', text: res.error }]);
+        }
+
+        if (!res.stdout && !res.stderr && res.success && !trimmed.toLowerCase().startsWith('cd')) {
+          setHistory(prev => [...prev, { type: 'sys', text: 'Command executed successfully.' }]);
+        }
+      } else {
+        // Fallback to AI Agent if system API call is null
+        const aiRes = await aiAgent.processQuery(trimmed, 'jarvis');
+        setHistory(prev => [...prev, { type: 'out', text: aiRes.reply }]);
+      }
     } catch (err) {
-      setHistory(prev => [...prev, { type: 'err', text: `Error processing command: ${err.message}` }]);
+      setIsExecuting(false);
+      setHistory(prev => [...prev, { type: 'err', text: `Execution Failure: ${err.message}` }]);
     }
   };
 
@@ -154,10 +219,10 @@ export default function TerminalModal({ isOpen, onClose, onOpenCalculator }) {
       padding: isMaximized ? '0' : '1.5rem'
     }}>
       <div className="hud-card" style={{
-        width: isMaximized ? '100vw' : '720px',
-        height: isMaximized ? '100vh' : '480px',
-        maxWidth: isMaximized ? '100vw' : '90vw',
-        maxHeight: isMaximized ? '100vh' : '85vh',
+        width: isMaximized ? '100vw' : '780px',
+        height: isMaximized ? '100vh' : '520px',
+        maxWidth: isMaximized ? '100vw' : '92vw',
+        maxHeight: isMaximized ? '100vh' : '88vh',
         background: 'rgba(2, 10, 22, 0.98)',
         border: '1px solid var(--cyan-bright)',
         boxShadow: '0 0 35px rgba(0, 240, 255, 0.35)',
@@ -170,13 +235,25 @@ export default function TerminalModal({ isOpen, onClose, onOpenCalculator }) {
         <div className="hud-card-header" style={{
           borderBottom: '1px solid rgba(0, 240, 255, 0.25)',
           padding: '0.6rem 1rem',
-          background: 'rgba(0, 240, 255, 0.05)'
+          background: 'rgba(0, 240, 255, 0.05)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
         }}>
           <span className="hud-card-title" style={{ fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Terminal size={16} color="#00f0ff" /> W.E.D.N.E.S.D.A.Y. HUD TERMINAL / CMD
+            <Terminal size={16} color="#00f0ff" /> W.E.D.N.E.S.D.A.Y. SYSTEM TERMINAL / CMD
           </span>
 
           <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+            <button
+              className="btn-hud"
+              onClick={handleLaunchNative}
+              style={{ fontSize: '0.68rem', padding: '0.2rem 0.6rem', display: 'flex', alignItems: 'center', gap: '0.3rem', color: '#00f0ff', borderColor: '#00f0ff' }}
+              title="Open Original Windows CMD Terminal Window on Desktop"
+            >
+              <ExternalLink size={12} /> Open Original CMD
+            </button>
+
             <button
               className="btn-hud"
               onClick={() => { soundFx.playClick(); setHistory([]); }}
@@ -213,7 +290,7 @@ export default function TerminalModal({ isOpen, onClose, onOpenCalculator }) {
             flex: 1,
             padding: '1rem',
             overflowY: 'auto',
-            fontFamily: 'Fira Code, monospace',
+            fontFamily: 'Fira Code, Consolas, monospace',
             fontSize: '0.85rem',
             lineHeight: '1.5',
             background: '#010610',
@@ -225,15 +302,27 @@ export default function TerminalModal({ isOpen, onClose, onOpenCalculator }) {
             <div
               key={idx}
               style={{
-                color: item.type === 'user' ? '#ffffff' : item.type === 'sys' ? '#00f0ff' : item.type === 'err' ? '#ff4d4d' : '#a0aec0',
-                marginBottom: '0.3rem',
+                color: item.type === 'user'
+                  ? '#ffffff'
+                  : item.type === 'sys'
+                    ? '#00f0ff'
+                    : item.type === 'err'
+                      ? '#ff5555'
+                      : '#cbd5e0',
+                marginBottom: '0.25rem',
                 wordBreak: 'break-word',
-                fontWeight: item.type === 'user' ? 'bold' : 'normal'
+                fontWeight: item.type === 'user' ? 'bold' : 'normal',
+                whiteSpace: 'pre-wrap'
               }}
             >
               {item.text}
             </div>
           ))}
+          {isExecuting && (
+            <div style={{ color: '#00f0ff', opacity: 0.8, fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <Cpu size={14} className="spin-anim" /> Executing command in system shell...
+            </div>
+          )}
           <div ref={terminalEndRef} />
         </div>
 
@@ -243,11 +332,22 @@ export default function TerminalModal({ isOpen, onClose, onOpenCalculator }) {
           alignItems: 'center',
           gap: '0.5rem',
           padding: '0.6rem 1rem',
-          background: 'rgba(0, 0, 0, 0.8)',
+          background: 'rgba(0, 0, 0, 0.85)',
           borderTop: '1px solid rgba(0, 240, 255, 0.2)'
         }}>
-          <span style={{ color: 'var(--cyan-bright)', fontFamily: 'Fira Code', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>
-            C:\WEDNESDAY\JARVIS&gt;
+          <span
+            style={{
+              color: 'var(--cyan-bright)',
+              fontFamily: 'Fira Code, Consolas, monospace',
+              fontSize: '0.8rem',
+              whiteSpace: 'nowrap',
+              maxWidth: '320px',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
+            }}
+            title={currentCwd}
+          >
+            {currentCwd}&gt;
           </span>
           <input
             ref={inputRef}
@@ -255,20 +355,22 @@ export default function TerminalModal({ isOpen, onClose, onOpenCalculator }) {
             value={inputVal}
             onChange={(e) => setInputVal(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Type command or query..."
+            disabled={isExecuting}
+            placeholder="Type command (python -V, dir, npm...) or type 'cmd' for original terminal..."
             style={{
               flex: 1,
               background: 'transparent',
               border: 'none',
               outline: 'none',
               color: '#ffffff',
-              fontFamily: 'Fira Code',
+              fontFamily: 'Fira Code, Consolas, monospace',
               fontSize: '0.85rem'
             }}
           />
           <button
             className="btn-hud"
             onClick={() => handleCommand(inputVal)}
+            disabled={isExecuting}
             style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem' }}
           >
             <Send size={12} /> Run

@@ -102,6 +102,7 @@ export default function SettingsModal({ isOpen, onClose }) {
               style={{ width: '100%' }}
             >
               <option value="local">W.E.D.N.E.S.D.A.Y. Autonomous Core (Free - No API Key Needed)</option>
+              <option value="groq">Groq Cloud API (Ultra-Fast - Llama 3.3 70B / DeepSeek)</option>
               <option value="gemini">Google Gemini API (Free Tier Keys)</option>
               <option value="openai">OpenAI (ChatGPT / GPT-4o)</option>
               <option value="ollama">Local Ollama LLM (http://localhost:11434)</option>
@@ -111,17 +112,22 @@ export default function SettingsModal({ isOpen, onClose }) {
           {provider !== 'local' && provider !== 'ollama' && (
             <div>
               <label style={{ fontSize: '0.8rem', color: 'var(--cyan-bright)', fontFamily: 'Orbitron', display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.4rem' }}>
-                <Key size={14} /> {provider === 'gemini' ? 'Google Gemini API Key' : 'OpenAI API Key'}
+                <Key size={14} /> {provider === 'groq' ? 'Groq Cloud API Key' : provider === 'gemini' ? 'Google Gemini API Key' : 'OpenAI API Key'}
               </label>
               <input
                 type="password"
                 className="input-hud"
-                placeholder={provider === 'gemini' ? 'Paste Gemini API Key (AIzaSy...)' : 'Paste OpenAI API Key (sk-...)'}
+                placeholder={provider === 'groq' ? 'Paste Groq API Key (gsk_...)' : provider === 'gemini' ? 'Paste Gemini API Key (AIzaSy...)' : 'Paste OpenAI API Key (sk-...)'}
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
               />
-              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.3rem' }}>
-                Stored locally in browser memory.
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.3rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>Stored locally in browser memory.</span>
+                {provider === 'groq' && (
+                  <a href="https://console.groq.com/keys" target="_blank" rel="noreferrer" style={{ color: 'var(--cyan-bright)', textDecoration: 'underline' }}>
+                    Get Free Groq Key
+                  </a>
+                )}
               </div>
             </div>
           )}

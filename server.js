@@ -140,15 +140,56 @@ app.post('/api/system/open-url', (req, res) => {
 });
 
 app.post('/api/system/exec', (req, res) => {
-  const { command } = req.body;
+  const { command, cwd } = req.body;
   if (!command) return res.status(400).json({ error: 'command is required' });
 
-  exec(command, { cwd: os.homedir() }, (error, stdout, stderr) => {
+  let currentCwd = (cwd && fs.existsSync(cwd)) ? cwd : process.cwd();
+  const trimmed = command.trim();
+
+  // Handle cd command specifically for stateful directory navigation
+  if (trimmed.toLowerCase() === 'cd' || trimmed.toLowerCase() === 'cd.' || trimmed.toLowerCase() === 'pwd') {
+    return res.json({
+      success: true,
+      stdout: currentCwd + '\n',
+      stderr: '',
+      cwd: currentCwd
+    });
+  }
+
+  if (trimmed.toLowerCase().startsWith('cd ') || trimmed.toLowerCase().startsWith('cd\\') || trimmed.toLowerCase().startsWith('cd/')) {
+    let targetPath = trimmed.substring(2).trim();
+    targetPath = targetPath.replace(/^["']|["']$/g, '');
+    
+    if (targetPath.toLowerCase().startsWith('/d ')) {
+      targetPath = targetPath.substring(3).trim();
+    }
+
+    const resolved = path.resolve(currentCwd, targetPath);
+    if (fs.existsSync(resolved) && fs.statSync(resolved).isDirectory()) {
+      return res.json({
+        success: true,
+        stdout: '',
+        stderr: '',
+        cwd: resolved
+      });
+    } else {
+      return res.json({
+        success: false,
+        stdout: '',
+        stderr: `The system cannot find the path specified: ${targetPath}\n`,
+        cwd: currentCwd
+      });
+    }
+  }
+
+  // Execute general system shell command in currentCwd
+  exec(command, { cwd: currentCwd, shell: true, maxBuffer: 10 * 1024 * 1024 }, (error, stdout, stderr) => {
     res.json({
       success: !error,
       stdout: stdout || '',
-      stderr: stderr || '',
-      error: error ? error.message : null
+      stderr: stderr || (error ? error.message : ''),
+      error: error ? error.message : null,
+      cwd: currentCwd
     });
   });
 });
@@ -279,8 +320,9 @@ const PERSONA_PROMPTS = {
 
 app.post('/api/ai/chat', async (req, res) => {
   const { prompt, personaMode = 'jarvis', provider = 'jarvis' } = req.body;
+  let groqKey = (req.body.apiKey && req.body.apiKey.startsWith('gsk_')) ? req.body.apiKey.trim() : (process.env.GROQ_API_KEY || '').trim();
   let openAiKey = (req.body.apiKey && req.body.apiKey.startsWith('sk-')) ? req.body.apiKey.trim() : (process.env.OPENAI_API_KEY || '').trim();
-  let geminiKey = (req.body.apiKey && !req.body.apiKey.startsWith('sk-') && !req.body.apiKey.startsWith('gemini-')) ? req.body.apiKey.trim() : (process.env.GEMINI_API_KEY || '').trim();
+  let geminiKey = (req.body.apiKey && !req.body.apiKey.startsWith('sk-') && !req.body.apiKey.startsWith('gsk_') && !req.body.apiKey.startsWith('gemini-')) ? req.body.apiKey.trim() : (process.env.GEMINI_API_KEY || '').trim();
 
   let configuredModel = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
   if (geminiKey.startsWith('gemini-')) {
@@ -292,6 +334,37 @@ app.post('/api/ai/chat', async (req, res) => {
   if (!prompt) return res.status(400).json({ error: 'prompt is required' });
 
   const activeSystemPrompt = PERSONA_PROMPTS[personaMode] || PERSONA_PROMPTS.jarvis;
+
+  // Tier 0: Groq Cloud Ultra-Fast AI API Key (Llama-3.3-70B / DeepSeek)
+  if ((provider === 'groq' || groqKey) && groqKey && groqKey.length > 5) {
+    try {
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${groqKey}`
+        },
+        body: JSON.stringify({
+          model: req.body.groqModel || 'llama-3.3-70b-versatile',
+          messages: [
+            { role: 'system', content: activeSystemPrompt },
+            { role: 'user', content: prompt }
+          ]
+        })
+      });
+      const data = await response.json();
+      if (response.ok && data.choices && data.choices[0]?.message?.content) {
+        return res.json({ success: true, reply: data.choices[0].message.content });
+      } else if (data.error) {
+        console.error('Groq Error:', data.error);
+        if (provider === 'groq') {
+          return res.json({ success: false, error: `Groq Error: ${data.error.message}` });
+        }
+      }
+    } catch (err) {
+      console.error('Groq fetch exception:', err);
+    }
+  }
 
   // Tier 1: OpenAI API Key
   if ((provider === 'openai' || (openAiKey && provider !== 'gemini')) && openAiKey && openAiKey.length > 5) {

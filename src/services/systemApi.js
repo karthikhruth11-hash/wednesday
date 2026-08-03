@@ -139,11 +139,11 @@ export const systemApi = {
     };
   },
 
-  async execCommand(command) {
+  async execCommand(command, cwd = '') {
     const backendRes = await fetchWithFallback('/system/exec', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ command })
+      body: JSON.stringify({ command, cwd })
     });
     if (backendRes) return backendRes;
 
@@ -248,9 +248,35 @@ export const systemApi = {
     // Client-Side High-Speed Autonomous AI Fallback (Zero Backend Requirement!)
     const activeSystemPrompt = PERSONA_PROMPTS[personaMode] || PERSONA_PROMPTS.jarvis;
 
-    // 1. Direct OpenAI / Gemini Client Key if provided
+    // 1. Direct Groq / OpenAI / Gemini Client Key if provided
+    let groqKey = (apiKey && apiKey.startsWith('gsk_')) ? apiKey.trim() : '';
     let openAiKey = (apiKey && apiKey.startsWith('sk-')) ? apiKey.trim() : '';
-    let geminiKey = (apiKey && !apiKey.startsWith('sk-')) ? apiKey.trim() : '';
+    let geminiKey = (apiKey && !apiKey.startsWith('sk-') && !apiKey.startsWith('gsk_')) ? apiKey.trim() : '';
+
+    if (groqKey) {
+      try {
+        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${groqKey}`
+          },
+          body: JSON.stringify({
+            model: 'llama-3.3-70b-versatile',
+            messages: [
+              { role: 'system', content: activeSystemPrompt },
+              { role: 'user', content: prompt }
+            ]
+          })
+        });
+        const data = await response.json();
+        if (data.choices && data.choices[0]?.message?.content) {
+          return { success: true, reply: data.choices[0].message.content };
+        }
+      } catch {
+        // continue
+      }
+    }
 
     if (openAiKey) {
       try {
