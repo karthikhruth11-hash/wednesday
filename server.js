@@ -422,12 +422,21 @@ app.post('/api/ai/chat', async (req, res) => {
     }
   }
 
-  // Tier 3: Free Live DeepSeek-R1 / Llama-3.3-70B / Mistral High-Speed Free AI Engine (Zero API Key Required!)
-  const freeModels = ['mistral', 'openai', 'qwen-coder'];
+  // Tier 3: Free Live DeepSeek-R1 / Llama-3.3-70B / Mistral High-Speed Free AI Engine
+  const freeModels = ['openai', 'mistral', 'qwen-coder', 'llama'];
   for (const model of freeModels) {
     try {
-      const fetchUrl = `https://text.pollinations.ai/${encodeURIComponent(prompt)}?system=${encodeURIComponent(activeSystemPrompt)}&model=${model}`;
-      const response = await fetch(fetchUrl);
+      const response = await fetch('https://text.pollinations.ai/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [
+            { role: 'system', content: activeSystemPrompt },
+            { role: 'user', content: prompt }
+          ],
+          model: model
+        })
+      });
       if (response.ok) {
         const textReply = await response.text();
         if (textReply && textReply.trim().length > 10 && !textReply.includes('<html>') && !textReply.includes('PAYMENT_REQUIRED')) {
@@ -435,6 +444,29 @@ app.post('/api/ai/chat', async (req, res) => {
         }
       }
     } catch {
+      // try next model
+    }
+  }
+
+  // Tier 3b: Wikipedia REST API Summary Lookup
+  const cleanTopic = prompt
+    .replace(/^(what\s+is|what\s+are|tell\s+me\s+about|who\s+is|who\s+was|explain|describe|define|where\s+is|how\s+does|how\s+to)\s+/i, '')
+    .replace(/\?$/g, '')
+    .trim();
+
+  if (cleanTopic.length >= 2) {
+    try {
+      const wikiUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(cleanTopic)}`;
+      const wikiRes = await fetch(wikiUrl);
+      if (wikiRes.ok) {
+        const wikiData = await wikiRes.json();
+        if (wikiData && wikiData.extract && wikiData.type !== 'disambiguation') {
+          const reply = `**${wikiData.title}**\n\n${wikiData.extract}${wikiData.description ? `\n\n*${wikiData.description}*` : ''}`;
+          return res.json({ success: true, reply });
+        }
+      }
+    } catch {
+      // fallback
     }
   }
 
