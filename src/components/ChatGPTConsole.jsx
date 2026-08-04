@@ -23,11 +23,14 @@ function renderFormattedMessage(text) {
           style={{
             marginTop: '0.8rem',
             marginBottom: '0.8rem',
-            borderRadius: '12px',
+            maxWidth: '480px',
+            marginLeft: 'auto',
+            marginRight: 'auto',
+            borderRadius: '14px',
             overflow: 'hidden',
             border: '1px solid rgba(0, 240, 255, 0.4)',
             boxShadow: '0 4px 20px rgba(0, 240, 255, 0.25)',
-            background: 'rgba(6, 18, 36, 0.9)'
+            background: 'rgba(2, 8, 20, 0.95)'
           }}
         >
           <img
@@ -36,21 +39,25 @@ function renderFormattedMessage(text) {
             loading="lazy"
             style={{
               width: '100%',
-              maxHeight: '300px',
-              objectFit: 'cover',
-              display: 'block'
+              height: 'auto',
+              maxHeight: '280px',
+              objectFit: 'contain',
+              display: 'block',
+              margin: '0 auto',
+              background: '#020612'
             }}
           />
           <div
             style={{
               padding: '0.4rem 0.8rem',
-              background: 'rgba(0, 240, 255, 0.08)',
+              background: 'rgba(0, 240, 255, 0.1)',
               color: '#00f0ff',
               fontSize: '0.72rem',
               fontFamily: 'Orbitron, sans-serif',
-              borderTop: '1px solid rgba(0, 240, 255, 0.2)',
+              borderTop: '1px solid rgba(0, 240, 255, 0.25)',
               display: 'flex',
               alignItems: 'center',
+              justify: 'center',
               gap: '0.4rem'
             }}
           >

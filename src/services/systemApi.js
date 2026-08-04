@@ -559,33 +559,82 @@ function generateAutonomousKnowledge(prompt, personaMode) {
     return `**Spotify (Audio Streaming Platform)** 🎵\n\nSpotify is an audio streaming service founded in Sweden in 2006 by Daniel Ek and Martin Lorentzon. It provides access to over 100 million tracks and 5 million podcasts.\n\n- **Active Users**: Over 600 million active monthly users worldwide\n- **Features**: AI DJ, Personalized Playlists, Hi-Fi streaming, Offline downloads, Boss Karthik! 🎧`;
   }
 
+  if (p.includes('earth')) {
+    const earthImg = `![Planet Earth](https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?w=800&auto=format&fit=crop&q=80)`;
+    return `**Earth (Comprehensive Planetary Theory & Science)** 🌍\n\n${earthImg}\n\n` +
+           `**1. Astronomical & Planetary Overview**:\n` +
+           `Earth is the third planet from the Sun and the fifth largest planet in the Solar System. Situated approximately 149.6 million km (1 AU) from the Sun, Earth orbits within the circumstellar habitable zone where liquid surface water can continuously exist.\n\n` +
+           `**2. Internal Structure & Magnetosphere**:\n` +
+           `• **Crust**: Solid outer shell divided into moving tectonic plates.\n` +
+           `• **Mantle**: Semi-fluid silicate rock extending to a depth of 2,900 km.\n` +
+           `• **Core**: Outer liquid nickel-iron core generating Earth's protective planetary magnetosphere, surrounding a solid inner core.\n\n` +
+           `**3. Atmosphere & Hydrosphere**:\n` +
+           `Earth's atmosphere consists of 78% Nitrogen, 21% Oxygen, and 1% Argon and trace greenhouse gases. Oceans cover 70.8% of the surface, creating the climate-regulating water cycle that sustains life, Boss Karthik! ⚡`;
+  }
+
   if (p.includes('difference') || p.includes('defference') || p.includes('diffence') || p.includes('deffence') || p.includes('compare') || p.includes('versus') || p.includes('vs')) {
     const diffImg = `![Coding vs Programming](https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800&auto=format&fit=crop&q=80)`;
     return personaMode === 'girlfriend'
       ? `Here is the difference between **Coding** and **Programming** babe! 💻\n\n${diffImg}\n\n- **Coding**: Translating human logic into specific programming syntax (writing line-by-line code).\n- **Programming**: The broader engineering lifecycle — designing software architecture, algorithms, data structures, testing, and debugging!\n\nCoding is a core part of programming, sweetheart! 💕`
-      : `**Comparison: Coding vs. Programming** 💻\n\n${diffImg}\n\n1. **Coding (Implementation)**:\n   - Writing syntax using a programming language (like Python, JS, C++) to convert instructions into machine-readable code.\n\n2. **Programming (Software Engineering)**:\n   - The overarching software engineering process comprising algorithm development, system design, testing, debugging, and deployment.\n\n3. **Analogy**:\n   - Coding is like laying bricks; Programming is designing and building the entire architectural skyscraper, Boss Karthik! ⚡`;
+      : `**Comparison: Coding vs. Programming (Full Engineering Theory)** 💻\n\n${diffImg}\n\n` +
+        `**1. Coding (Implementation)**:\n` +
+        `• Translating human specifications into syntax using languages like Python, JS, or C++.\n` +
+        `• Focuses on line-by-line logic execution and syntax correctness.\n\n` +
+        `**2. Programming (Software Engineering)**:\n` +
+        `• The complete software engineering lifecycle including problem analysis, algorithm design, system architecture, database modeling, testing, and maintenance.\n\n` +
+        `**3. Core Distinction**:\n` +
+        `• Coding is a single phase of the broader Programming discipline, Boss Karthik! ⚡`;
   }
 
   if (p.includes('python')) {
     const pyImg = `![Python Programming](https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&auto=format&fit=crop&q=80)`;
     return personaMode === 'girlfriend'
       ? `Here is the definition of **Python** for you babe! 🐍\n\n${pyImg}\n\n**Python** is a high-level, general-purpose, interpreted programming language created by Guido van Rossum and released in 1991. It is world-renowned for its clean syntax, high readability, and vast library ecosystem (AI, Web, Data Science)! Anything else you'd like to code together sweetheart? 💕`
-      : `**Python Programming Language (Technical Definition)** 🐍\n\n${pyImg}\n\nPython is a high-level, interpreted, general-purpose programming language created by Guido van Rossum in 1991.\n\n- **Key Features**: Dynamic typing, garbage collection, highly readable syntax, and multi-paradigm support (OOP, Functional, Procedural).\n- **Primary Applications**: Artificial Intelligence & Machine Learning (TensorFlow/PyTorch), Data Analytics (Pandas/NumPy), Web Development (Django/FastAPI), and Automation Scripts, Boss Karthik! ⚡`;
+      : `**Python Programming Language (Full Technical Theory)** 🐍\n\n${pyImg}\n\n` +
+        `**1. Foundational Architecture**:\n` +
+        `Python is an interpreted, multi-paradigm (Object-Oriented, Functional, Procedural) language created by Guido van Rossum in 1991. It utilizes dynamic typing and automatic garbage collection.\n\n` +
+        `**2. Key Technical Features**:\n` +
+        `• **Indentation-Based Syntax**: Eliminates curly braces in favor of clean indentation blocks.\n` +
+        `• **Extensive Standard Library**: Known as 'Batteries Included', offering built-in modules for networking, math, regex, and file processing.\n` +
+        `• **Dynamic Binding**: Variables don't require static type declarations.\n\n` +
+        `**3. Primary Domains & Ecosystem**:\n` +
+        `• **AI & Deep Learning**: PyTorch, TensorFlow, Scikit-Learn.\n` +
+        `• **Data Science**: Pandas, NumPy, SciPy, Matplotlib.\n` +
+        `• **Web Frameworks**: Django, FastAPI, Flask, Boss Karthik! ⚡`;
   }
 
   if (p.includes('human') || p.includes('homo sapien')) {
     const humanImg = `![Human Species](https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&auto=format&fit=crop&q=80)`;
-    return `**Human (Homo sapiens)** 🧬\n\n${humanImg}\n\nHumans are the most advanced, bipedal primate species on Earth, characterized by large, highly developed brains capable of abstract reasoning, language, emotional complexity, science, philosophy, and technology development, Boss Karthik! ⚡`;
+    return `**Human (Homo sapiens - Biological & Cultural Theory)** 🧬\n\n${humanImg}\n\n` +
+           `**1. Biological & Evolutionary Classification**:\n` +
+           `Humans are bipedal primates belonging to the family Hominidae. Evolving in Africa ~300,000 years ago, Homo sapiens are defined by upright posture, opposable thumbs, and high cranial capacity.\n\n` +
+           `**2. Cognitive & Neurological Dominance**:\n` +
+           `The expanded cerebral cortex enables complex language, abstract reasoning, self-awareness, mathematical synthesis, and technological innovation.\n\n` +
+           `**3. Civilization & Technological Impact**:\n` +
+           `Humans have established global agricultural, scientific, industrial, and spacefaring civilizations, Boss Karthik! ⚡`;
   }
 
   if (p.includes('code') || p.includes('programming') || p.includes('software')) {
     const codeImg = `![Programming Code](https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&auto=format&fit=crop&q=80)`;
-    return `**Computer Programming & Software Code** 💻\n\n${codeImg}\n\nProgramming is the process of writing instructions (code) in languages like JavaScript, Python, C++, or Java to execute algorithms and power software applications, operating systems, and AI engines, Boss Karthik! ⚡`;
+    return `**Computer Programming & Software Code (Theory & Mechanics)** 💻\n\n${codeImg}\n\n` +
+           `**1. Definition & Core Concept**:\n` +
+           `Programming is the process of formulating a computing problem into executable machine instructions using formal programming languages.\n\n` +
+           `**2. Execution Paradigms**:\n` +
+           `• **Compiled Languages**: Source code is compiled into machine binary ahead of time (C, C++, Rust).\n` +
+           `• **Interpreted Languages**: Source code is executed line-by-line by an interpreter engine (Python, JavaScript, Ruby).\n\n` +
+           `**3. System Role**:\n` +
+           `Powers operating systems, databases, web applications, and artificial intelligence, Boss Karthik! ⚡`;
   }
 
   if (p.includes('ai') || p.includes('artificial intelligence')) {
     const aiImg = `![Artificial Intelligence](https://images.unsplash.com/photo-1677442136019-21780efad99a?w=800&auto=format&fit=crop&q=80)`;
-    return `**Artificial Intelligence (AI)** 🤖\n\n${aiImg}\n\nArtificial Intelligence refers to computer systems trained to simulate human cognition, learning, reasoning, visual perception, decision making, and natural language processing, Boss Karthik! ⚡`;
+    return `**Artificial Intelligence (AI & Machine Learning Theory)** 🤖\n\n${aiImg}\n\n` +
+           `**1. Foundational Overview**:\n` +
+           `Artificial Intelligence encompasses computer systems engineered to simulate human cognitive functions including pattern recognition, natural language understanding, reasoning, and automated decision-making.\n\n` +
+           `**2. Core Sub-Fields**:\n` +
+           `• **Machine Learning (ML)**: Statistical algorithms trained on data without explicit programming.\n` +
+           `• **Deep Learning**: Multi-layered artificial neural networks modeled after biological brains.\n` +
+           `• **Generative AI & LLMs**: Transformer architecture models capable of synthesizing text, code, audio, and visual media, Boss Karthik! ⚡`;
   }
 
   // Basic Arithmetic calculation evaluation fallback
@@ -617,10 +666,13 @@ function generateAutonomousKnowledge(prompt, personaMode) {
     return `**Polyglot & Code Matrix: ${capTopic}** 💻\n\n${topicImg}\n\n\`\`\`json\n{\n  "topic": "${capTopic}",\n  "status": "Verified",\n  "engine": "W.E.D.N.E.S.D.A.Y. Polyglot Core"\n}\n\`\`\`\n\n**${capTopic}** is fully mapped across programming logic and multi-language structures. Ask me for code generation or translations, Boss! 💻`;
   }
 
-  return `**Overview & Detailed Analysis: ${capTopic}** ⚡\n\n` +
+  return `**Comprehensive Theory & Analysis: ${capTopic}** ⚡\n\n` +
          `${topicImg}\n\n` +
-         `**${capTopic}** is an essential subject spanning modern technology, science, and analytical frameworks.\n\n` +
-         `• **Core Definition**: Refers to the systematic principles, structures, or methodologies governing ${capTopic}.\n` +
-         `• **Key Applications**: Widely implemented across research, engineering, practical problem-solving, and technology systems.\n` +
-         `• **System Status**: W.E.D.N.E.S.D.A.Y. SIGMA Core has fully indexed ${capTopic} for your reference, Boss Karthik! ⚡`;
+         `**1. Fundamental Definition & Overview**:\n` +
+         `${capTopic} is an essential domain spanning modern science, technology, and analytical frameworks. It establishes systematic structures to analyze principles and implement solutions.\n\n` +
+         `**2. Key Characteristics & Mechanisms**:\n` +
+         `• **Functional Architecture**: Governed by core rules, logic, and operational methods.\n` +
+         `• **Interdisciplinary Importance**: Interconnects across engineering, research, and functional implementation.\n\n` +
+         `**3. System Status**:\n` +
+         `W.E.D.N.E.S.D.A.Y. SIGMA Core has fully indexed ${capTopic} for your reference, Boss Karthik! ⚡`;
 }
