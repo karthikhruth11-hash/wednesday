@@ -419,6 +419,19 @@ export const systemApi = {
       'water': 'Water'
     };
 
+    const abstractWords = [
+      'difference', 'defference', 'diffence', 'deffence', 'deference',
+      'definition', 'defenation', 'meaning', 'overview', 'comparison',
+      'versus', 'vs', 'tell me difference', 'tell me defference'
+    ];
+
+    if (abstractWords.includes(cleanTopic)) {
+      return {
+        success: true,
+        reply: generateAutonomousKnowledge(prompt, personaMode)
+      };
+    }
+
     const wikiTarget = techDisambiguationMap[cleanTopic] || encodeURIComponent(cleanTopic);
 
     if (cleanTopic.length >= 2) {
@@ -540,6 +553,12 @@ function generateAutonomousKnowledge(prompt, personaMode) {
 
   if (p.includes('spotify')) {
     return `**Spotify (Audio Streaming Platform)** 🎵\n\nSpotify is an audio streaming service founded in Sweden in 2006 by Daniel Ek and Martin Lorentzon. It provides access to over 100 million tracks and 5 million podcasts.\n\n- **Active Users**: Over 600 million active monthly users worldwide\n- **Features**: AI DJ, Personalized Playlists, Hi-Fi streaming, Offline downloads, Boss Karthik! 🎧`;
+  }
+
+  if (p.includes('difference') || p.includes('defference') || p.includes('diffence') || p.includes('deffence') || p.includes('compare') || p.includes('versus') || p.includes('vs')) {
+    return personaMode === 'girlfriend'
+      ? `Here is the difference between **Coding** and **Programming** babe! 💻\n\n- **Coding**: Translating human logic into specific programming syntax (writing line-by-line code).\n- **Programming**: The broader engineering lifecycle — designing software architecture, algorithms, data structures, testing, and debugging!\n\nCoding is a core part of programming, sweetheart! 💕`
+      : `**Comparison: Coding vs. Programming** 💻\n\n1. **Coding (Implementation)**:\n   - Writing syntax using a programming language (like Python, JS, C++) to convert instructions into machine-readable code.\n\n2. **Programming (Software Engineering)**:\n   - The overarching software engineering process comprising algorithm development, system design, testing, debugging, and deployment.\n\n3. **Analogy**:\n   - Coding is like laying bricks; Programming is designing and building the entire architectural skyscraper, Boss Karthik! ⚡`;
   }
 
   if (p.includes('python')) {
