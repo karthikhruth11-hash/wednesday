@@ -603,15 +603,26 @@ function generateAutonomousKnowledge(prompt, personaMode) {
         `• **Web Frameworks**: Django, FastAPI, Flask, Boss Karthik! ⚡`;
   }
 
-  if (p.includes('human') || p.includes('homo sapien')) {
-    const humanImg = `![Human Species](https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&auto=format&fit=crop&q=80)`;
-    return `**Human (Homo sapiens - Biological & Cultural Theory)** 🧬\n\n${humanImg}\n\n` +
-           `**1. Biological & Evolutionary Classification**:\n` +
-           `Humans are bipedal primates belonging to the family Hominidae. Evolving in Africa ~300,000 years ago, Homo sapiens are defined by upright posture, opposable thumbs, and high cranial capacity.\n\n` +
-           `**2. Cognitive & Neurological Dominance**:\n` +
-           `The expanded cerebral cortex enables complex language, abstract reasoning, self-awareness, mathematical synthesis, and technological innovation.\n\n` +
-           `**3. Civilization & Technological Impact**:\n` +
-           `Humans have established global agricultural, scientific, industrial, and spacefaring civilizations, Boss Karthik! ⚡`;
+  if (p.includes('human') || p.includes('homo sapien') || p.includes('evolution') || p.includes('starting to now') || p.includes('evolution')) {
+    const humanImg = `![Human Evolution Matrix](https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&auto=format&fit=crop&q=80)`;
+    return `**Comprehensive Master Theory: Human Evolution & History (Origin to Present)** 🧬\n\n${humanImg}\n\n` +
+           `**Phase 1: Deep Origins & Pre-Human Hominids (7 Million – 2 Million Years Ago)**\n` +
+           `• **Common Ancestry (~6–7 Mya)**: Hominins diverged from our last common ancestor with chimpanzees in Africa (*Sahelanthropus tchadensis* & *Ardipithecus ramidus*).\n` +
+           `• **Bipedal Revolution (*Australopithecus afarensis*, ~3.9–2.9 Mya)**: Famous fossil 'Lucy' demonstrated full bipedal walking while retaining climbing adaptations, freeing front limbs for carrying objects and tools.\n\n` +
+           `**Phase 2: Emergence of Genus *Homo* & Tool Mastership (2.8 Mya – 300,000 Years Ago)**\n` +
+           `• ***Homo habilis* ('Handy Man', ~2.8 Mya)**: Developed Oldowan stone tool technology to fracture bones and extract bone marrow.\n` +
+           `• ***Homo erectus* (~1.9 Mya)**: First hominin to control fire, cook protein (triggering rapid brain encephalization), and migrate out of Africa across Eurasia.\n` +
+           `• ***Homo neanderthalensis* & Archaic Humans**: Adapted to colder European climates, developed Mousterian toolkits, symbolic burial practices, and vocal capabilities.\n\n` +
+           `**Phase 3: Emergence of *Homo sapiens* & Cognitive Revolution (~300,000 – 70,000 Years Ago)**\n` +
+           `• **Anatomical Origin**: *Homo sapiens* emerged in Africa (~300,000 YA) with rounded skulls, distinct chins, and lighter skeletons.\n` +
+           `• **The Cognitive Revolution (~70,000 YA)**: Neural wiring mutations unlocked complex abstract language, symbolic art, mythologies, storytelling, and large-scale social cooperation beyond familial tribes.\n\n` +
+           `**Phase 4: Global Migration & Interbreeding (~60,000 – 12,000 Years Ago)**\n` +
+           `• Out-of-Africa expansions populated Asia, Australia, Europe, and the Americas. *Homo sapiens* interbred with Neanderthals and Denisovans, leaving 1–3% Neanderthal DNA in non-African populations today.\n\n` +
+           `**Phase 5: Agricultural Revolution & Civilization (~12,000 Years Ago – 1700s)**\n` +
+           `• Transitioned from nomadic hunter-gatherers to settled agriculture in the Fertile Crescent. Domesticated wheat, barley, and animals, leading to permanent cities, written languages (cuneiform/hieroglyphs), governance, legal systems, and empires.\n\n` +
+           `**Phase 6: Scientific, Industrial & Digital/AI Era (1700s – Present Day)**\n` +
+           `• **Industrial Revolution**: Harnessing steam, electricity, and combustion engines.\n` +
+           `• **Digital & Space Era**: Semiconductor microprocessors, global internet, spaceflight, genomics, and Artificial Intelligence, Boss Karthik! ⚡`;
   }
 
   if (p.includes('code') || p.includes('programming') || p.includes('software')) {

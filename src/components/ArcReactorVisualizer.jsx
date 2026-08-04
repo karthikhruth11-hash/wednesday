@@ -1,10 +1,19 @@
 import React, { useEffect, useRef } from 'react';
 import { Sparkles } from 'lucide-react';
+import galaxyImgUrl from '../assets/galaxy-core.jpg';
 
 export default function ArcReactorVisualizer({ state, activeGesture, handPos }) {
   const canvasRef = useRef(null);
+  const galaxyImgRef = useRef(null);
 
   useEffect(() => {
+    // Preload Real Galaxy Core Image via bundled asset URL
+    const img = new Image();
+    img.src = galaxyImgUrl;
+    img.onload = () => {
+      galaxyImgRef.current = img;
+    };
+
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -17,11 +26,11 @@ export default function ArcReactorVisualizer({ state, activeGesture, handPos }) 
     let waveRadius = 0;
 
     // Interactive Plasma Particle System
-    const particles = Array.from({ length: 70 }, () => ({
+    const particles = Array.from({ length: 80 }, () => ({
       angle: Math.random() * Math.PI * 2,
       speed: 0.6 + Math.random() * 2.0,
-      dist: 15 + Math.random() * 130,
-      size: 1.2 + Math.random() * 2.8,
+      dist: 15 + Math.random() * 140,
+      size: 1.2 + Math.random() * 3.0,
       alpha: 0.3 + Math.random() * 0.7
     }));
 
@@ -63,18 +72,18 @@ export default function ArcReactorVisualizer({ state, activeGesture, handPos }) 
       // Dynamic Theme Color Palette & Rotation Speeds based on state
       let speedMult = 1.0;
       let primaryColor = '#00f0ff'; // Stark Neon Cyan
-      let secondaryColor = '#0066ff'; // Electric Blue
+      let secondaryColor = '#ff6b00'; // Cosmic Fiery Amber
       let accentGlow = 'rgba(0, 240, 255, 0.4)';
 
       if (state === 'listening') {
         speedMult = 2.2;
         primaryColor = '#00ff88'; // Matrix Emerald Green
-        secondaryColor = '#00cc44';
+        secondaryColor = '#ffaa00';
         accentGlow = 'rgba(0, 255, 136, 0.4)';
       } else if (state === 'processing') {
         speedMult = 3.5;
         primaryColor = '#a855f7'; // Quantum Deep Purple
-        secondaryColor = '#e040fb';
+        secondaryColor = '#ff0055';
         accentGlow = 'rgba(168, 85, 247, 0.5)';
       } else if (state === 'speaking') {
         speedMult = 2.0;
@@ -85,7 +94,7 @@ export default function ArcReactorVisualizer({ state, activeGesture, handPos }) 
 
       rOuter += 0.007 * speedMult;
       rInner -= 0.014 * speedMult;
-      rCore += 0.022 * speedMult;
+      rCore += 0.018 * speedMult;
       pulsePhase += 0.045 * speedMult;
       waveRadius = (waveRadius + 1.8 * speedMult) % 190;
 
@@ -94,7 +103,7 @@ export default function ArcReactorVisualizer({ state, activeGesture, handPos }) 
       // --- 1. SWIRLING PLASMA SPARK PARTICLES ---
       particles.forEach(p => {
         p.dist += p.speed * speedMult * 0.45;
-        if (p.dist > 155 * scale) {
+        if (p.dist > 165 * scale) {
           p.dist = (15 + Math.random() * 20) * scale;
           p.angle = Math.random() * Math.PI * 2;
         }
@@ -102,10 +111,10 @@ export default function ArcReactorVisualizer({ state, activeGesture, handPos }) 
         const px = centerX + Math.cos(p.angle) * p.dist;
         const py = centerY + Math.sin(p.angle) * p.dist;
 
-        ctx.fillStyle = primaryColor;
+        ctx.fillStyle = p.dist < 80 ? secondaryColor : primaryColor;
         ctx.shadowColor = primaryColor;
         ctx.shadowBlur = 10;
-        ctx.globalAlpha = p.alpha * Math.sin((p.dist / (155 * scale)) * Math.PI);
+        ctx.globalAlpha = p.alpha * Math.sin((p.dist / (165 * scale)) * Math.PI);
         ctx.beginPath();
         ctx.arc(px, py, p.size * scale, 0, Math.PI * 2);
         ctx.fill();
@@ -215,54 +224,106 @@ export default function ArcReactorVisualizer({ state, activeGesture, handPos }) 
       });
       ctx.restore();
 
-      // --- 6. CENTRAL QUANTUM PLASMA REACTOR CORE ---
+      // --- 6. REAL GALAXY REACTOR HEART ANIMATION ---
       ctx.save();
       ctx.translate(centerX, centerY);
 
-      const corePulse = (44 + Math.sin(pulsePhase) * 5) * scale;
+      const baseCoreRadius = 66 * scale;
+      const corePulse = baseCoreRadius + Math.sin(pulsePhase) * (4 * scale);
 
-      // Multi-stop Radiant Gradient
-      const radGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, corePulse * 2.0);
+      // Multi-stop Ambient Radiant Gradient backdrop
+      const radGrad = ctx.createRadialGradient(0, 0, baseCoreRadius * 0.2, 0, 0, corePulse * 2.2);
       radGrad.addColorStop(0, '#ffffff');
-      radGrad.addColorStop(0.25, primaryColor);
-      radGrad.addColorStop(0.6, secondaryColor);
+      radGrad.addColorStop(0.3, primaryColor);
+      radGrad.addColorStop(0.65, secondaryColor);
       radGrad.addColorStop(0.88, accentGlow);
       radGrad.addColorStop(1, 'transparent');
 
       ctx.fillStyle = radGrad;
       ctx.beginPath();
-      ctx.arc(0, 0, corePulse * 2.0, 0, Math.PI * 2);
+      ctx.arc(0, 0, corePulse * 2.2, 0, Math.PI * 2);
       ctx.fill();
 
-      // Core Glass Lens Ring
+      // Render Real Galaxy Image as Core Heart if loaded
+      if (galaxyImgRef.current && galaxyImgRef.current.complete) {
+        ctx.save();
+
+        // Rotate primary galaxy spiral structure
+        ctx.rotate(rCore * 0.5);
+
+        // Smooth Circular Clip for Galaxy Core
+        ctx.beginPath();
+        ctx.arc(0, 0, corePulse, 0, Math.PI * 2);
+        ctx.clip();
+
+        // Draw Real Galaxy Image centered
+        const imgSize = corePulse * 2.3;
+        ctx.drawImage(
+          galaxyImgRef.current,
+          -imgSize / 2,
+          -imgSize / 2,
+          imgSize,
+          imgSize
+        );
+
+        // Counter-Rotating Inner Core Layer for dynamic cosmic depth
+        ctx.save();
+        ctx.rotate(-rCore * 0.9);
+        ctx.globalCompositeOperation = 'screen';
+        ctx.globalAlpha = 0.45;
+        const innerSize = corePulse * 1.15;
+        ctx.drawImage(
+          galaxyImgRef.current,
+          -innerSize / 2,
+          -innerSize / 2,
+          innerSize,
+          innerSize
+        );
+        ctx.restore();
+
+        // Radial Vignette Edge Mask overlay
+        const edgeMask = ctx.createRadialGradient(0, 0, corePulse * 0.55, 0, 0, corePulse);
+        edgeMask.addColorStop(0, 'rgba(0, 0, 0, 0)');
+        edgeMask.addColorStop(0.7, 'rgba(0, 240, 255, 0.12)');
+        edgeMask.addColorStop(1, primaryColor);
+        ctx.fillStyle = edgeMask;
+        ctx.beginPath();
+        ctx.arc(0, 0, corePulse, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+      }
+
+      // Core Glass Lens & Outer Rim Ring
       ctx.strokeStyle = '#ffffff';
       ctx.lineWidth = 3 * scale;
       ctx.shadowColor = primaryColor;
       ctx.shadowBlur = 32;
       ctx.beginPath();
-      ctx.arc(0, 0, 46 * scale, 0, Math.PI * 2);
+      ctx.arc(0, 0, corePulse, 0, Math.PI * 2);
       ctx.stroke();
 
-      // Core Tri-Arc Orbit Rings
+      // Core Tri-Arc Orbit Rings around the Galaxy Core
       for (let i = 0; i < 3; i++) {
         ctx.save();
         ctx.rotate(rCore + (i * Math.PI * 2) / 3);
         ctx.strokeStyle = primaryColor;
         ctx.lineWidth = 2 * scale;
+        ctx.shadowColor = primaryColor;
+        ctx.shadowBlur = 16;
         ctx.beginPath();
-        ctx.ellipse(0, 0, 38 * scale, 13 * scale, 0, 0, Math.PI * 2);
+        ctx.ellipse(0, 0, corePulse * 0.85, corePulse * 0.28, 0, 0, Math.PI * 2);
         ctx.stroke();
         ctx.restore();
       }
 
-      // Central Quantum Emblem ⚛️
-      ctx.font = `bold ${Math.round(28 * scale)}px Orbitron, sans-serif`;
+      // Center Specular Quantum Core Sparkle
       ctx.fillStyle = '#ffffff';
-      ctx.shadowColor = primaryColor;
-      ctx.shadowBlur = 18;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('⚛️', 0, 0);
+      ctx.shadowColor = '#ffffff';
+      ctx.shadowBlur = 15;
+      ctx.beginPath();
+      ctx.arc(0, 0, 5 * scale, 0, Math.PI * 2);
+      ctx.fill();
 
       ctx.restore();
       ctx.restore();
@@ -298,9 +359,10 @@ export default function ArcReactorVisualizer({ state, activeGesture, handPos }) 
           boxShadow: '0 0 15px rgba(0, 240, 255, 0.4)',
           zIndex: 10
         }}>
-          <Sparkles size={14} /> STARK ARC REACTOR ENGAGED: {activeGesture}
+          <Sparkles size={14} /> GALAXY ARC REACTOR ENGAGED: {activeGesture}
         </div>
       )}
     </div>
   );
 }
+

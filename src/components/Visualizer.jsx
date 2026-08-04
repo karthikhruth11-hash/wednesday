@@ -1,10 +1,18 @@
 import React, { useEffect, useRef } from 'react';
 import { Sparkles } from 'lucide-react';
+import galaxyImgUrl from '../assets/galaxy-core.jpg';
 
 export default function Visualizer({ state, activeGesture }) {
   const canvasRef = useRef(null);
+  const galaxyImgRef = useRef(null);
 
   useEffect(() => {
+    const img = new Image();
+    img.src = galaxyImgUrl;
+    img.onload = () => {
+      galaxyImgRef.current = img;
+    };
+
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -95,6 +103,27 @@ export default function Visualizer({ state, activeGesture }) {
         ctx.shadowColor = primaryColor;
         ctx.shadowBlur = 15;
         ctx.stroke();
+        ctx.restore();
+      }
+
+      // Real Galaxy Core Heart Image Center
+      if (galaxyImgRef.current && galaxyImgRef.current.complete) {
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.rotate(time * 0.4);
+
+        ctx.beginPath();
+        ctx.arc(0, 0, baseRadius * 0.85, 0, Math.PI * 2);
+        ctx.clip();
+
+        const imgSize = baseRadius * 2.0;
+        ctx.drawImage(
+          galaxyImgRef.current,
+          -imgSize / 2,
+          -imgSize / 2,
+          imgSize,
+          imgSize
+        );
         ctx.restore();
       }
 
