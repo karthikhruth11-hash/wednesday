@@ -8,10 +8,8 @@ export default function Visualizer({ state, activeGesture }) {
 
   useEffect(() => {
     const img = new Image();
+    galaxyImgRef.current = img;
     img.src = galaxyImgUrl;
-    img.onload = () => {
-      galaxyImgRef.current = img;
-    };
 
     const canvas = canvasRef.current;
     if (!canvas) return;

@@ -209,7 +209,7 @@ export default function App() {
   return (
     <div className="ascii-app-container" style={{ position: 'relative' }}>
       {/* ✨ FULLSCREEN COSMIC GALAXY ARC REACTOR BACKDROP ✨ */}
-      <div style={{ position: 'absolute', inset: 0, zIndex: 1, opacity: 0.65, pointerEvents: 'none' }}>
+      <div style={{ position: 'absolute', inset: 0, zIndex: 1, opacity: 0.95, pointerEvents: 'none' }}>
         <ArcReactorVisualizer
           state={appState}
           activeGesture={activeGesture}

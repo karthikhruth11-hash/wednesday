@@ -7,12 +7,10 @@ export default function ArcReactorVisualizer({ state, activeGesture, handPos }) 
   const galaxyImgRef = useRef(null);
 
   useEffect(() => {
-    // Preload Real Galaxy Core Image via bundled asset URL
+    // Synchronously assign image to ref so cached/loaded images render instantly
     const img = new Image();
+    galaxyImgRef.current = img;
     img.src = galaxyImgUrl;
-    img.onload = () => {
-      galaxyImgRef.current = img;
-    };
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -224,11 +222,11 @@ export default function ArcReactorVisualizer({ state, activeGesture, handPos }) 
       });
       ctx.restore();
 
-      // --- 6. REAL GALAXY REACTOR HEART ANIMATION ---
+      // --- 6. REAL SPIRAL GALAXY REACTOR HEART ANIMATION ---
       ctx.save();
       ctx.translate(centerX, centerY);
 
-      const baseCoreRadius = 66 * scale;
+      const baseCoreRadius = 80 * scale;
       const corePulse = baseCoreRadius + Math.sin(pulsePhase) * (4 * scale);
 
       // Multi-stop Ambient Radiant Gradient backdrop
@@ -244,22 +242,23 @@ export default function ArcReactorVisualizer({ state, activeGesture, handPos }) 
       ctx.arc(0, 0, corePulse * 2.2, 0, Math.PI * 2);
       ctx.fill();
 
-      // Render Real Galaxy Image as Core Heart if loaded
-      if (galaxyImgRef.current && galaxyImgRef.current.complete) {
+      // Render Real Galaxy Image as Core Heart
+      const galaxyImg = galaxyImgRef.current;
+      if (galaxyImg && (galaxyImg.complete || galaxyImg.naturalWidth > 0)) {
         ctx.save();
 
-        // Rotate primary galaxy spiral structure
-        ctx.rotate(rCore * 0.5);
+        // Continuous Smooth Cosmic Galaxy Rotation
+        ctx.rotate(rCore * 0.4);
 
-        // Smooth Circular Clip for Galaxy Core
+        // Circular Clip to fit EXACTLY inside the inner hazard ring
         ctx.beginPath();
         ctx.arc(0, 0, corePulse, 0, Math.PI * 2);
         ctx.clip();
 
         // Draw Real Galaxy Image centered
-        const imgSize = corePulse * 2.3;
+        const imgSize = corePulse * 2.2;
         ctx.drawImage(
-          galaxyImgRef.current,
+          galaxyImg,
           -imgSize / 2,
           -imgSize / 2,
           imgSize,
@@ -268,12 +267,12 @@ export default function ArcReactorVisualizer({ state, activeGesture, handPos }) 
 
         // Counter-Rotating Inner Core Layer for dynamic cosmic depth
         ctx.save();
-        ctx.rotate(-rCore * 0.9);
+        ctx.rotate(-rCore * 0.8);
         ctx.globalCompositeOperation = 'screen';
-        ctx.globalAlpha = 0.45;
+        ctx.globalAlpha = 0.4;
         const innerSize = corePulse * 1.15;
         ctx.drawImage(
-          galaxyImgRef.current,
+          galaxyImg,
           -innerSize / 2,
           -innerSize / 2,
           innerSize,
@@ -281,10 +280,10 @@ export default function ArcReactorVisualizer({ state, activeGesture, handPos }) 
         );
         ctx.restore();
 
-        // Radial Vignette Edge Mask overlay
-        const edgeMask = ctx.createRadialGradient(0, 0, corePulse * 0.55, 0, 0, corePulse);
+        // Radial Edge Blend Overlay
+        const edgeMask = ctx.createRadialGradient(0, 0, corePulse * 0.6, 0, 0, corePulse);
         edgeMask.addColorStop(0, 'rgba(0, 0, 0, 0)');
-        edgeMask.addColorStop(0.7, 'rgba(0, 240, 255, 0.12)');
+        edgeMask.addColorStop(0.75, 'rgba(0, 240, 255, 0.1)');
         edgeMask.addColorStop(1, primaryColor);
         ctx.fillStyle = edgeMask;
         ctx.beginPath();
