@@ -226,37 +226,36 @@ export default function ArcReactorVisualizer({ state, activeGesture, handPos }) 
       ctx.save();
       ctx.translate(centerX, centerY);
 
-      const baseCoreRadius = 80 * scale;
-      const corePulse = baseCoreRadius + Math.sin(pulsePhase) * (4 * scale);
+      const baseCoreRadius = 76 * scale;
+      const corePulse = baseCoreRadius + Math.sin(pulsePhase) * (3.5 * scale);
 
-      // Multi-stop Ambient Radiant Gradient backdrop
-      const radGrad = ctx.createRadialGradient(0, 0, baseCoreRadius * 0.2, 0, 0, corePulse * 2.2);
-      radGrad.addColorStop(0, '#ffffff');
-      radGrad.addColorStop(0.3, primaryColor);
-      radGrad.addColorStop(0.65, secondaryColor);
-      radGrad.addColorStop(0.88, accentGlow);
+      // Multi-stop Cosmic Corona Glow (fiery orange matching galaxy arms)
+      const radGrad = ctx.createRadialGradient(0, 0, baseCoreRadius * 0.3, 0, 0, corePulse * 1.8);
+      radGrad.addColorStop(0, 'rgba(255, 100, 20, 0.5)');
+      radGrad.addColorStop(0.5, 'rgba(255, 40, 0, 0.25)');
+      radGrad.addColorStop(0.85, accentGlow);
       radGrad.addColorStop(1, 'transparent');
 
       ctx.fillStyle = radGrad;
       ctx.beginPath();
-      ctx.arc(0, 0, corePulse * 2.2, 0, Math.PI * 2);
+      ctx.arc(0, 0, corePulse * 1.8, 0, Math.PI * 2);
       ctx.fill();
 
-      // Render Real Galaxy Image as Core Heart
+      // Render Pure Real Galaxy Image as Core Heart
       const galaxyImg = galaxyImgRef.current;
       if (galaxyImg && (galaxyImg.complete || galaxyImg.naturalWidth > 0)) {
         ctx.save();
 
-        // Continuous Smooth Cosmic Galaxy Rotation
+        // Continuous Smooth Cosmic Galaxy Rotation (spinning the real galaxy photo!)
         ctx.rotate(rCore * 0.4);
 
-        // Circular Clip to fit EXACTLY inside the inner hazard ring
+        // Circular Clip to fit EXACTLY inside the reactor ring
         ctx.beginPath();
         ctx.arc(0, 0, corePulse, 0, Math.PI * 2);
         ctx.clip();
 
-        // Draw Real Galaxy Image centered
-        const imgSize = corePulse * 2.2;
+        // Draw Real Galaxy Image centered at 100% crisp color vibrancy
+        const imgSize = corePulse * 2.15;
         ctx.drawImage(
           galaxyImg,
           -imgSize / 2,
@@ -265,25 +264,10 @@ export default function ArcReactorVisualizer({ state, activeGesture, handPos }) 
           imgSize
         );
 
-        // Counter-Rotating Inner Core Layer for dynamic cosmic depth
-        ctx.save();
-        ctx.rotate(-rCore * 0.8);
-        ctx.globalCompositeOperation = 'screen';
-        ctx.globalAlpha = 0.4;
-        const innerSize = corePulse * 1.15;
-        ctx.drawImage(
-          galaxyImg,
-          -innerSize / 2,
-          -innerSize / 2,
-          innerSize,
-          innerSize
-        );
-        ctx.restore();
-
-        // Radial Edge Blend Overlay
-        const edgeMask = ctx.createRadialGradient(0, 0, corePulse * 0.6, 0, 0, corePulse);
+        // Edge Blend Vignette Ring
+        const edgeMask = ctx.createRadialGradient(0, 0, corePulse * 0.7, 0, 0, corePulse);
         edgeMask.addColorStop(0, 'rgba(0, 0, 0, 0)');
-        edgeMask.addColorStop(0.75, 'rgba(0, 240, 255, 0.1)');
+        edgeMask.addColorStop(0.8, 'rgba(255, 70, 0, 0.15)');
         edgeMask.addColorStop(1, primaryColor);
         ctx.fillStyle = edgeMask;
         ctx.beginPath();
@@ -293,36 +277,22 @@ export default function ArcReactorVisualizer({ state, activeGesture, handPos }) 
         ctx.restore();
       }
 
-      // Core Glass Lens & Outer Rim Ring
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 3 * scale;
+      // Sleek Sci-Fi Glass Core Rim Ring (Clean rim, NO atomic lines covering galaxy!)
+      ctx.strokeStyle = primaryColor;
+      ctx.lineWidth = 2.5 * scale;
       ctx.shadowColor = primaryColor;
-      ctx.shadowBlur = 32;
+      ctx.shadowBlur = 22;
       ctx.beginPath();
       ctx.arc(0, 0, corePulse, 0, Math.PI * 2);
       ctx.stroke();
 
-      // Core Tri-Arc Orbit Rings around the Galaxy Core
-      for (let i = 0; i < 3; i++) {
-        ctx.save();
-        ctx.rotate(rCore + (i * Math.PI * 2) / 3);
-        ctx.strokeStyle = primaryColor;
-        ctx.lineWidth = 2 * scale;
-        ctx.shadowColor = primaryColor;
-        ctx.shadowBlur = 16;
-        ctx.beginPath();
-        ctx.ellipse(0, 0, corePulse * 0.85, corePulse * 0.28, 0, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.restore();
-      }
-
-      // Center Specular Quantum Core Sparkle
-      ctx.fillStyle = '#ffffff';
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1 * scale;
       ctx.shadowColor = '#ffffff';
-      ctx.shadowBlur = 15;
+      ctx.shadowBlur = 10;
       ctx.beginPath();
-      ctx.arc(0, 0, 5 * scale, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.arc(0, 0, corePulse * 0.97, 0, Math.PI * 2);
+      ctx.stroke();
 
       ctx.restore();
       ctx.restore();
