@@ -85,7 +85,7 @@ class SpeechEngine {
   loadVoices() {
     if (!this.synthesis) return [];
     const voices = this.synthesis.getVoices();
-    const savedVoiceName = localStorage.getItem('wednesday');
+    const savedVoiceName = localStorage.getItem('wednesday_voice_name');
 
     if (savedVoiceName) {
       const matched = voices.find(v => v.name === savedVoiceName);
@@ -150,7 +150,7 @@ class SpeechEngine {
     }
   }
 
-  async speak(text, onStart, onEnd) {
+  async speak(text, onStart, onEnd, langCode = null) {
     // Check if recorded user voice replacement is active
     if (customVoiceSynth.hasCustomVoice()) {
       if (this.isListening) this.stopListening();
@@ -178,7 +178,16 @@ class SpeechEngine {
     this.synthesis.cancel(); // Stop ongoing speech
 
     const utterance = new SpeechSynthesisUtterance(text);
-    if (this.selectedVoice) {
+    if (langCode) {
+      utterance.lang = langCode;
+      const voices = this.getAvailableVoices();
+      const matchVoice = voices.find(v => v.lang.toLowerCase().startsWith(langCode.toLowerCase().slice(0, 2)));
+      if (matchVoice) {
+        utterance.voice = matchVoice;
+      } else if (this.selectedVoice) {
+        utterance.voice = this.selectedVoice;
+      }
+    } else if (this.selectedVoice) {
       utterance.voice = this.selectedVoice;
     }
 

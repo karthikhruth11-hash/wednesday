@@ -34,7 +34,7 @@ export default function App() {
 
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [activeNav, setActiveNav] = useState('aichat'); // 'dashboard', 'aichat', 'voice', 'memory', 'files', 'browser', 'settings'
-  const [personaMode] = useState(localStorage.getItem('wednesday_persona_mode') || 'jarvis');
+  const [personaMode, setPersonaMode] = useState(localStorage.getItem('wednesday_persona_mode') || 'jarvis');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isTerminalOpen, setIsTerminalOpen] = useState(false);
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
@@ -107,33 +107,44 @@ export default function App() {
     setMessages(prev => [...prev, assistantMsg]);
 
     speechEngine.speak(
-      res.reply,
+      res.spokenReply || res.reply,
       () => setAppState('speaking'),
-      () => setAppState('idle')
+      () => setAppState('idle'),
+      res.speakLang
     );
   }, [personaMode]);
 
+  const lastGestureActionTimeRef = useRef(0);
+
   // Hand Gesture Action Dispatcher
   const handleGestureDetected = useCallback((data) => {
+    if (!data) return;
     const gesture = typeof data === 'object' ? data.gesture : data;
+    const isNewGesture = typeof data === 'object' ? data.isNewGesture : true;
+
     if (typeof data === 'object' && data.handPos) {
       setHandPos(data.handPos);
     }
 
-    if (gesture && gesture !== 'TRACKING') {
+    if (isNewGesture && gesture && gesture !== 'TRACKING') {
       setActiveGesture(gesture);
       setTimeout(() => setActiveGesture(null), 1500);
-    }
 
-    if (gesture === 'CLOSED_FIST') {
-      speechEngine.stopListening();
-      setIsListening(false);
-      setAppState('idle');
-      soundFx.playClick();
-    } else if (gesture === 'THUMBS_UP') {
-      handleSendMessage('Awesome job Wednesday!');
-    } else if (gesture === 'PINCH_OK') {
-      handleStartWednesday();
+      const now = Date.now();
+      if (now - lastGestureActionTimeRef.current > 1500) {
+        lastGestureActionTimeRef.current = now;
+
+        if (gesture === 'CLOSED_FIST') {
+          speechEngine.stopListening();
+          setIsListening(false);
+          setAppState('idle');
+          soundFx.playClick();
+        } else if (gesture === 'THUMBS_UP') {
+          handleSendMessage('Awesome job Wednesday!');
+        } else if (gesture === 'PINCH_OK') {
+          handleStartWednesday();
+        }
+      }
     }
   }, [handleStartWednesday, handleSendMessage]);
 
@@ -364,6 +375,7 @@ export default function App() {
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
+        onPersonaChange={(mode) => setPersonaMode(mode)}
       />
 
       <TerminalModal

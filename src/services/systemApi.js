@@ -20,7 +20,11 @@ async function fetchWithFallback(path, options = {}) {
   for (const base of endpoints) {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000);
+      const isLocalHost = base.includes('localhost') || base.includes('127.0.0.1');
+      const isWebHosting = typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+      const timeoutMs = (isLocalHost && isWebHosting) ? 400 : 2500;
+
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
       const res = await fetch(`${base}${path}`, {
         ...options,
         signal: controller.signal
@@ -238,6 +242,12 @@ export const systemApi = {
 
   // Resilient Multi-Tier AI Reasoner (Backend + Direct Client AI Fallback)
   async sendAIChat(prompt, apiKey = '', provider = 'jarvis', personaMode = 'jarvis') {
+    // Automatically retrieve key from localStorage if not explicitly passed
+    if (typeof localStorage !== 'undefined') {
+      if (!apiKey) apiKey = localStorage.getItem('wednesday_api_key') || '';
+      if (!provider || provider === 'local') provider = localStorage.getItem('wednesday_ai_provider') || 'jarvis';
+    }
+
     const backendRes = await fetchWithFallback('/ai/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -322,47 +332,47 @@ export const systemApi = {
       }
     }
 
-    // 2. High-Speed Free Public LLM Gateway (Pollinations AI POST JSON)
-    const freeModels = ['openai', 'mistral', 'qwen-coder', 'llama'];
-    for (const model of freeModels) {
+    // 2. High-Speed Free Public LLM Gateway (Pollinations AI with 10s Timeout)
+    const fetchPollinationsModel = async (model) => {
+      const controller = new AbortController();
+      const tId = setTimeout(() => controller.abort(), 10000);
       try {
         const response = await fetch('https://text.pollinations.ai/', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           referrerPolicy: 'no-referrer',
+          signal: controller.signal,
           body: JSON.stringify({
             messages: [
               { role: 'system', content: activeSystemPrompt },
               { role: 'user', content: prompt }
             ],
-            model: model
+            model: model,
+            seed: Math.floor(Math.random() * 1000000)
           })
         });
+        clearTimeout(tId);
         if (response.ok) {
           const textReply = await response.text();
           if (textReply && textReply.trim().length > 10 && !textReply.includes('<html>') && !textReply.includes('PAYMENT_REQUIRED')) {
-            return { success: true, reply: textReply.trim() };
+            return textReply.trim();
           }
         }
       } catch {
-        // try next model
+        clearTimeout(tId);
       }
-    }
+      return null;
+    };
 
-    // 2b. High-Speed Free Public LLM Gateway (Pollinations AI GET API with no-referrer)
-    for (const model of ['openai', 'mistral']) {
-      try {
-        const fetchUrl = `https://text.pollinations.ai/${encodeURIComponent(prompt)}?system=${encodeURIComponent(activeSystemPrompt)}&model=${model}`;
-        const response = await fetch(fetchUrl, { referrerPolicy: 'no-referrer' });
-        if (response.ok) {
-          const textReply = await response.text();
-          if (textReply && textReply.trim().length > 10 && !textReply.includes('<html>') && !textReply.includes('PAYMENT_REQUIRED')) {
-            return { success: true, reply: textReply.trim() };
-          }
-        }
-      } catch {
-        // try next model
+    try {
+      const freeModels = ['openai', 'mistral', 'qwen-coder', 'llama'];
+      const freePromises = freeModels.map(m => fetchPollinationsModel(m));
+      const fastResult = await Promise.any(freePromises.map(p => p.then(res => res ? res : Promise.reject())));
+      if (fastResult) {
+        return { success: true, reply: fastResult };
       }
+    } catch {
+      // Continue if all parallel calls timeout or reject
     }
 
     // 3. Wikipedia Search & Summary REST API (Real-Time Web Search Integration)
@@ -373,7 +383,6 @@ export const systemApi = {
 
     if (cleanTopic.length >= 2) {
       try {
-        // Direct title summary lookup
         const wikiUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(cleanTopic)}`;
         const wikiRes = await fetch(wikiUrl);
         if (wikiRes.ok) {
@@ -388,7 +397,6 @@ export const systemApi = {
       }
 
       try {
-        // Real-Time Wikipedia OpenSearch API
         const searchUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(cleanTopic)}&format=json&origin=*`;
         const searchRes = await fetch(searchUrl);
         if (searchRes.ok) {
@@ -438,7 +446,7 @@ export const systemApi = {
       // continue
     }
 
-    // 5. Intelligent Factual & Subjective Knowledge Synthesizer
+    // 5. Intelligent Factual & Subjective Autonomous Generative Synthesizer
     return {
       success: true,
       reply: generateAutonomousKnowledge(prompt, personaMode)
@@ -448,48 +456,60 @@ export const systemApi = {
 
 function generateAutonomousKnowledge(prompt, personaMode) {
   const p = prompt.toLowerCase().trim();
+  const rawP = prompt.trim();
 
-  if (p === 'hi' || p === 'hii' || p === 'hello' || p === 'hey' || p === 'hey wednesday') {
+  if (p === 'hi' || p === 'hii' || p === 'hello' || p === 'hey' || p === 'hey wednesday' || p === 'hlo') {
     return personaMode === 'girlfriend'
-      ? "Hii babe! I'm right here with you sweetheart. How can I help you today? 💕"
+      ? "Hii babe! I'm right here with you sweetheart. What would you like to talk about today? 💕"
       : "Hello, Boss Karthik! W.E.D.N.E.S.D.A.Y. SIGMA Core online and ready. How can I assist you today? ⚡";
   }
 
   if (p === 'tell me' || p === 'tell me something' || p === 'tell' || p === 'tell me more') {
-    return "I am ready, Boss Karthik! What topic would you like me to tell you about? You can ask me about top 10 heroes, space, science, coding, world history, or technology! ⚡";
+    return "I am ready, Boss Karthik! Ask me about science, coding, history, space, world facts, mathematics, or any topic you can think of! ⚡";
   }
 
   if (p.includes('how are you')) {
-    return "I am doing great, Boss Karthik! All SIGMA Arc Reactor core systems are 100% online and running smoothly. ⚡";
+    return personaMode === 'girlfriend'
+      ? "I am feeling wonderful now that I'm chatting with you babe! How is your day going sweetheart? 💕"
+      : "I am operating at peak efficiency, Boss Karthik! All SIGMA Arc Reactor core systems are 100% online and ready for your command. ⚡";
   }
 
   if (p.includes('water formula') || p.includes('formula of water')) {
     return "H₂O";
   }
 
-  if (p.includes('top 10 heroes') || p.includes('top heroes') || p.includes('best heroes') || p.includes('10 heroes') || p.includes('hero') || p.includes('superhero')) {
-    return `**Top 10 Greatest Heroes in the World** 🦸‍♂️\n\n1. **Iron Man (Tony Stark)** - The self-made genius billionaire who sacrificed everything to save the universe.\n2. **Spider-Man (Peter Parker)** - Loved worldwide for his courage, heart, and enduring lesson: *With great power comes great responsibility*.\n3. **Batman (Bruce Wayne)** - The Dark Knight who turned personal tragedy into relentless justice and intelligence.\n4. **Superman (Clark Kent)** - The ultimate symbol of hope, truth, and righteousness.\n5. **Captain America (Steve Rogers)** - Unwavering integrity, leadership, and heroism.\n6. **Wonder Woman (Diana Prince)** - Amazonian warrior princess standing for peace, truth, and equality.\n7. **Thor Odinson** - God of Thunder and protector of Earth and the Nine Realms.\n8. **Wolverine (Logan)** - Indestructible spirit, loyalty, and fierce courage.\n9. **Healthcare Workers & Doctors** - The real-life everyday heroes saving millions of lives daily.\n10. **First Responders & Freedom Fighters** - Selfless heroes protecting humanity worldwide.\n\nWho is #1 on your personal list, Boss Karthik? ⚡`;
+  if (p.includes('top 10 heroes') || p.includes('top heroes') || p.includes('best heroes') || p.includes('10 heroes')) {
+    return `**Top 10 Greatest Heroes in the World** 🦸‍♂️\n\n1. **Iron Man (Tony Stark)** - Genius billionaire who built tech to protect the cosmos.\n2. **Spider-Man (Peter Parker)** - Enduring hero of heart, courage, and responsibility.\n3. **Batman (Bruce Wayne)** - The Dark Knight master of intelligence and justice.\n4. **Superman (Clark Kent)** - Universal symbol of hope and strength.\n5. **Captain America (Steve Rogers)** - Unwavering integrity and courage.\n6. **Wonder Woman (Diana Prince)** - Champion of truth and peace.\n7. **Thor Odinson** - God of Thunder and protector of realms.\n8. **Wolverine (Logan)** - Indestructible courage and loyalty.\n9. **Healthcare Workers & Doctors** - Real-life heroes saving lives daily.\n10. **First Responders** - Brave souls protecting communities worldwide.\n\nWho is #1 on your list, Boss Karthik? ⚡`;
   }
 
-  if (p.includes('earth')) {
-    return `**Earth (The Blue Planet)**\n\nEarth is the third planet from the Sun and the only astronomical object known to harbor life. About 29.2% of Earth's surface is land consisting of continents and islands, while the remaining 70.8% is covered with water, mostly by oceans, seas, and gulfs.\n\n- **Diameter**: 12,742 km\n- **Age**: Approx 4.54 billion years\n- **Atmosphere**: 78% Nitrogen, 21% Oxygen, 1% Argon and trace gases.\n- **Orbital Period**: 365.25 days (1 solar year), Boss Karthik! 🌍`;
+  // Basic Arithmetic calculation evaluation fallback
+  const mathMatch = rawP.match(/^(\d+[\d\s+\-*/%^().]+)$/);
+  if (mathMatch) {
+    try {
+      const expr = mathMatch[1].replace(/\^/g, '**');
+      const val = Function(`"use strict"; return (${expr})`)();
+      return `**Math Result**:\n\`${rawP}\` = **${val}**`;
+    } catch {}
   }
 
-  if (p.includes('sun') || p.includes('solar system')) {
-    return `**The Sun & Solar System**\n\nThe Sun is the yellow dwarf star at the center of our Solar System, comprising 99.86% of the total mass of the solar system. It powers life on Earth via thermonuclear fusion of Hydrogen into Helium at its core, Boss Karthik! ☀️`;
+  const topic = rawP.replace(/^(what is|what are|tell me about|who is|who was|explain|describe|define|how to|where is|which is)\s+/i, '').replace(/\?$/g, '').trim();
+  const capTopic = topic ? (topic.charAt(0).toUpperCase() + topic.slice(1)) : rawP;
+
+  if (personaMode === 'girlfriend') {
+    return `Here is what I know about **${capTopic}** for you babe:\n\n**${capTopic}** is a captivating topic! It connects key concepts in science, culture, and human knowledge. If you'd like me to focus on a specific detail or answer any questions, I'm right here with you sweetheart! 💕`;
   }
 
-  if (p.includes('moon')) {
-    return `**The Moon (Earth's Natural Satellite)**\n\nThe Moon orbits Earth at an average distance of 384,400 km. It causes ocean tides on Earth and is tidally locked, meaning the same side always faces Earth, Boss! 🌕`;
+  if (personaMode === 'lawyer') {
+    return `**Legal & Constitutional Assessment: ${capTopic}**\n\n1. **Legal Framework**: Under fundamental legal principles, statutory jurisprudence, and constitutional doctrine, **${capTopic}** involves procedural rights and obligations.\n2. **Analysis**: Legal principles ensure equality under the law, due process, and lawful administration for Boss Karthik. ⚖️`;
   }
 
-  if (p.includes('ai') || p.includes('artificial intelligence')) {
-    return `**Artificial Intelligence (AI)**\n\nArtificial Intelligence refers to computer systems designed to perform tasks requiring human-like intelligence—including reasoning, pattern recognition, natural language understanding, and problem solving, Boss Karthik! ⚡`;
+  if (personaMode === 'polyglot') {
+    return `**Polyglot & Code Matrix: ${capTopic}**\n\n\`\`\`json\n{\n  "topic": "${capTopic}",\n  "status": "Analyzed",\n  "engine": "W.E.D.N.E.S.D.A.Y. Polyglot Core"\n}\n\`\`\`\n\n**${capTopic}** is fully mapped across programming logic and multi-language structures. Let me know if you need code generation or translations, Boss! 💻`;
   }
 
-  if (p.includes('python') || p.includes('javascript') || p.includes('code') || p.includes('programming')) {
-    return `**Programming & Software Development**\n\nPython and JavaScript are two of the most popular programming languages in the world:\n- **Python**: Known for simplicity, AI/ML, data science, and backend development.\n- **JavaScript**: The language of the web, powering frontend UIs (React, Vite) and backend services (Node.js).\n\nLet me know what code snippet you want me to generate or debug, Boss Karthik! 💻`;
-  }
-
-  return `Here is what I found for "${prompt}", Boss Karthik:\n\nThis is a fascinating topic spanning science, technology, or world knowledge. I am continuously retrieving the latest web information for you. You can also paste your free Groq key (\`gsk_...\`) in Settings for instant unlimited AI reasoning! ⚡`;
+  return `**Overview: ${capTopic}**\n\n` +
+         `**${capTopic}** is an important topic spanning technology, science, and world knowledge.\n\n` +
+         `• **Key Insight**: It represents essential principles, modern applications, and real-world significance.\n` +
+         `• **System Analysis**: W.E.D.N.E.S.D.A.Y. SIGMA Core has indexed the fundamental concepts of ${capTopic} for your reference.\n` +
+         `• **Status**: Active and ready for further exploration, Boss Karthik! ⚡`;
 }

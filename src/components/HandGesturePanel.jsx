@@ -21,11 +21,18 @@ export default function HandGesturePanel({ onGestureDetected }) {
         videoRef.current,
         canvasRef.current,
         (evt) => {
-          setActiveGesture(evt.gesture);
-          soundFx.playClick();
-          setGestureLog(prev => [evt, ...prev.slice(0, 4)]);
+          // Pass live tracking event to parent handler for smooth reactor tracking
           if (onGestureDetected) {
-            onGestureDetected(evt.gesture);
+            onGestureDetected(evt);
+          }
+
+          // Only trigger UI pill, audio click, and log feed on a NEW gesture event
+          if (evt.isNewGesture && evt.gesture && evt.gesture !== 'TRACKING') {
+            setActiveGesture(evt.gesture);
+            soundFx.playClick();
+            setGestureLog(prev => [evt, ...prev.slice(0, 4)]);
+          } else if (!evt.gesture) {
+            setActiveGesture(null);
           }
         }
       );

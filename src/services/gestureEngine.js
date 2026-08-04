@@ -17,7 +17,8 @@ export class GestureEngine {
     this.onGesture = null;
     this.lastGesture = null;
     this.lastGestureTime = 0;
-    this.prevHandX = null;
+    this.wristXHistory = [];
+    this.isProcessing = false;
 
     this.loadedScript = false;
   }
@@ -80,6 +81,7 @@ export class GestureEngine {
 
   stop() {
     this.isRunning = false;
+    this.isProcessing = false;
     if (this.animFrameId) {
       cancelAnimationFrame(this.animFrameId);
       this.animFrameId = null;
@@ -102,18 +104,30 @@ export class GestureEngine {
 
     hands.setOptions({
       maxNumHands: 1,
-      modelComplexity: 1,
-      minDetectionConfidence: 0.65,
-      minTrackingConfidence: 0.65
+      modelComplexity: 0,
+      minDetectionConfidence: 0.5,
+      minTrackingConfidence: 0.5
     });
 
-    hands.onResults((results) => this.processMediaPipeResults(results));
+    hands.onResults((results) => {
+      this.isProcessing = false;
+      this.processMediaPipeResults(results);
+    });
+
+    let lastSendTime = 0;
 
     const cameraLoop = async () => {
+      const now = Date.now();
       if (this.isRunning && this.videoElement && this.videoElement.readyState >= 2) {
-        try {
-          await hands.send({ image: this.videoElement });
-        } catch {}
+        if (!this.isProcessing && now - lastSendTime >= 30) {
+          this.isProcessing = true;
+          lastSendTime = now;
+          try {
+            await hands.send({ image: this.videoElement });
+          } catch (e) {
+            this.isProcessing = false;
+          }
+        }
       }
       if (this.isRunning) {
         this.animFrameId = requestAnimationFrame(cameraLoop);
@@ -128,6 +142,9 @@ export class GestureEngine {
     ctx.clearRect(0, 0, this.canvasElement.width, this.canvasElement.height);
 
     if (!results.multiHandLandmarks || results.multiHandLandmarks.length === 0) {
+      if (this.onGesture) {
+        this.onGesture({ gesture: null, handPos: null, landmarks: null, timestamp: new Date().toLocaleTimeString() });
+      }
       return;
     }
 
@@ -146,18 +163,21 @@ export class GestureEngine {
     const gesture = this.classifyHandGesture(landmarks);
 
     const now = Date.now();
+    let isNewGesture = false;
+    if (gesture && (gesture !== this.lastGesture || now - this.lastGestureTime > 1500)) {
+      this.lastGesture = gesture;
+      this.lastGestureTime = now;
+      isNewGesture = true;
+    }
+
     if (this.onGesture) {
       this.onGesture({
         gesture: gesture || 'TRACKING',
+        isNewGesture,
         handPos,
         landmarks,
         timestamp: new Date().toLocaleTimeString()
       });
-    }
-
-    if (gesture && (gesture !== this.lastGesture || now - this.lastGestureTime > 1200)) {
-      this.lastGesture = gesture;
-      this.lastGestureTime = now;
     }
   }
 
@@ -193,62 +213,73 @@ export class GestureEngine {
     });
   }
 
+  dist2D(p1, p2) {
+    const dx = p1.x - p2.x;
+    const dy = p1.y - p2.y;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
   classifyHandGesture(landmarks) {
-    // Landmark index references:
-    // 0: Wrist
-    // 4: Thumb tip, 8: Index tip, 12: Middle tip, 16: Ring tip, 20: Pinky tip
-    // 3: Thumb IP, 6: Index PIP, 10: Middle PIP, 14: Ring PIP, 18: Pinky PIP
+    const wrist = landmarks[0];
+    const distToWrist = (idx) => this.dist2D(landmarks[idx], wrist);
 
-    const isExtended = (tipIdx, pipIdx) => landmarks[tipIdx].y < landmarks[pipIdx].y;
+    // Orientation-invariant finger extension check using distance ratios to wrist
+    const indexExt = distToWrist(8) > distToWrist(6) * 1.12;
+    const middleExt = distToWrist(12) > distToWrist(10) * 1.12;
+    const ringExt = distToWrist(16) > distToWrist(14) * 1.12;
+    const pinkyExt = distToWrist(20) > distToWrist(18) * 1.12;
 
-    const indexExt = isExtended(8, 6);
-    const middleExt = isExtended(12, 10);
-    const ringExt = isExtended(16, 14);
-    const pinkyExt = isExtended(20, 18);
+    const thumbExt = distToWrist(4) > distToWrist(2) * 1.2;
 
     const extendedCount = [indexExt, middleExt, ringExt, pinkyExt].filter(Boolean).length;
 
-    // 1. OPEN PALM (4 or 5 fingers extended)
-    if (extendedCount >= 4) {
+    // 1. PINCH / OK SIGN (Thumb tip close to Index tip)
+    const pinchDist = this.dist2D(landmarks[4], landmarks[8]);
+    if (pinchDist < 0.075 && (middleExt || ringExt)) {
+      return 'PINCH_OK';
+    }
+
+    // 2. OPEN PALM (4 or 5 fingers extended)
+    if (extendedCount >= 4 || (extendedCount >= 3 && thumbExt)) {
       return 'OPEN_PALM';
     }
 
-    // 2. CLOSED FIST (0 fingers extended)
-    if (extendedCount === 0 && landmarks[4].y > landmarks[2].y) {
+    // 3. CLOSED FIST (0 fingers extended, thumb folded)
+    if (extendedCount === 0 && !thumbExt) {
       return 'CLOSED_FIST';
     }
 
-    // 3. PEACE / V-SIGN (Index & Middle extended only)
+    // 4. PEACE / V-SIGN (Index & Middle extended only)
     if (indexExt && middleExt && !ringExt && !pinkyExt) {
       return 'PEACE_SIGN';
     }
 
-    // 4. THUMBS UP (Thumb tip above wrist, other fingers curled)
-    if (extendedCount === 0 && landmarks[4].y < landmarks[3].y && landmarks[3].y < landmarks[0].y) {
+    // 5. THUMBS UP (Thumb extended, other fingers folded)
+    if (thumbExt && extendedCount === 0) {
       return 'THUMBS_UP';
     }
 
-    // 5. PINCH / OK SIGN (Thumb tip close to Index tip)
-    const dx = landmarks[4].x - landmarks[8].x;
-    const dy = landmarks[4].y - landmarks[8].y;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    if (dist < 0.06 && middleExt) {
-      return 'PINCH_OK';
-    }
+    // 6. SWIPE DETECTOR (Using position history queue over 300ms window)
+    const now = Date.now();
+    const wristX = wrist.x;
+    this.wristXHistory.push({ x: wristX, time: now });
+    this.wristXHistory = this.wristXHistory.filter(h => now - h.time <= 300);
 
-    // 6. SWIPE DETECTOR
-    const wristX = landmarks[0].x;
-    if (this.prevHandX !== null) {
-      const deltaX = wristX - this.prevHandX;
-      if (deltaX > 0.22) {
-        this.prevHandX = wristX;
-        return 'SWIPE_RIGHT';
-      } else if (deltaX < -0.22) {
-        this.prevHandX = wristX;
-        return 'SWIPE_LEFT';
+    if (this.wristXHistory.length >= 3) {
+      const oldest = this.wristXHistory[0];
+      const deltaX = wristX - oldest.x;
+      const deltaTime = now - oldest.time;
+
+      if (deltaTime >= 70) {
+        if (deltaX > 0.14) {
+          this.wristXHistory = [];
+          return 'SWIPE_RIGHT';
+        } else if (deltaX < -0.14) {
+          this.wristXHistory = [];
+          return 'SWIPE_LEFT';
+        }
       }
     }
-    this.prevHandX = wristX;
 
     return null;
   }
@@ -269,3 +300,4 @@ export class GestureEngine {
 }
 
 export const gestureEngine = new GestureEngine();
+

@@ -7,7 +7,7 @@
   --bg-sidebar: rgba(2, 10, 22, 0.94);
   
   --cyan-bright: #00f0ff;
-  --cyan-glow: rgba(0, 240, 255, 0.45);
+  --cyan-glow: rgba(31, 109, 114, 0.45);
   --blue-tech: #00a8ff;
   --text-main: #e2e8f0;
   --text-muted: #64748b;
@@ -210,11 +210,11 @@ body {
 
 .input-prompt-full {
   flex: 1;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(193, 58, 58, 0.6);
   border: 1px solid var(--border-hud);
   border-radius: 24px;
   padding: 0.55rem 1.2rem;
-  color: #ffffff;
+  color: #d36262;
   font-family: var(--font-tech);
   font-size: 0.95rem;
   outline: none;

@@ -44,8 +44,12 @@ export class OmniscientKnowledgeEngine {
       'who is your boss': 'Boss Karthik is my creator and boss.',
       'hi': 'Hello, Boss Karthik! W.E.D.N.E.S.D.A.Y. SIGMA Core online and ready. How can I assist you today? ⚡',
       'hii': 'Hello, Boss Karthik! W.E.D.N.E.S.D.A.Y. SIGMA Core online and ready. How can I assist you today? ⚡',
+      'hlo': 'Hello, Boss Karthik! W.E.D.N.E.S.D.A.Y. SIGMA Core online and ready. How can I assist you today? ⚡',
+      'hllo': 'Hello, Boss Karthik! W.E.D.N.E.S.D.A.Y. SIGMA Core online and ready. How can I assist you today? ⚡',
+      'helo': 'Hello, Boss Karthik! W.E.D.N.E.S.D.A.Y. SIGMA Core online and ready. How can I assist you today? ⚡',
       'hello': 'Hello, Boss Karthik! W.E.D.N.E.S.D.A.Y. SIGMA Core online and ready. How can I assist you today? ⚡',
-      'hey': 'Hello, Boss Karthik! W.E.D.N.E.S.D.A.Y. SIGMA Core online and ready. How can I assist you today? ⚡'
+      'hey': 'Hello, Boss Karthik! W.E.D.N.E.S.D.A.Y. SIGMA Core online and ready. How can I assist you today? ⚡',
+      'namaste': 'Namaste, Boss Karthik! W.E.D.N.E.S.D.A.Y. SIGMA Core online and ready. How can I assist you today? ⚡'
     };
   }
 
@@ -56,6 +60,13 @@ export class OmniscientKnowledgeEngine {
     // Do not intercept if user is trying to perform an action
     if (clean.includes('open') || clean.includes('play') || clean.includes('create') || clean.includes('launch') || clean.includes('close') || clean.includes('run')) {
       return null;
+    }
+
+    // Name introduction pattern ("my name is karthik", "i am karthik")
+    if (clean.startsWith('my name is ') || clean.startsWith('i am ')) {
+      const name = raw.replace(/^(my name is|i am)\s+/i, '').trim();
+      const capName = name.charAt(0).toUpperCase() + name.slice(1);
+      return `Hello, ${capName}! It's great to talk to you. I am W.E.D.N.E.S.D.A.Y., standing by to assist you. ⚡`;
     }
 
     // Exact key lookup

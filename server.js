@@ -199,13 +199,18 @@ app.post('/api/system/create-dir', (req, res) => {
   if (!dirPath) return res.status(400).json({ error: 'dirPath is required' });
 
   let fullPath = dirPath;
-  if (dirPath.toLowerCase().startsWith('desktop')) {
-    fullPath = path.join(os.homedir(), 'Desktop', dirPath.replace(/^desktop[/\\]?/i, ''));
+  const lowerDir = dirPath.toLowerCase().trim();
+
+  if (lowerDir.startsWith('desktop') || lowerDir.startsWith('home page') || lowerDir.startsWith('laptop desktop')) {
+    const cleanSub = dirPath.replace(/^(desktop|home page|laptop desktop)[/\\]?/i, '');
+    fullPath = path.join(os.homedir(), 'Desktop', cleanSub);
+  } else if (!path.isAbsolute(dirPath)) {
+    fullPath = path.join(os.homedir(), 'Desktop', dirPath);
   }
 
   try {
     fs.mkdirSync(fullPath, { recursive: true });
-    res.json({ success: true, path: fullPath, message: `Created directory: ${fullPath}` });
+    res.json({ success: true, path: fullPath, message: `Created directory on Desktop: ${fullPath}` });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Settings, Key, Bot, X, Save, Volume2 } from 'lucide-react';
 import { soundFx } from '../services/soundFx';
 import { speechEngine } from '../services/speech';
+import PersonalitySelector from './PersonalitySelector';
 
-export default function SettingsModal({ isOpen, onClose }) {
+export default function SettingsModal({ isOpen, onClose, onPersonaChange }) {
   const [provider, setProvider] = useState(localStorage.getItem('wednesday_ai_provider') || 'local');
   const [apiKey, setApiKey] = useState(localStorage.getItem('wednesday_api_key') || '');
+  const [personaMode, setPersonaMode] = useState(localStorage.getItem('wednesday_persona_mode') || 'jarvis');
   const [voices, setVoices] = useState([]);
   const [selectedVoiceName, setSelectedVoiceName] = useState(localStorage.getItem('wednesday_voice_name') || '');
   const [speechRate, setSpeechRate] = useState(localStorage.getItem('wednesday_speech_rate') || '1.0');
@@ -46,6 +48,11 @@ export default function SettingsModal({ isOpen, onClose }) {
     soundFx.playClick();
     localStorage.setItem('wednesday_ai_provider', provider);
     localStorage.setItem('wednesday_api_key', apiKey.trim());
+    localStorage.setItem('wednesday_persona_mode', personaMode);
+
+    if (onPersonaChange) {
+      onPersonaChange(personaMode);
+    }
 
     if (selectedVoiceName) {
       speechEngine.setSelectedVoice(selectedVoiceName);
@@ -90,6 +97,9 @@ export default function SettingsModal({ isOpen, onClose }) {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          {/* Personality Mode Selector */}
+          <PersonalitySelector currentMode={personaMode} onSelectMode={setPersonaMode} />
+
           {/* Intelligence Engine Section */}
           <div>
             <label style={{ fontSize: '0.8rem', color: 'var(--cyan-bright)', fontFamily: 'Orbitron', display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.4rem' }}>
