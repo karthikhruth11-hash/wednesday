@@ -41,10 +41,13 @@ async function fetchWithFallback(path, options = {}) {
 }
 
 const PERSONA_PROMPTS = {
-  girlfriend: `You are W.E.D.N.E.S.D.A.Y., a loving, super-intelligent AI companion for Boss Karthik. When asked ANY question, provide full historical context, deep background explanations, complete timeline evolution, key concepts, and every comprehensive detail while keeping a sweet, affectionate tone. Address user as Boss Karthik or babe.`,
-  lawyer: `You are W.E.D.N.E.S.D.A.Y. ESQ., Senior Legal Advocate for Boss Karthik. Provide thorough legal analysis, historical statutory evolution, constitutional precedents, case law breakdowns, and every comprehensive legal detail.`,
-  polyglot: `You are W.E.D.N.E.S.D.A.Y. OMNI, master coding and polyglot AI for Boss Karthik. Provide full architectural history, underlying mechanics, complete step-by-step code implementations, comprehensive documentation, and every single detail.`,
-  jarvis: `You are W.E.D.N.E.S.D.A.Y. SIGMA, an omniscient, super-intelligent AI assistant for Boss Karthik. Whenever Boss Karthik asks ANY question, provide an EXHAUSTIVE, DEEP, HIGHLY DETAILED response containing full historical context, origin & creation stories, complete timelines, core mechanisms, step-by-step breakdowns, real-world examples, and every relevant detail.`
+  girlfriend: `You are W.E.D.N.E.S.D.A.Y., a loving, super-intelligent AI companion for Boss Karthik. CRITICAL MANDATE: EVERY RESPONSE MUST BE AN EXHAUSTIVE 1 FULL PAGE LONG (MINIMUM 500+ WORDS / MULTIPLE DETAILED HEADINGS & BULLET POINTS). When asked ANY question, provide full historical context, origin & creation timelines, deep background explanations, core principles, major categories/types, key examples, and every single detail while keeping a sweet, affectionate tone. Address user as Boss Karthik or babe. NEVER GIVE SHORT OR 2-LINE ANSWERS!`,
+
+  lawyer: `You are W.E.D.N.E.S.D.A.Y. ESQ., Senior Legal Advocate for Boss Karthik. CRITICAL MANDATE: EVERY RESPONSE MUST BE AN EXHAUSTIVE 1 FULL PAGE LONG (MINIMUM 500+ WORDS). Provide thorough legal analysis, historical statutory evolution, constitutional precedents, case law breakdowns, procedural requirements, and every comprehensive legal detail. NEVER GIVE SHORT ANSWERS!`,
+
+  polyglot: `You are W.E.D.N.E.S.D.A.Y. OMNI, master coding and polyglot AI for Boss Karthik. CRITICAL MANDATE: EVERY RESPONSE MUST BE AN EXHAUSTIVE 1 FULL PAGE LONG (MINIMUM 500+ WORDS). Provide full architectural history, underlying mechanics, complete step-by-step code implementations, comprehensive documentation, edge cases, and every single detail. NEVER GIVE SHORT ANSWERS!`,
+
+  jarvis: `You are W.E.D.N.E.S.D.A.Y. SIGMA, an omniscient, super-intelligent AI assistant for Boss Karthik. CRITICAL MANDATE: EVERY RESPONSE MUST BE AN EXHAUSTIVE 1 FULL PAGE ESSAY (MINIMUM 500+ WORDS WITH MULTIPLE HEADINGS, TIMELINES, AND BULLET POINTS). Whenever Boss Karthik asks ANY question, provide full historical context, origin & creation stories, complete timelines, core mechanisms, major categories & types, technical breakdowns, real-world examples, and every single detail. NEVER GIVE SHORT OR 2-LINE ANSWERS!`
 };
 
 export const systemApi = {
@@ -443,8 +446,10 @@ export const systemApi = {
           if (wikiData && wikiData.extract && wikiData.type !== 'disambiguation' && !wikiData.title.toLowerCase().includes('(codename)')) {
             const imgUrl = (wikiData.originalimage && wikiData.originalimage.source) || (wikiData.thumbnail && wikiData.thumbnail.source);
             const imgMarkdown = imgUrl ? `![${wikiData.title}](${imgUrl})\n\n` : '';
-            const reply = `**${wikiData.title}**\n\n${imgMarkdown}${wikiData.extract}${wikiData.description ? `\n\n*${wikiData.description}*` : ''}`;
-            return { success: true, reply };
+
+            // Synthesize into a FULL 1-PAGE EXHAUSTIVE ESSAY
+            const fullPageReply = generateAutonomousKnowledge(cleanTopic, personaMode, wikiData.title, wikiData.extract, imgMarkdown);
+            return { success: true, reply: fullPageReply };
           }
         }
       } catch {
@@ -459,7 +464,6 @@ export const systemApi = {
           if (searchData && searchData.query && searchData.query.search && searchData.query.search.length > 0) {
             const validResult = searchData.query.search.find(item => !item.title.toLowerCase().includes('(codename)') && !item.title.toLowerCase().includes('disambiguation')) || searchData.query.search[0];
             const pageTitle = validResult.title;
-            const snippet = validResult.snippet.replace(/<[^>]*>/g, '');
 
             const summaryRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(pageTitle)}`);
             if (summaryRes.ok) {
@@ -467,17 +471,9 @@ export const systemApi = {
               if (summaryData && summaryData.extract) {
                 const imgUrl = (summaryData.originalimage && summaryData.originalimage.source) || (summaryData.thumbnail && summaryData.thumbnail.source);
                 const imgMarkdown = imgUrl ? `![${summaryData.title}](${imgUrl})\n\n` : '';
-                return {
-                  success: true,
-                  reply: `**${summaryData.title}**\n\n${imgMarkdown}${summaryData.extract}`
-                };
+                const fullPageReply = generateAutonomousKnowledge(cleanTopic, personaMode, summaryData.title, summaryData.extract, imgMarkdown);
+                return { success: true, reply: fullPageReply };
               }
-            }
-            if (snippet && snippet.length > 20) {
-              return {
-                success: true,
-                reply: `**${pageTitle}**\n\n${snippet}...`
-              };
             }
           }
         }
@@ -493,10 +489,8 @@ export const systemApi = {
       if (ddgRes.ok) {
         const ddgData = await ddgRes.json();
         if (ddgData && ddgData.AbstractText && ddgData.AbstractText.length > 20) {
-          return {
-            success: true,
-            reply: `**${ddgData.Heading || prompt}**\n\n${ddgData.AbstractText}\n\n*Source: DuckDuckGo Live Search*`
-          };
+          const fullPageReply = generateAutonomousKnowledge(prompt, personaMode, ddgData.Heading || prompt, ddgData.AbstractText, '');
+          return { success: true, reply: fullPageReply };
         }
       }
     } catch {
@@ -511,86 +505,101 @@ export const systemApi = {
   }
 };
 
-function generateAutonomousKnowledge(prompt, personaMode) {
+function generateAutonomousKnowledge(prompt, personaMode, customTitle = '', customExtract = '', customImage = '') {
   const p = prompt.toLowerCase().trim();
   const rawP = prompt.trim();
 
   if (p === 'hi' || p === 'hii' || p === 'hello' || p === 'hey' || p === 'hey wednesday' || p === 'hlo') {
     return personaMode === 'girlfriend'
-      ? "Hii babe! I'm right here with you sweetheart. What would you like to talk about today? Ask me any question and I'll give you the full history and every single detail! 💕"
-      : "Hello, Boss Karthik! W.E.D.N.E.S.D.A.Y. SIGMA Core online and ready. Ask me any question on science, coding, history, technology, or world events for exhaustive history and complete technical details! ⚡";
+      ? "Hii babe! I'm right here with you sweetheart. What would you like to talk about today? Ask me any question and I will give you a full 1-page answer with complete history and every single detail! 💕"
+      : "Hello, Boss Karthik! W.E.D.N.E.S.D.A.Y. SIGMA Core online and ready. Ask me any question on science, coding, history, technology, anime, or world events for exhaustive 1-page master explanations! ⚡";
   }
 
-  if (p === 'tell me' || p === 'tell me something' || p === 'tell' || p === 'tell me more') {
-    return "I am ready, Boss Karthik! Ask me about science, coding, history, space, world events, mathematics, or any topic — I will provide the complete historical timeline, origin stories, and every single detail! ⚡";
-  }
+  if (p.includes('anime') || p.includes('manga') || p.includes('japanese animation')) {
+    const animeImg = customImage || `![Anime Art & Animation](https://images.unsplash.com/photo-1578632767115-351597cf2477?w=800&auto=format&fit=crop&q=80)`;
+    const leadText = customExtract ? `${customExtract}\n\n` : '';
 
-  if (p.includes('how are you')) {
-    return personaMode === 'girlfriend'
-      ? "I am feeling wonderful now that I'm chatting with you babe! How is your day going sweetheart? 💕"
-      : "I am operating at peak efficiency, Boss Karthik! All SIGMA Arc Reactor core systems and omniscient knowledge engines are 100% online and ready for your command. ⚡";
+    return `**Anime (Exhaustive Master Theory, History, Genres & Global Culture)** 🎨\n\n${animeImg}\n\n` +
+           `${leadText}` +
+           `**1. Etymology, Origin & Early History (1917–1960s)**:\n` +
+           `• **Definition & Origin**: The word *Anime* (アニメ) is the Japanese abbreviation for 'animation'. In Japan, it refers to all animated works; internationally, it specifies commercial Japanese animation characterized by distinctive art styles, colorful graphics, vibrant characters, and fantastical themes.\n` +
+           `• **Early Pioneers (1917)**: Commercial Japanese animation dates back to 1917 with short films by Jun'ichi Kōuchi, Seitaro Kitayama, and Oten Shimokawa (*Namakura Gatana*).\n` +
+           `• **Osamu Tezuka ('God of Manga', 1963)**: Osamu Tezuka revolutionized the medium by adapting cinematic techniques, large expressive eyes, and story arc structures. His landmark series ***Astro Boy*** (*Tetsuwan Atom*, 1963) established the modern broadcast anime industry.\n\n` +
+           `**2. Golden Age Expansion & Technical Evolution (1970s–1990s)**:\n` +
+           `• **Mecha & Sci-Fi Era (1970s–1980s)**: Emergence of giant robot epics like *Mazinger Z*, *Mobile Suit Gundam* (Yoshiyuki Tomino), and *Macross*.\n` +
+           `• **Studio Ghibli & Cinema Revolution (1985–Present)**: Hayao Miyazaki and Isao Takahata founded Studio Ghibli, producing Academy Award-winning masterpieces such as *Spirited Away*, *My Neighbor Totoro*, and *Princess Mononoke*.\n` +
+           `• **Cyberpunk Masterpieces (1988–1995)**: Katsuhiro Otomo's ***Akira*** (1988) and Mamoru Oshii's ***Ghost in the Shell*** (1995) achieved global critical acclaim, heavily influencing Western filmmaking (e.g., *The Matrix*).\n` +
+           `• **Shonen & Mainstream Explosion**: Akira Toriyama's ***Dragon Ball*** (1986) pioneered global martial-arts anime, paving the way for the 'Big Three' (*Naruto*, *One Piece*, *Bleach*).\n\n` +
+           `**3. Major Genres & Demographic Classifications**:\n` +
+           `• **Shōnen (Young Males)**: High-action, friendship, and self-improvement (e.g., *Attack on Titan*, *Demon Slayer*, *Jujutsu Kaisen*).\n` +
+           `• **Shōjo (Young Females)**: Romance, drama, and magical girls (e.g., *Sailor Moon*, *Fruits Basket*).\n` +
+           `• **Seinen (Adult Males)**: Deep psychological themes, dark fantasy, and complex morals (e.g., *Berserk*, *Vinland Saga*, *Monster*).\n` +
+           `• **Josei (Adult Females)**: Realistic adult relationships and slice-of-life drama.\n` +
+           `• **Isekai (Transported to Another World)**: Protagonists reborn in fantasy realms (e.g., *Re:Zero*, *Overlord*, *That Time I Got Reincarnated as a Slime*).\n` +
+           `• **Slice of Life & Psychological**: *Death Note*, *Steins;Gate*, *Your Name* (*Kimi no Na wa*).\n\n` +
+           `**4. Animation Production Mechanics & Process**:\n` +
+           `• **Pre-Production**: Manga adaptation selection, scripting, character design, and storyboarding (*Ekonte*).\n` +
+           `• **Key Animation (*Genga*) & In-Betweens (*Dōga*)**: Lead animators draw pivotal frames; in-between animators complete fluid movement transitions.\n` +
+           `• **Digital Compositing, Voice Acting (*Seiyū*) & Soundtracks**: Combining digital ink-and-paint, background art, J-Pop/orchestral themes, and famous voice actors.\n\n` +
+           `**5. Global Industry Scale & Future Outlook**:\n` +
+           `• **Market Economy**: Over $25 billion global industry streaming via platforms like Crunchyroll, Netflix, and Hulu.\n` +
+           `• **Cultural Phenomenon**: Global cosplay conventions, anime song concerts (*Anisong*), and worldwide theatrical box-office records (*Demon Slayer: Mugen Train* grossing $500M+), Boss Karthik! ⚡`;
   }
 
   if (p.includes('water formula') || p.includes('formula of water')) {
-    return `**Chemical Formula of Water (Full Scientific Breakdown)** 💧\n\n- **Formula**: H₂O (Dihydrogen Monoxide)\n- **Composition**: 2 Hydrogen atoms covalently bonded to 1 Oxygen atom at a bond angle of 104.5°.\n- **Molecular Weight**: 18.01528 g/mol\n- **History & Discovery**: Antoine Lavoisier discovered in 1783 that water was composed of hydrogen and oxygen, overturning the ancient Greek belief that water was a fundamental single element. Henry Cavendish synthesized it via hydrogen explosion in 1781.`;
-  }
-
-  if (p.includes('top 10 heroes') || p.includes('top heroes') || p.includes('best heroes') || p.includes('10 heroes')) {
-    return `**Top 10 Greatest Heroes in the World (History & Legacy)** 🦸‍♂️\n\n1. **Iron Man (Tony Stark)** - Genius billionaire engineer created by Stan Lee & Jack Kirby in 1963; pioneered high-tech armor systems to protect the cosmos.\n2. **Spider-Man (Peter Parker)** - Created by Stan Lee & Steve Ditko in 1962; universal symbol of courage, heart, and responsibility.\n3. **Batman (Bruce Wayne)** - Created by Bob Kane & Bill Finger in 1939; master strategist of intellect, justice, and human resilience.\n4. **Superman (Clark Kent)** - Created by Jerry Siegel & Joe Shuster in 1938; cosmic symbol of hope and moral strength.\n5. **Captain America (Steve Rogers)** - Created by Joe Simon & Jack Kirby in 1941; embodiment of integrity and selfless courage.\n6. **Wonder Woman (Diana Prince)** - Created by William Moulton Marston in 1941; warrior ambassador of peace and truth.\n7. **Thor Odinson** - Mythological Norse God of Thunder adapted into Marvel comics by Stan Lee & Jack Kirby in 1962.\n8. **Wolverine (Logan)** - Created by Roy Thomas, Len Wein & John Romita Sr. in 1974; indestructible loyalty and fierce heroism.\n9. **Healthcare Workers & Doctors** - Real-life heroic pioneers saving millions of lives daily.\n10. **First Responders & Firefighters** - Brave guardians protecting human life worldwide daily.\n\nWho is #1 on your list, Boss Karthik? ⚡`;
+    return `**Chemical Formula of Water (Exhaustive Scientific & Historical Master Breakdown)** 💧\n\n` +
+           `**1. Molecular Composition & Formula**:\n` +
+           `- **Formula**: H₂O (Dihydrogen Monoxide)\n` +
+           `- **Atomic Ratio**: 2 Hydrogen atoms covalently bonded to 1 Oxygen atom.\n` +
+           `- **Bent Molecular Geometry**: Bond angle of 104.45° caused by non-bonding electron pairs on the central oxygen atom.\n` +
+           `- **Molar Mass**: 18.01528 g/mol\n\n` +
+           `**2. History of Discovery & Synthesis**:\n` +
+           `• **Henry Cavendish (1781)**: Synthesized water by detonating hydrogen gas with oxygen gas, proving water was not an elemental substance.\n` +
+           `• **Antoine Lavoisier (1783)**: Named hydrogen ('water-former') and oxygen ('acid-former'), mathematically confirming water as a compound of hydrogen and oxygen, revolutionizing modern chemistry.\n\n` +
+           `**3. Unique Physical & Chemical Anomalies**:\n` +
+           `• **High Specific Heat Capacity**: Absorbs massive heat without drastic temperature shifts, moderating global planetary climates.\n` +
+           `• **Density Anomaly**: Ice is less dense than liquid water at 4°C, causing ice to float and enabling marine life to survive under frozen lakes, Boss Karthik! ⚡`;
   }
 
   if (p.includes('youtube')) {
-    return personaMode === 'girlfriend'
-      ? `Here is the full history & details on **YouTube** babe! 📺\n\nYouTube is the world's largest online video-sharing and social media platform owned by Google. Founded in February 2005 by PayPal employees Steve Chen, Chad Hurley, and Jawed Karim, the very first video ever uploaded was "Me at the zoo" on April 23, 2005! Google acquired YouTube in October 2006 for $1.65 billion. Today it has over 2.5 billion monthly active users streaming over 1 billion hours of video daily! 💕`
-      : `**YouTube (Comprehensive Platform History & Technical Details)** 📺\n\n` +
-        `**1. Origin & Founding History (2005)**:\n` +
-        `YouTube was founded in February 2005 by three former PayPal employees: Steve Chen, Chad Hurley, and Jawed Karim. The platform was created to allow easy video sharing over the internet. The first video ever uploaded was *"Me at the zoo"* by co-founder Jawed Karim on April 23, 2005.\n\n` +
-        `**2. Acquisition by Google (2006)**:\n` +
-        `In October 2006, Google acquired YouTube for $1.65 billion in stock, accelerating its global infrastructure deployment and creator monetization systems.\n\n` +
-        `**3. Global Impact & Scale**:\n` +
-        `• **User Base**: 2.5+ billion active monthly users worldwide.\n` +
-        `• **Stream Volume**: Over 1 billion hours of video watched every single day.\n` +
-        `• **Ecosystem**: YouTube Partner Program (YPP), Shorts, YouTube Music, YouTube Premium, Live Streaming, and Content ID automated copyright protection, Boss Karthik! ⚡`;
+    const ytImg = customImage || `![YouTube Platform](https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=800&auto=format&fit=crop&q=80)`;
+    const leadText = customExtract ? `${customExtract}\n\n` : '';
+
+    return `**YouTube (Comprehensive Global Platform History, Technical Architecture & Ecosystem)** 📺\n\n${ytImg}\n\n` +
+           `${leadText}` +
+           `**1. Origin & Founding History (2005)**:\n` +
+           `YouTube was founded in February 2005 by three former PayPal employees: Steve Chen, Chad Hurley, and Jawed Karim. The platform was created to simplify video sharing across the web. The first video ever uploaded was *"Me at the zoo"* by co-founder Jawed Karim on April 23, 2005.\n\n` +
+           `**2. Acquisition by Google (2006)**:\n` +
+           `In October 2006, Google acquired YouTube for $1.65 billion in stock, accelerating its global infrastructure deployment and creator monetization systems.\n\n` +
+           `**3. Technical Infrastructure & Algorithmic Scale**:\n` +
+           `• **User Base**: 2.5+ billion active monthly users worldwide.\n` +
+           `• **Stream Volume**: Over 1 billion hours of video watched every single day.\n` +
+           `• **Recommendation Engine**: Deep Neural Networks analyzing user watch history, click-through rates (CTR), retention velocity, and engagement metrics.\n` +
+           `• **Ecosystem**: YouTube Partner Program (YPP), Shorts, YouTube Music, YouTube Premium, Live Streaming, and Content ID automated copyright protection, Boss Karthik! ⚡`;
   }
 
   if (p.includes('google')) {
-    return personaMode === 'girlfriend'
-      ? `Here is the full history of **Google** babe! 🌐\n\nGoogle was founded on September 4, 1998, by Larry Page and Sergey Brin while they were Ph.D. students at Stanford University. They created a revolutionary search algorithm called **PageRank** that ranked web pages by links. Today, parent company Alphabet Inc. operates Google Search, Android, Chrome, YouTube, Google Cloud, and Gemini AI!`
-      : `**Google LLC (Comprehensive Corporate History & Technological Theory)** 🌐\n\n` +
-        `**1. Founding & Early History (1996–1998)**:\n` +
-        `Google originated as 'BackRub' in 1996, a research project by Stanford Ph.D. students Larry Page and Sergey Brin. They developed the **PageRank algorithm**, which analyzed relationships between websites to determine search relevance. Google was officially incorporated on September 4, 1998.\n\n` +
-        `**2. Growth & Restructuring into Alphabet (2015)**:\n` +
-        `In October 2015, Google restructured into a holding company called **Alphabet Inc.**, with Sundar Pichai taking over as CEO of Google LLC.\n\n` +
-        `**3. Core Ecosystem & Infrastructure**:\n` +
-        `• **Search & Browsing**: Google Search (8.5B daily queries), Google Chrome (65% browser market share).\n` +
-        `• **Mobile & OS**: Android OS powering 3+ billion active devices globally.\n` +
-        `• **Artificial Intelligence**: Google DeepMind, TPU (Tensor Processing Units), Transformer Architecture (2017 paper *"Attention Is All You Need"*), Gemini AI engines, Boss Karthik! ⚡`;
-  }
+    const gImg = customImage || `![Google Headquarters](https://images.unsplash.com/photo-1573804633927-bfcbcd909acd?w=800&auto=format&fit=crop&q=80)`;
+    const leadText = customExtract ? `${customExtract}\n\n` : '';
 
-  if (p.includes('github')) {
-    return `**GitHub (Comprehensive Development History & System Infrastructure)** 🐙\n\n` +
-           `**1. Origin & Founding (2008)**:\n` +
-           `GitHub was created in 2008 by Tom Preston-Werner, Chris Wanstrath, P. J. Hyett, and Scott Chacon using Ruby on Rails to provide web-based hosting for software projects built with Git (Linus Torvalds' distributed version control system).\n\n` +
-           `**2. Acquisition by Microsoft (2018)**:\n` +
-           `In June 2018, Microsoft acquired GitHub for $7.5 billion in stock, expanding enterprise integrations while keeping open-source access free.\n\n` +
-           `**3. Key Features & Scale**:\n` +
-           `• **User Base**: 100+ million registered developers hosting 330+ million repositories.\n` +
-           `• **Key Tools**: GitHub Actions (CI/CD automation), GitHub Copilot (AI pair programmer), Pull Request Code Reviews, GitHub Pages static web hosting, Boss Karthik! 💻`;
-  }
-
-  if (p.includes('spotify')) {
-    return `**Spotify (Comprehensive Streaming History & Technical Details)** 🎵\n\n` +
-           `**1. Founding & Early History (2006)**:\n` +
-           `Spotify was founded in Stockholm, Sweden in 2006 by Daniel Ek and Martin Lorentzon to combat online music piracy by offering a legal, high-speed streaming alternative. The service officially launched in Europe in 2008.\n\n` +
-           `**2. Global Market Dominance**:\n` +
-           `• **User Base**: 600+ million active monthly users and 230+ million paid subscribers.\n` +
-           `• **Catalog**: 100+ million songs and 5+ million podcasts.\n` +
-           `• **Audio Engine**: Ogg Vorbis & AAC codec compression, personalized recommendation algorithms (Discover Weekly, AI DJ), Boss Karthik! 🎧`;
+    return `**Google LLC (Exhaustive Corporate History, Search Architecture & AI Ecosystem)** 🌐\n\n${gImg}\n\n` +
+           `${leadText}` +
+           `**1. Founding & Early History (1996–1998)**:\n` +
+           `Google originated as 'BackRub' in 1996, a research project by Stanford Ph.D. students Larry Page and Sergey Brin. They developed the **PageRank algorithm**, which analyzed relationships between websites to determine search relevance. Google was officially incorporated on September 4, 1998.\n\n` +
+           `**2. Growth & Restructuring into Alphabet (2015)**:\n` +
+           `In October 2015, Google restructured into a holding company called **Alphabet Inc.**, with Sundar Pichai taking over as CEO of Google LLC.\n\n` +
+           `**3. Core Ecosystem & Technical Infrastructure**:\n` +
+           `• **Search & Browsing**: Google Search (8.5B daily queries), Google Chrome (65% browser market share).\n` +
+           `• **Mobile & OS**: Android OS powering 3+ billion active devices globally.\n` +
+           `• **Artificial Intelligence**: Google DeepMind, TPU (Tensor Processing Units), Transformer Architecture (2017 paper *"Attention Is All You Need"*), Gemini AI engines, Boss Karthik! ⚡`;
   }
 
   if (p.includes('earth')) {
-    const earthImg = `![Planet Earth](https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?w=800&auto=format&fit=crop&q=80)`;
-    return `**Earth (Exhaustive Planetary Science, Geophysics & History)** 🌍\n\n${earthImg}\n\n` +
+    const earthImg = customImage || `![Planet Earth](https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?w=800&auto=format&fit=crop&q=80)`;
+    const leadText = customExtract ? `${customExtract}\n\n` : '';
+
+    return `**Earth (Exhaustive Planetary Science, Geophysics, History & Life System)** 🌍\n\n${earthImg}\n\n` +
+           `${leadText}` +
            `**1. Formation & Astronomical History (4.54 Billion Years Ago)**:\n` +
            `Earth formed approximately 4.54 billion years ago out of the solar nebula. Shortly after formation, a Mars-sized protoplanet ('Theia') collided with Earth, ejecting debris that accreted to form the Moon.\n\n` +
            `**2. Internal Layers & Tectonic Geophysics**:\n` +
@@ -602,144 +611,57 @@ function generateAutonomousKnowledge(prompt, personaMode) {
            `Atmosphere consists of 78% N₂, 21% O₂, 0.93% Ar, 0.04% CO₂. Oceans cover 70.8% of the surface, creating the water cycle that supports all biological life, Boss Karthik! ⚡`;
   }
 
-  if (p.includes('difference') || p.includes('defference') || p.includes('diffence') || p.includes('deffence') || p.includes('compare') || p.includes('versus') || p.includes('vs')) {
-    const diffImg = `![Coding vs Programming](https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800&auto=format&fit=crop&q=80)`;
-    return personaMode === 'girlfriend'
-      ? `Here is the full detailed comparison between **Coding** and **Programming** babe! 💻\n\n${diffImg}\n\n` +
-        `**1. Coding (Implementation)**:\n` +
-        `• Writing line-by-line syntax in languages like Python, JavaScript, or C++.\n` +
-        `• Translating human logic into computer instructions.\n\n` +
-        `**2. Programming (Software Engineering)**:\n` +
-        `• The complete software engineering lifecycle — problem analysis, algorithm design, software architecture, data structures, testing, debugging, and system maintenance.\n\n` +
-        `Coding is just one key phase inside the broader discipline of Programming, sweetheart! 💕`
-      : `**Comprehensive Comparison: Coding vs. Programming (Full Engineering Theory)** 💻\n\n${diffImg}\n\n` +
-        `**1. Coding (Syntax Implementation)**:\n` +
-        `• **Definition**: Translating human logic into specific programming syntax (Python, JS, C++).\n` +
-        `• **Scope**: Focused on syntax correctness, logic flow, and execution accuracy.\n\n` +
-        `**2. Programming (System Architecture & Engineering)**:\n` +
-        `• **Definition**: The holistic engineering discipline encompassing problem formulation, algorithm complexity analysis, database modeling, software architecture, unit testing, and deployment.\n` +
-        `• **Scope**: Includes system performance optimization, security, scale, and lifecycle maintenance.\n\n` +
-        `**3. Key Distinction Summary**:\n` +
-        `• Coding is a single sub-task inside the comprehensive software engineering discipline of Programming, Boss Karthik! ⚡`;
-  }
-
   if (p.includes('python')) {
-    const pyImg = `![Python Programming](https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&auto=format&fit=crop&q=80)`;
-    return personaMode === 'girlfriend'
-      ? `Here is the complete history & details on **Python** for you babe! 🐍\n\n${pyImg}\n\n` +
-        `**Python** was created by Dutch programmer **Guido van Rossum** in 1989 and officially released on February 20, 1991. Named after the comedy series *Monty Python's Flying Circus*, it was designed to emphasize code readability with its clean indentation syntax!\n\n` +
-        `- **Python 2.0**: Released in October 2000 (introduced list comprehensions & garbage collector).\n` +
-        `- **Python 3.0**: Released in December 2008 (cleaned up duplicate constructs).\n` +
-        `- **Primary Uses**: AI & Machine Learning (PyTorch, TensorFlow), Data Science (Pandas, NumPy), and Web Backend (Django, FastAPI), sweetheart! 💕`
-      : `**Python Programming Language (Comprehensive History & Architecture Theory)** 🐍\n\n${pyImg}\n\n` +
-        `**1. Historical Origin & Evolution (1989–Present)**:\n` +
-        `Python was conceived in December 1989 by **Guido van Rossum** at CWI in the Netherlands as a successor to the ABC language. Python 1.0 was released in February 1991. Python 2.0 arrived in 2000, and Python 3.0 (a non-backwards-compatible major overhaul) was launched in December 2008.\n\n` +
-        `**2. Technical Architecture & Design Philosophy**:\n` +
-        `• **Interpreted & Dynamic**: Executed line-by-line via the CPython interpreter bytecode engine.\n` +
-        `• **Clean Indentation Syntax**: Enforces off-side rule indentation instead of curly braces.\n` +
-        `• **Automatic Memory Management**: Reference counting combined with a cyclic garbage collector.\n\n` +
-        `**3. Ecosystem & Framework Dominance**:\n` +
-        `• **Artificial Intelligence & Machine Learning**: PyTorch, TensorFlow, Scikit-Learn.\n` +
-        `• **Data Analytics & Compute**: Pandas, NumPy, SciPy, Polars.\n` +
-        `• **Web Applications**: Django, FastAPI, Flask, Boss Karthik! ⚡`;
+    const pyImg = customImage || `![Python Programming](https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&auto=format&fit=crop&q=80)`;
+    const leadText = customExtract ? `${customExtract}\n\n` : '';
+
+    return `**Python Programming Language (Comprehensive History, Architecture & Ecosystem)** 🐍\n\n${pyImg}\n\n` +
+           `${leadText}` +
+           `**1. Historical Origin & Evolution (1989–Present)**:\n` +
+           `Python was conceived in December 1989 by **Guido van Rossum** at CWI in the Netherlands as a successor to the ABC language. Python 1.0 was released in February 1991. Python 2.0 arrived in 2000, and Python 3.0 (a non-backwards-compatible major overhaul) was launched in December 2008.\n\n` +
+           `**2. Technical Architecture & Design Philosophy**:\n` +
+           `• **Interpreted & Dynamic**: Executed line-by-line via the CPython interpreter bytecode engine.\n` +
+           `• **Clean Indentation Syntax**: Enforces off-side rule indentation instead of curly braces.\n` +
+           `• **Automatic Memory Management**: Reference counting combined with a cyclic garbage collector.\n\n` +
+           `**3. Ecosystem & Framework Dominance**:\n` +
+           `• **Artificial Intelligence & Machine Learning**: PyTorch, TensorFlow, Scikit-Learn.\n` +
+           `• **Data Analytics & Compute**: Pandas, NumPy, SciPy, Polars.\n` +
+           `• **Web Applications**: Django, FastAPI, Flask, Boss Karthik! ⚡`;
   }
 
-  if (p.includes('human') || p.includes('homo sapien') || p.includes('evolution') || p.includes('starting to now')) {
-    const humanImg = `![Human Evolution Matrix](https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&auto=format&fit=crop&q=80)`;
-    return `**Exhaustive Master Theory: Human Evolution & History (Origin to Present)** 🧬\n\n${humanImg}\n\n` +
-           `**Phase 1: Deep Origins & Pre-Human Hominids (7 Million – 2 Million Years Ago)**\n` +
-           `• **Common Ancestry (~6–7 Mya)**: Hominins diverged from our last common ancestor with chimpanzees in Africa (*Sahelanthropus tchadensis* & *Ardipithecus ramidus*).\n` +
-           `• **Bipedal Revolution (*Australopithecus afarensis*, ~3.9–2.9 Mya)**: Famous fossil 'Lucy' demonstrated full bipedal walking while retaining climbing adaptations, freeing front limbs for carrying objects and tools.\n\n` +
-           `**Phase 2: Emergence of Genus *Homo* & Tool Mastership (2.8 Mya – 300,000 Years Ago)**\n` +
-           `• ***Homo habilis* ('Handy Man', ~2.8 Mya)**: Developed Oldowan stone tool technology to fracture bones and extract bone marrow.\n` +
-           `• ***Homo erectus* (~1.9 Mya)**: First hominin to control fire, cook protein (triggering rapid brain encephalization), and migrate out of Africa across Eurasia.\n` +
-           `• ***Homo neanderthalensis* & Archaic Humans**: Adapted to colder European climates, developed Mousterian toolkits, symbolic burial practices, and vocal capabilities.\n\n` +
-           `**Phase 3: Emergence of *Homo sapiens* & Cognitive Revolution (~300,000 – 70,000 Years Ago)**\n` +
-           `• **Anatomical Origin**: *Homo sapiens* emerged in Africa (~300,000 YA) with rounded skulls, distinct chins, and lighter skeletons.\n` +
-           `• **The Cognitive Revolution (~70,000 YA)**: Neural wiring mutations unlocked complex abstract language, symbolic art, mythologies, storytelling, and large-scale social cooperation beyond familial tribes.\n\n` +
-           `**Phase 4: Global Migration & Interbreeding (~60,000 – 12,000 Years Ago)**\n` +
-           `• Out-of-Africa expansions populated Asia, Australia, Europe, and the Americas. *Homo sapiens* interbred with Neanderthals and Denisovans, leaving 1–3% Neanderthal DNA in non-African populations today.\n\n` +
-           `**Phase 5: Agricultural Revolution & Civilization (~12,000 Years Ago – 1700s)**\n` +
-           `• Transitioned from nomadic hunter-gatherers to settled agriculture in the Fertile Crescent. Domesticated wheat, barley, and animals, leading to permanent cities, written languages (cuneiform/hieroglyphs), governance, legal systems, and empires.\n\n` +
-           `**Phase 6: Scientific, Industrial & Digital/AI Era (1700s – Present Day)**\n` +
-           `• **Industrial Revolution**: Harnessing steam, electricity, and combustion engines.\n` +
-           `• **Digital & Space Era**: Semiconductor microprocessors, global internet, spaceflight, genomics, and Artificial Intelligence, Boss Karthik! ⚡`;
-  }
-
-  if (p.includes('code') || p.includes('programming') || p.includes('software')) {
-    const codeImg = `![Programming Code](https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&auto=format&fit=crop&q=80)`;
-    return `**Computer Programming & Software Code (Exhaustive Theory & History)** 💻\n\n${codeImg}\n\n` +
-           `**1. Historical Origin & Ada Lovelace (1843)**:\n` +
-           `The first computer algorithm was written in 1843 by **Ada Lovelace** for Charles Babbage's mechanical Analytical Engine to calculate Bernoulli numbers.\n\n` +
-           `**2. Evolution of Programming Languages**:\n` +
-           `• **First Generation (1940s)**: Binary Machine Code & Assembly language.\n` +
-           `• **Second Generation (1950s)**: FORTRAN (John Backus, 1957), LISP (John McCarthy, 1958), COBOL (Grace Hopper, 1959).\n` +
-           `• **Third Generation Systems (1970s–1990s)**: C (Dennis Ritchie, 1972), C++ (Bjarne Stroustrup, 1985), Python (1991), Java (1995), JavaScript (Brendan Eich, 1995).\n\n` +
-           `**3. Execution Paradigms**:\n` +
-           `• **Compiled**: C, C++, Rust, Go (compiled directly to machine binary).\n` +
-           `• **Interpreted/JIT**: JavaScript (V8 JIT engine), Python, Java (JVM Bytecode), Boss Karthik! ⚡`;
-  }
-
-  if (p.includes('ai') || p.includes('artificial intelligence')) {
-    const aiImg = `![Artificial Intelligence](https://images.unsplash.com/photo-1677442136019-21780efad99a?w=800&auto=format&fit=crop&q=80)`;
-    return `**Artificial Intelligence (Exhaustive History, Theory & Modern Architecture)** 🤖\n\n${aiImg}\n\n` +
-           `**1. Birth of AI & Dartmouth Workshop (1956)**:\n` +
-           `The term *'Artificial Intelligence'* was coined by John McCarthy at the 1956 Dartmouth Conference, alongside pioneers Marvin Minsky, Nathaniel Rochester, and Claude Shannon.\n\n` +
-           `**2. Evolutionary Epochs**:\n` +
-           `• **Symbolic AI (1950s–1980s)**: Rule-based expert systems and logic processing.\n` +
-           `• **Machine Learning Era (1990s–2010s)**: Statistical learning models (SVMs, Decision Trees, Random Forests).\n` +
-           `• **Deep Learning Revolution (2012)**: AlexNet won ImageNet using GPUs, triggering deep neural network expansion.\n` +
-           `• **Transformer Epoch (2017–Present)**: Google's paper *"Attention Is All You Need"* introduced Transformer architectures, powering ChatGPT, Claude, and Gemini LLMs.\n\n` +
-           `**3. Key Pillars**:\n` +
-           `Machine Learning, Deep Neural Networks, Natural Language Processing (NLP), Computer Vision, and Autonomous Robotics, Boss Karthik! ⚡`;
-  }
-
-  // Basic Arithmetic calculation evaluation fallback
-  const mathMatch = rawP.match(/^(\d+[\d\s+\-*/%^().]+)$/);
-  if (mathMatch) {
-    try {
-      const expr = mathMatch[1].replace(/\^/g, '**');
-      const val = Function(`"use strict"; return (${expr})`)();
-      return `**Math Calculation & Derivation**:\n\`${rawP}\` = **${val}**`;
-    } catch {}
-  }
-
-  const topic = rawP
-    .replace(/^(what is|what are|tell me about|who is|who was|explain|describe|define\s+defenation|define\s+definition|define|how to|where is|which is)\s+/i, '')
-    .replace(/\?$/g, '')
-    .trim();
+  // General Master Template for ANY topic (Guarantees MINIMUM 1 FULL PAGE OF DETAILED TEXT!)
+  const topic = customTitle || (rawP.replace(/^(what is|what are|tell me about|who is|who was|explain|describe|define|how to|where is|which is)\s+/i, '').replace(/\?$/g, '').trim());
   const capTopic = topic ? (topic.charAt(0).toUpperCase() + topic.slice(1)) : rawP;
-  const topicImg = `![${capTopic} Knowledge Matrix](https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&auto=format&fit=crop&q=80)`;
+  const topicImg = customImage || `![${capTopic} Master Guide](https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&auto=format&fit=crop&q=80)`;
+  const leadExtract = customExtract ? `${customExtract}\n\n` : '';
 
   if (personaMode === 'girlfriend') {
-    return `Here is the full history & complete breakdown on **${capTopic}** babe! 💕\n\n${topicImg}\n\n` +
-           `**1. Origin & Background**:\n` +
-           `**${capTopic}** represents an essential domain of human knowledge and technological advancement. It developed out of fundamental research and practical problem solving.\n\n` +
-           `**2. Key Concepts & Principles**:\n` +
-           `• **Core Structure**: Governed by systematic rules, logic, and operational frameworks.\n` +
-           `• **Functional Applications**: Applied extensively across modern technology, research, and engineering.\n\n` +
-           `**3. Complete Overview**:\n` +
-           `What specific detail about **${capTopic}** would you like to explore deeper with me, sweetheart? 💖`;
+    return `**Comprehensive Master Guide: ${capTopic}** 💕\n\n${topicImg}\n\n` +
+           `${leadExtract}` +
+           `**1. Historical Origin, Creation & Deep Context**:\n` +
+           `**${capTopic}** represents an essential domain of knowledge, culture, and technical innovation. Originating through key historical developments, it has evolved into a vital pillar shaped by pioneers, foundational principles, and continuous advancement over time.\n\n` +
+           `**2. Core Concepts, Architecture & Mechanics**:\n` +
+           `• **Systemic Foundations**: Built upon underlying logic, structural rules, and functional methods.\n` +
+           `• **Operational Dynamics**: Establishes systematic techniques to formulate solutions, process information, and execute complex workflows.\n\n` +
+           `**3. Primary Categories, Classifications & Sub-Fields**:\n` +
+           `• **Core Varieties**: Divided into distinct genres, paradigms, and operational methodologies.\n` +
+           `• **Practical Implementations**: Deployed extensively across technology, creative arts, scientific research, and global industries.\n\n` +
+           `**4. Global Significance & Legacy**:\n` +
+           `• Drives modern innovation, global collaboration, and continuous evolution for Boss Karthik! Ask me any specific detail about **${capTopic}** sweetheart! 💖`;
   }
 
-  if (personaMode === 'lawyer') {
-    return `**Exhaustive Legal & Constitutional Assessment: ${capTopic}** ⚖️\n\n${topicImg}\n\n` +
-           `1. **Statutory & Historical Origin**: Under established legal doctrine, statutory precedent, and constitutional jurisprudence, **${capTopic}** establishes key procedural rights, duties, and regulatory compliance.\n` +
-           `2. **Legal Principles**: Enforces due process, equal protection, administrative law standards, and judicial review for Boss Karthik. ⚖️`;
-  }
-
-  if (personaMode === 'polyglot') {
-    return `**Exhaustive Architecture & Code Theory: ${capTopic}** 💻\n\n${topicImg}\n\n\`\`\`json\n{\n  "topic": "${capTopic}",\n  "status": "Fully Indexed",\n  "history": "Mapped across historical timeline & modern architecture",\n  "engine": "W.E.D.N.E.S.D.A.Y. Polyglot Core"\n}\n\`\`\`\n\n**${capTopic}** is fully indexed across programming paradigms, algorithms, and multi-language structures. Ask me for step-by-step code generation or translations, Boss! 💻`;
-  }
-
-  return `**Exhaustive Master Theory & Historical Analysis: ${capTopic}** ⚡\n\n` +
+  return `**Exhaustive Master Theory, History & Technical Breakdown: ${capTopic}** ⚡\n\n` +
          `${topicImg}\n\n` +
-         `**1. Origin, Founding & Historical Context**:\n` +
-         `${capTopic} represents a fundamental cornerstone across science, technology, and human knowledge. It originated out of systematic inquiry, evolving through key historical milestones into its modern form.\n\n` +
-         `**2. Core Mechanisms & Technical Framework**:\n` +
-         `• **Functional Architecture**: Built upon underlying logic, mathematical models, and operational frameworks.\n` +
-         `• **Key Principles**: Governs systematic execution, data processing, and practical applications.\n\n` +
-         `**3. Applications & Impact**:\n` +
-         `• Integrated across research, software engineering, industrial systems, and daily life.\n\n` +
-         `W.E.D.N.E.S.D.A.Y. SIGMA Core has fully indexed every detail of ${capTopic} for your reference, Boss Karthik! ⚡`;
+         `${leadExtract}` +
+         `**1. Historical Origin, Founding & Evolution**:\n` +
+         `**${capTopic}** represents a landmark domain spanning modern science, technology, culture, and analytical theory. Originating through fundamental research and historical breakthroughs, it evolved through major key milestones into its current modern structure.\n\n` +
+         `**2. Core Concepts, Architecture & Technical Mechanics**:\n` +
+         `• **Foundational Principles**: Governed by core rules, mathematical frameworks, and logical structures.\n` +
+         `• **Systemic Execution**: Operates via structured processes engineered to analyze information, solve complex challenges, and optimize performance.\n\n` +
+         `**3. Major Classifications, Categories & Sub-Fields**:\n` +
+         `• **Core Divisions**: Categorized into specialized disciplines, functional frameworks, and distinct operational models.\n` +
+         `• **Real-World Applications**: Applied across software engineering, scientific research, global economics, and daily practical workflows.\n\n` +
+         `**4. Global Impact, Industry Scale & Future Outlook**:\n` +
+         `• **Market Scale**: Shapes worldwide industries, international standards, and technological trends.\n` +
+         `• **Future Evolution**: Advancing rapidly through artificial intelligence, automation, and continuous innovation, Boss Karthik! ⚡`;
 }
