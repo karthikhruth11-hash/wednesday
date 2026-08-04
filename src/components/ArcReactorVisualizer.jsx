@@ -151,46 +151,46 @@ export default function ArcReactorVisualizer({ state, activeGesture, handPos }) 
         ctx.globalAlpha = 1.0;
       });
 
-      // --- 4. REAL 3D ROTATING PLANET - "HEART OF WEDNESDAY" AT SCREEN CENTER ---
-      ctx.save();
-      ctx.translate(centerX, centerY);
-
-      const pinchScale = (handPos && handPos.pinchDist) ? Math.max(0.6, Math.min(1.8, handPos.pinchDist * 6)) : 1;
-      const basePlanetRadius = 135 * pinchScale;
-      const planetPulse = basePlanetRadius + Math.sin(time * 2.5) * (6 * pinchScale);
-
-      // A. Outer Atmospheric Nebular Corona Glow Aura
-      const coronaGrad = ctx.createRadialGradient(0, 0, basePlanetRadius * 0.5, 0, 0, planetPulse * 1.8);
-      coronaGrad.addColorStop(0, 'rgba(168, 85, 247, 0.7)');
-      coronaGrad.addColorStop(0.45, 'rgba(0, 240, 255, 0.35)');
-      coronaGrad.addColorStop(0.8, accentGlow);
-      coronaGrad.addColorStop(1, 'transparent');
-
-      ctx.fillStyle = coronaGrad;
-      ctx.beginPath();
-      ctx.arc(0, 0, planetPulse * 1.8, 0, Math.PI * 2);
-      ctx.fill();
-
-      // B. Render Cropped Real Planet Texture at Screen Center
+      // --- 4. LIVE ANIMATED 3D PLANET MOVEMENT (FROM THE 1ST IMAGE) ---
       if (spaceImg && (spaceImg.complete || spaceImg.naturalWidth > 0)) {
         const imgW = spaceImg.naturalWidth || spaceImg.width || 1920;
         const imgH = spaceImg.naturalHeight || spaceImg.height || 1080;
 
-        // Crop coordinates of planet in source image
+        // Source planet coordinates inside the Serenity wallpaper
         const srcPX = imgW * 0.685;
         const srcPY = imgH * 0.525;
         const srcPR = imgW * 0.118;
 
-        ctx.save();
-        // Continuous 360-degree 3D Planet Rotation
-        ctx.rotate(time * 0.4);
+        const pinchScale = (handPos && handPos.pinchDist) ? Math.max(0.6, Math.min(1.8, handPos.pinchDist * 6)) : 1;
+        const basePlanetRadius = 145 * pinchScale;
+        const planetPulse = basePlanetRadius + Math.sin(time * 2.2) * (6 * pinchScale);
 
-        // Circular Clip at Screen Center
+        ctx.save();
+        ctx.translate(centerX, centerY);
+
+        // A. Atmospheric Purple/Magma Corona Glow
+        const coronaGrad = ctx.createRadialGradient(0, 0, basePlanetRadius * 0.5, 0, 0, planetPulse * 1.75);
+        coronaGrad.addColorStop(0, 'rgba(168, 85, 247, 0.7)');
+        coronaGrad.addColorStop(0.45, 'rgba(255, 107, 0, 0.35)');
+        coronaGrad.addColorStop(0.85, accentGlow);
+        coronaGrad.addColorStop(1, 'transparent');
+
+        ctx.fillStyle = coronaGrad;
+        ctx.beginPath();
+        ctx.arc(0, 0, planetPulse * 1.75, 0, Math.PI * 2);
+        ctx.fill();
+
+        // B. Render & Rotate the Actual Planet Texture from the 1st Image
+        ctx.save();
+        // 360-degree Continuous 3D Planet Rotation
+        ctx.rotate(time * 0.35);
+
+        // Circular Clip for Planet
         ctx.beginPath();
         ctx.arc(0, 0, planetPulse, 0, Math.PI * 2);
         ctx.clip();
 
-        // Draw Real Planet Image centered at screen center!
+        // Draw the exact planet from the user's image centered
         ctx.drawImage(
           spaceImg,
           srcPX - srcPR,
@@ -203,92 +203,66 @@ export default function ArcReactorVisualizer({ state, activeGesture, handPos }) 
           planetPulse * 2
         );
 
-        // Counter-Rotating Inner Magma Glow Layer for 3D Depth
+        // Counter-Rotating Magma Surface Swirl for 3D Shimmer
         ctx.save();
-        ctx.rotate(-time * 0.7);
+        ctx.rotate(-time * 0.65);
         ctx.globalCompositeOperation = 'screen';
-        ctx.globalAlpha = 0.45;
+        ctx.globalAlpha = 0.4;
         ctx.drawImage(
           spaceImg,
           srcPX - srcPR,
           srcPY - srcPR,
           srcPR * 2,
           srcPR * 2,
-          -planetPulse * 1.06,
-          -planetPulse * 1.06,
-          planetPulse * 2.12,
-          planetPulse * 2.12
+          -planetPulse * 1.05,
+          -planetPulse * 1.05,
+          planetPulse * 2.1,
+          planetPulse * 2.1
         );
         ctx.restore();
 
-        // 3D Spherical Light Shading (Light from top-left, shadow bottom-right)
+        // 3D Spherical Light & Volumetric Shadow Mask
         const sphereShade = ctx.createRadialGradient(
           -planetPulse * 0.35, -planetPulse * 0.35, planetPulse * 0.1,
           0, 0, planetPulse
         );
-        sphereShade.addColorStop(0, 'rgba(255, 255, 255, 0.22)');
+        sphereShade.addColorStop(0, 'rgba(255, 255, 255, 0.2)');
         sphereShade.addColorStop(0.5, 'rgba(0, 0, 0, 0)');
-        sphereShade.addColorStop(0.85, 'rgba(10, 4, 30, 0.65)');
-        sphereShade.addColorStop(1, 'rgba(3, 1, 10, 0.92)');
+        sphereShade.addColorStop(0.85, 'rgba(10, 4, 30, 0.6)');
+        sphereShade.addColorStop(1, 'rgba(3, 1, 10, 0.9)');
 
         ctx.fillStyle = sphereShade;
         ctx.beginPath();
         ctx.arc(0, 0, planetPulse, 0, Math.PI * 2);
         ctx.fill();
 
-        ctx.restore();
-      }
+        ctx.restore(); // end clip
 
-      // C. 3D Rayleigh Limb Specular Edge Highlight
-      const rimGrad = ctx.createRadialGradient(
-        planetPulse * 0.25, planetPulse * 0.25, planetPulse * 0.75,
-        0, 0, planetPulse
-      );
-      rimGrad.addColorStop(0, 'transparent');
-      rimGrad.addColorStop(0.8, 'rgba(0, 240, 255, 0.3)');
-      rimGrad.addColorStop(0.98, 'rgba(255, 255, 255, 0.85)');
+        // C. 3D Rayleigh Limb Edge Glow
+        const rimGrad = ctx.createRadialGradient(
+          planetPulse * 0.25, planetPulse * 0.25, planetPulse * 0.75,
+          0, 0, planetPulse
+        );
+        rimGrad.addColorStop(0, 'transparent');
+        rimGrad.addColorStop(0.8, 'rgba(168, 85, 247, 0.35)');
+        rimGrad.addColorStop(0.98, 'rgba(255, 255, 255, 0.85)');
 
-      ctx.fillStyle = rimGrad;
-      ctx.beginPath();
-      ctx.arc(0, 0, planetPulse, 0, Math.PI * 2);
-      ctx.fill();
-
-      // D. Interlocking 3D Energy Orbit Rings around Centered Planet Heart
-      for (let r = 0; r < 3; r++) {
-        ctx.save();
-        ctx.rotate(time * 0.6 + (r * Math.PI) / 3);
-        ctx.strokeStyle = r % 2 === 0 ? primaryColor : secondaryColor;
-        ctx.lineWidth = 2.5 * pinchScale;
-        ctx.shadowColor = primaryColor;
-        ctx.shadowBlur = 18;
+        ctx.fillStyle = rimGrad;
         ctx.beginPath();
-        ctx.ellipse(0, 0, planetPulse * 1.3, planetPulse * 0.42, 0, 0, Math.PI * 2);
-        ctx.stroke();
-
-        // 3D Revolving Quantum Electron Node
-        const nodeA = time * (1.6 + r * 0.3);
-        const nx = Math.cos(nodeA) * (planetPulse * 1.3);
-        const ny = Math.sin(nodeA) * (planetPulse * 0.42);
-        ctx.fillStyle = '#ffffff';
-        ctx.shadowColor = primaryColor;
-        ctx.shadowBlur = 20;
-        ctx.beginPath();
-        ctx.arc(nx, ny, 5 * pinchScale, 0, Math.PI * 2);
+        ctx.arc(0, 0, planetPulse, 0, Math.PI * 2);
         ctx.fill();
 
+        // D. Ultra-Sleek Glass Rim Ring
+        ctx.strokeStyle = primaryColor;
+        ctx.lineWidth = 2.5 * pinchScale;
+        ctx.shadowColor = primaryColor;
+        ctx.shadowBlur = 22;
+        ctx.beginPath();
+        ctx.arc(0, 0, planetPulse, 0, Math.PI * 2);
+        ctx.stroke();
+
         ctx.restore();
       }
-
-      // E. Glass Lens Rim Ring around Centered Planet Heart
-      ctx.strokeStyle = primaryColor;
-      ctx.lineWidth = 3 * pinchScale;
-      ctx.shadowColor = primaryColor;
-      ctx.shadowBlur = 24;
-      ctx.beginPath();
-      ctx.arc(0, 0, planetPulse, 0, Math.PI * 2);
-      ctx.stroke();
-
-      ctx.restore();
 
       ctx.restore();
       animationId = requestAnimationFrame(render);
@@ -310,23 +284,21 @@ export default function ArcReactorVisualizer({ state, activeGesture, handPos }) 
           position: 'absolute',
           top: '12px',
           padding: '0.4rem 1rem',
-          background: 'rgba(0, 240, 255, 0.15)',
-          border: '1px solid #00f0ff',
-          color: '#00f0ff',
+          background: 'rgba(168, 85, 247, 0.15)',
+          border: '1px solid #a855f7',
+          color: '#e040fb',
           borderRadius: '20px',
           fontSize: '0.75rem',
           fontFamily: 'Orbitron',
           display: 'flex',
           alignItems: 'center',
           gap: '0.5rem',
-          boxShadow: '0 0 15px rgba(0, 240, 255, 0.4)',
+          boxShadow: '0 0 15px rgba(168, 85, 247, 0.4)',
           zIndex: 10
         }}>
-          <Sparkles size={14} /> FULLSCREEN COSMIC BACKDROP ACTIVE: {activeGesture}
+          <Sparkles size={14} /> PLANET MOVEMENT ACTIVE: {activeGesture}
         </div>
       )}
     </div>
   );
 }
-
-
