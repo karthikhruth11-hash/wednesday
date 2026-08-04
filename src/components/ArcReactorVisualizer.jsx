@@ -1,34 +1,82 @@
 import React, { useEffect, useRef } from 'react';
 import { Sparkles } from 'lucide-react';
-import galaxyImgUrl from '../assets/galaxy-core.jpg';
 
 export default function ArcReactorVisualizer({ state, activeGesture, handPos }) {
   const canvasRef = useRef(null);
-  const galaxyImgRef = useRef(null);
 
   useEffect(() => {
-    // Synchronously assign image to ref for immediate rendering
-    const img = new Image();
-    galaxyImgRef.current = img;
-    img.src = galaxyImgUrl;
-
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
 
     let animationId;
-    let rGalaxyRot = 0;
-    let pulsePhase = 0;
+    let time = 0;
 
-    // Fullscreen Cosmic Stardust Sparkles
-    const particles = Array.from({ length: 120 }, () => ({
-      x: Math.random(),
-      y: Math.random(),
-      speedX: (Math.random() - 0.5) * 0.4,
-      speedY: (Math.random() - 0.5) * 0.4,
-      size: 1.0 + Math.random() * 2.8,
-      alpha: 0.2 + Math.random() * 0.8
-    }));
+    // --- 1. GENERATE 3D GALAXY SPIRAL ACCRETION PARTICLES ---
+    const numParticles = 320;
+    const galaxyParticles = Array.from({ length: numParticles }, (_, i) => {
+      const arm = i % 2; // Dual spiral arms
+      const angleOffset = arm * Math.PI;
+      const distRatio = Math.pow(Math.random(), 0.7);
+      const r = 20 + distRatio * 200;
+      const angle = angleOffset + distRatio * Math.PI * 4 + (Math.random() - 0.5) * 0.4;
+      const yOffset = (Math.random() - 0.5) * (15 + distRatio * 35);
+      const size = 1.0 + Math.random() * 2.5;
+
+      return {
+        baseR: r,
+        baseAngle: angle,
+        y: yOffset,
+        size,
+        alpha: 0.3 + Math.random() * 0.7,
+        isFiery: Math.random() > 0.45
+      };
+    });
+
+    // --- 2. 3D ATOMIC ORBIT RINGS CONFIGURATION ---
+    const atomRings = [
+      { tiltX: 0.35, tiltY: 0.2, tiltZ: 0.1, radius: 95, speed: 1.2 },
+      { tiltX: -0.65, tiltY: 0.5, tiltZ: -0.3, radius: 105, speed: -1.5 },
+      { tiltX: 0.8, tiltY: -0.4, tiltZ: 0.5, radius: 115, speed: 1.8 },
+      { tiltX: -0.2, tiltY: -0.8, tiltZ: -0.4, radius: 125, speed: -1.1 }
+    ];
+
+    // --- 3. 3D ORBITAL SATELLITE NODES ---
+    const orbitalNodes = [
+      'ChatGPT Core',
+      'Gestures AI',
+      'Voice Synth',
+      'Sigma OS',
+      'Auto ML',
+      'Galaxy Radar',
+      'Atomic Core'
+    ];
+
+    // --- 3D PERSPECTIVE PROJECTION HELPER ---
+    const project3D = (x, y, z, pitch, yaw, roll, focalLength, cx, cy) => {
+      // Yaw (Y-axis)
+      const cosY = Math.cos(yaw), sinY = Math.sin(yaw);
+      const x1 = x * cosY - z * sinY;
+      const z1 = z * cosY + x * sinY;
+
+      // Pitch (X-axis)
+      const cosX = Math.cos(pitch), sinX = Math.sin(pitch);
+      const y2 = y * cosX - z1 * sinX;
+      const z2 = z1 * cosX + y * sinX;
+
+      // Roll (Z-axis)
+      const cosZ = Math.cos(roll), sinZ = Math.sin(roll);
+      const x3 = x1 * cosZ - y2 * sinZ;
+      const y3 = y2 * cosZ + x1 * sinZ;
+
+      // Perspective scale factor
+      const depth = z2 + 450;
+      const scale = focalLength / Math.max(100, depth);
+      const screenX = cx + x3 * scale;
+      const screenY = cy + y3 * scale;
+
+      return { screenX, screenY, scale, depth, rawZ: z2 };
+    };
 
     const render = () => {
       const parent = canvas.parentElement;
@@ -49,96 +97,253 @@ export default function ArcReactorVisualizer({ state, activeGesture, handPos }) 
       let centerX = width / 2;
       let centerY = height / 2;
 
-      // Track hand position live if gesture engine active
+      // Dynamic Interactive 3D Parallax Pitch and Yaw
+      let targetPitch = 0.35; // Default 3D perspective tilt
+      let targetYaw = time * 0.4;
+
       if (handPos && handPos.x !== undefined && handPos.y !== undefined) {
         centerX = (1 - handPos.x) * width;
         centerY = handPos.y * height;
+        targetPitch = (handPos.y - 0.5) * 1.2;
+        targetYaw = (0.5 - handPos.x) * 1.5 + time * 0.4;
       }
 
-      // Dynamic State Color Palette & Animation Speeds
+      // Dynamic State Themes & Speeds
       let speedMult = 1.0;
-      let primaryColor = '#00f0ff'; // Neon Cyan
-      let secondaryColor = '#ff6b00'; // Fiery Amber
+      let primaryColor = '#00f0ff'; // Stark Neon Cyan
+      let secondaryColor = '#ff6b00'; // Fiery Amber Gold
+      let accentGlow = 'rgba(0, 240, 255, 0.5)';
 
       if (state === 'listening') {
-        speedMult = 2.0;
-        primaryColor = '#00ff88'; // Emerald Green
+        speedMult = 2.2;
+        primaryColor = '#00ff88'; // Matrix Emerald
         secondaryColor = '#ffaa00';
+        accentGlow = 'rgba(0, 255, 136, 0.5)';
       } else if (state === 'processing') {
-        speedMult = 3.2;
-        primaryColor = '#a855f7'; // Purple
+        speedMult = 3.5;
+        primaryColor = '#a855f7'; // Quantum Purple
         secondaryColor = '#ff0055';
+        accentGlow = 'rgba(168, 85, 247, 0.6)';
       } else if (state === 'speaking') {
-        speedMult = 1.8;
-        primaryColor = '#ff0055'; // Crimson
-        secondaryColor = '#ffb703'; // Gold
+        speedMult = 2.0;
+        primaryColor = '#ff0055'; // Solar Fusion Crimson
+        secondaryColor = '#ffb703'; // Golden Flame
+        accentGlow = 'rgba(255, 0, 85, 0.6)';
       }
 
-      rGalaxyRot += 0.005 * speedMult;
-      pulsePhase += 0.035 * speedMult;
+      time += 0.012 * speedMult;
+      const pitch = targetPitch;
+      const yaw = targetYaw;
+      const roll = Math.sin(time * 0.5) * 0.08;
+      const focalLength = 500;
 
-      const scale = (handPos && handPos.pinchDist) ? Math.max(0.7, Math.min(1.6, handPos.pinchDist * 5)) : 1;
+      const pinchScale = (handPos && handPos.pinchDist) ? Math.max(0.6, Math.min(1.8, handPos.pinchDist * 6)) : 1.0;
 
-      // --- 1. FULLSCREEN ROTATING GALAXY IMAGE ---
-      const galaxyImg = galaxyImgRef.current;
-      const diag = Math.sqrt(width * width + height * height) * 1.18 * scale;
-      const pulseSize = diag + Math.sin(pulsePhase) * 20;
+      // Collection of 3D elements for Z-sorting (Depth Sorting for realistic 3D occlusion)
+      const renderQueue = [];
 
-      if (galaxyImg && (galaxyImg.complete || galaxyImg.naturalWidth > 0)) {
-        ctx.save();
-        ctx.translate(centerX, centerY);
+      // --- 1. 3D GALAXY SPIRAL PARTICLES ---
+      galaxyParticles.forEach((p) => {
+        const curAngle = p.baseAngle + time * (0.3 + (200 - p.baseR) * 0.002);
+        const r = p.baseR * pinchScale;
+        const x = Math.cos(curAngle) * r;
+        const z = Math.sin(curAngle) * r;
+        const y = p.y * pinchScale;
 
-        // 360-degree Continuous Fullscreen Galaxy Rotation
-        ctx.rotate(rGalaxyRot);
+        const proj = project3D(x, y, z, pitch, yaw, roll, focalLength, centerX, centerY);
+        const col = p.isFiery ? secondaryColor : primaryColor;
 
-        // Draw Real Galaxy Image covering full screen edge to edge
-        ctx.drawImage(
-          galaxyImg,
-          -pulseSize / 2,
-          -pulseSize / 2,
-          pulseSize,
-          pulseSize
-        );
-
-        ctx.restore();
-      } else {
-        // Fallback space gradient
-        const bgGrad = ctx.createRadialGradient(centerX, centerY, 50, centerX, centerY, width);
-        bgGrad.addColorStop(0, '#0a0d1a');
-        bgGrad.addColorStop(1, '#02040a');
-        ctx.fillStyle = bgGrad;
-        ctx.fillRect(0, 0, width, height);
-      }
-
-      // --- 2. STATE REACTIVE AMBIENT LUMINOSITY OVERLAY ---
-      const ambientGlow = ctx.createRadialGradient(centerX, centerY, 50, centerX, centerY, width * 0.75);
-      ambientGlow.addColorStop(0, 'rgba(0, 0, 0, 0)');
-      ambientGlow.addColorStop(0.6, 'rgba(0, 0, 0, 0.35)');
-      ambientGlow.addColorStop(1, 'rgba(2, 6, 16, 0.8)');
-
-      ctx.fillStyle = ambientGlow;
-      ctx.fillRect(0, 0, width, height);
-
-      // --- 3. FULLSCREEN COSMIC STARDUST SPARKLES ---
-      particles.forEach(p => {
-        p.x = (p.x + p.speedX * 0.001 * speedMult + 1) % 1;
-        p.y = (p.y + p.speedY * 0.001 * speedMult + 1) % 1;
-
-        const px = p.x * width;
-        const py = p.y * height;
-
-        ctx.fillStyle = Math.random() > 0.5 ? primaryColor : secondaryColor;
-        ctx.shadowColor = primaryColor;
-        ctx.shadowBlur = 10;
-        ctx.globalAlpha = p.alpha * (0.6 + 0.4 * Math.sin(pulsePhase * 2));
-        ctx.beginPath();
-        ctx.arc(px, py, p.size * scale, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.globalAlpha = 1.0;
+        renderQueue.push({
+          depth: proj.depth,
+          draw: () => {
+            ctx.fillStyle = col;
+            ctx.shadowColor = col;
+            ctx.shadowBlur = 10 * proj.scale;
+            ctx.globalAlpha = p.alpha * Math.min(1, Math.max(0.2, proj.scale * 0.9));
+            ctx.beginPath();
+            ctx.arc(proj.screenX, proj.screenY, p.size * proj.scale, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 1.0;
+          }
+        });
       });
 
-      ctx.restore();
+      // --- 2. 3D ATOMIC ORBIT RINGS & ELECTRONS ---
+      atomRings.forEach((ring, rIdx) => {
+        const ringR = ring.radius * pinchScale;
+        const numPoints = 80;
+        const ringPoints = [];
 
+        for (let i = 0; i <= numPoints; i++) {
+          const a = (i / numPoints) * Math.PI * 2;
+          const rx0 = Math.cos(a) * ringR;
+          const ry0 = Math.sin(a) * ringR;
+          const rz0 = 0;
+
+          // Apply ring inclination rotations
+          const cx1 = Math.cos(ring.tiltX), sx1 = Math.sin(ring.tiltX);
+          const cy1 = Math.cos(ring.tiltY), sy1 = Math.sin(ring.tiltY);
+          const cz1 = Math.cos(ring.tiltZ), sz1 = Math.sin(ring.tiltZ);
+
+          let rx1 = rx0 * cz1 - ry0 * sz1;
+          let ry1 = ry0 * cz1 + rx0 * sz1;
+          let rz1 = rz0;
+
+          let rx2 = rx1;
+          let ry2 = ry1 * cx1 - rz1 * sx1;
+          let rz2 = rz1 * cx1 + ry1 * sx1;
+
+          let rx3 = rx2 * cy1 + rz2 * sy1;
+          let ry3 = ry2;
+          let rz3 = rz2 * cy1 - rx2 * sy1;
+
+          const proj = project3D(rx3, ry3, rz3, pitch, yaw, roll, focalLength, centerX, centerY);
+          ringPoints.push(proj);
+        }
+
+        // Calculate average depth of ring
+        const avgDepth = ringPoints.reduce((sum, pt) => sum + pt.depth, 0) / ringPoints.length;
+
+        renderQueue.push({
+          depth: avgDepth,
+          draw: () => {
+            ctx.beginPath();
+            ringPoints.forEach((pt, i) => {
+              if (i === 0) ctx.moveTo(pt.screenX, pt.screenY);
+              else ctx.lineTo(pt.screenX, pt.screenY);
+            });
+            ctx.closePath();
+
+            ctx.strokeStyle = rIdx % 2 === 0 ? primaryColor : secondaryColor;
+            ctx.lineWidth = 2.2 * (focalLength / avgDepth);
+            ctx.shadowColor = primaryColor;
+            ctx.shadowBlur = 16;
+            ctx.stroke();
+
+            // 3D Revolving Quantum Electron
+            const eAngle = time * ring.speed * 2;
+            const eIdx = Math.floor((((eAngle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2)) / (Math.PI * 2) * numPoints);
+            const ePt = ringPoints[eIdx] || ringPoints[0];
+
+            ctx.fillStyle = '#ffffff';
+            ctx.shadowColor = primaryColor;
+            ctx.shadowBlur = 20;
+            ctx.beginPath();
+            ctx.arc(ePt.screenX, ePt.screenY, 5 * ePt.scale, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        });
+      });
+
+      // --- 3. 3D OUTER TUNGSTEN ALLOY ARC FINS ---
+      const numFins = 10;
+      const finR1 = 150 * pinchScale;
+      const finR2 = 190 * pinchScale;
+
+      for (let i = 0; i < numFins; i++) {
+        const angle = (i / numFins) * Math.PI * 2 + time * 0.2;
+        const widthAngle = 0.18;
+
+        const p1 = project3D(Math.cos(angle - widthAngle) * finR1, 0, Math.sin(angle - widthAngle) * finR1, pitch, yaw, roll, focalLength, centerX, centerY);
+        const p2 = project3D(Math.cos(angle - widthAngle) * finR2, 0, Math.sin(angle - widthAngle) * finR2, pitch, yaw, roll, focalLength, centerX, centerY);
+        const p3 = project3D(Math.cos(angle + widthAngle) * finR2, 0, Math.sin(angle + widthAngle) * finR2, pitch, yaw, roll, focalLength, centerX, centerY);
+        const p4 = project3D(Math.cos(angle + widthAngle) * finR1, 0, Math.sin(angle + widthAngle) * finR1, pitch, yaw, roll, focalLength, centerX, centerY);
+
+        const avgDepth = (p1.depth + p2.depth + p3.depth + p4.depth) / 4;
+
+        renderQueue.push({
+          depth: avgDepth,
+          draw: () => {
+            ctx.fillStyle = 'rgba(6, 18, 36, 0.85)';
+            ctx.strokeStyle = primaryColor;
+            ctx.lineWidth = 1.5 * p1.scale;
+            ctx.shadowColor = primaryColor;
+            ctx.shadowBlur = 12;
+
+            ctx.beginPath();
+            ctx.moveTo(p1.screenX, p1.screenY);
+            ctx.lineTo(p2.screenX, p2.screenY);
+            ctx.lineTo(p3.screenX, p3.screenY);
+            ctx.lineTo(p4.screenX, p4.screenY);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+          }
+        });
+      }
+
+      // --- 4. 3D ORBITAL SATELLITE TEXT NODES ---
+      orbitalNodes.forEach((nodeText, idx) => {
+        const angle = (idx / orbitalNodes.length) * Math.PI * 2 + time * 0.25;
+        const r = 215 * pinchScale;
+        const proj = project3D(Math.cos(angle) * r, 0, Math.sin(angle) * r, pitch, yaw, roll, focalLength, centerX, centerY);
+
+        renderQueue.push({
+          depth: proj.depth,
+          draw: () => {
+            ctx.fillStyle = primaryColor;
+            ctx.shadowColor = primaryColor;
+            ctx.shadowBlur = 12;
+            ctx.beginPath();
+            ctx.arc(proj.screenX, proj.screenY, 4.5 * proj.scale, 0, Math.PI * 2);
+            ctx.fill();
+
+            const fontSize = Math.max(7, Math.round(10 * proj.scale));
+            ctx.font = `bold ${fontSize}px Orbitron, sans-serif`;
+            ctx.fillStyle = '#ffffff';
+            ctx.shadowBlur = 8;
+            ctx.fillText(nodeText, proj.screenX + 7 * proj.scale, proj.screenY + 3 * proj.scale);
+          }
+        });
+      });
+
+      // --- 5. 3D CENTRAL QUANTUM PLASMA CORE (NUCLEUS) ---
+      const coreProj = project3D(0, 0, 0, pitch, yaw, roll, focalLength, centerX, centerY);
+      const corePulse = (62 + Math.sin(time * 3) * 6) * coreProj.scale * pinchScale;
+
+      renderQueue.push({
+        depth: coreProj.depth - 1, // Core renders near center
+        draw: () => {
+          // Radiant 3D Core Aura
+          const radGrad = ctx.createRadialGradient(
+            coreProj.screenX, coreProj.screenY, 0,
+            coreProj.screenX, coreProj.screenY, corePulse * 2.0
+          );
+          radGrad.addColorStop(0, '#ffffff');
+          radGrad.addColorStop(0.25, primaryColor);
+          radGrad.addColorStop(0.6, secondaryColor);
+          radGrad.addColorStop(0.88, accentGlow);
+          radGrad.addColorStop(1, 'transparent');
+
+          ctx.fillStyle = radGrad;
+          ctx.beginPath();
+          ctx.arc(coreProj.screenX, coreProj.screenY, corePulse * 2.0, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Core Glass Lens Rim
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 3 * coreProj.scale;
+          ctx.shadowColor = primaryColor;
+          ctx.shadowBlur = 28;
+          ctx.beginPath();
+          ctx.arc(coreProj.screenX, coreProj.screenY, corePulse, 0, Math.PI * 2);
+          ctx.stroke();
+
+          // Core Center Quantum Sparkle
+          ctx.fillStyle = '#ffffff';
+          ctx.shadowColor = '#ffffff';
+          ctx.shadowBlur = 18;
+          ctx.beginPath();
+          ctx.arc(coreProj.screenX, coreProj.screenY, 6 * coreProj.scale, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      });
+
+      // --- EXECUTE 3D Z-SORTED RENDER QUEUE (Far to Near) ---
+      renderQueue.sort((a, b) => b.depth - a.depth);
+      renderQueue.forEach(item => item.draw());
+
+      ctx.restore();
       animationId = requestAnimationFrame(render);
     };
 
@@ -170,7 +375,7 @@ export default function ArcReactorVisualizer({ state, activeGesture, handPos }) 
           boxShadow: '0 0 15px rgba(0, 240, 255, 0.4)',
           zIndex: 10
         }}>
-          <Sparkles size={14} /> FULLSCREEN GALAXY ACTIVE: {activeGesture}
+          <Sparkles size={14} /> 3D JARVIS ATOMIC REACTOR ENGAGED: {activeGesture}
         </div>
       )}
     </div>
