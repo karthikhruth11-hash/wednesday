@@ -151,6 +151,118 @@ export default function ArcReactorVisualizer({ state, activeGesture, handPos }) 
         ctx.globalAlpha = 1.0;
       });
 
+      // --- 4. CENTRAL 3D ROTATING PLANET - "HEART OF WEDNESDAY" ---
+      ctx.save();
+      ctx.translate(centerX, centerY);
+
+      const pinchScale = (handPos && handPos.pinchDist) ? Math.max(0.6, Math.min(1.8, handPos.pinchDist * 6)) : 1;
+      const basePlanetRadius = 110 * pinchScale;
+      const planetPulse = basePlanetRadius + Math.sin(time * 2.5) * (5 * pinchScale);
+
+      // A. Outer Atmospheric Corona Glow Aura
+      const coronaGrad = ctx.createRadialGradient(0, 0, basePlanetRadius * 0.6, 0, 0, planetPulse * 1.85);
+      coronaGrad.addColorStop(0, primaryColor + 'bb');
+      coronaGrad.addColorStop(0.4, secondaryColor + '55');
+      coronaGrad.addColorStop(0.8, accentGlow);
+      coronaGrad.addColorStop(1, 'transparent');
+
+      ctx.fillStyle = coronaGrad;
+      ctx.beginPath();
+      ctx.arc(0, 0, planetPulse * 1.85, 0, Math.PI * 2);
+      ctx.fill();
+
+      // B. 3D Sphere Body with Radial Light Shading
+      const planetGrad = ctx.createRadialGradient(
+        -planetPulse * 0.35, -planetPulse * 0.35, planetPulse * 0.1,
+        0, 0, planetPulse
+      );
+      planetGrad.addColorStop(0, '#ffffff');
+      planetGrad.addColorStop(0.2, primaryColor);
+      planetGrad.addColorStop(0.55, secondaryColor);
+      planetGrad.addColorStop(0.85, '#12082b');
+      planetGrad.addColorStop(1, '#03010b');
+
+      ctx.fillStyle = planetGrad;
+      ctx.beginPath();
+      ctx.arc(0, 0, planetPulse, 0, Math.PI * 2);
+      ctx.fill();
+
+      // C. 3D Surface Bands & Landmass Swirls (Rotating Y-Axis Surface Feature)
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(0, 0, planetPulse * 0.98, 0, Math.PI * 2);
+      ctx.clip();
+
+      const numBands = 8;
+      for (let b = 0; b < numBands; b++) {
+        const lat = ((b / numBands) - 0.5) * Math.PI * 0.8;
+        const bandY = Math.sin(lat) * planetPulse;
+        const bandH = Math.cos(lat) * planetPulse * 0.25;
+
+        ctx.strokeStyle = (b % 2 === 0 ? primaryColor : secondaryColor) + '66';
+        ctx.lineWidth = Math.max(1.2, bandH * 0.4);
+        ctx.shadowColor = primaryColor;
+        ctx.shadowBlur = 10;
+        ctx.setLineDash([14, 18]);
+        ctx.lineDashOffset = -time * 90 * (b % 2 === 0 ? 1 : -1);
+
+        ctx.beginPath();
+        ctx.ellipse(0, bandY, planetPulse * Math.cos(lat), Math.max(2, bandH * 0.35), 0, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // D. 3D Rayleigh Limb Specular Edge Highlight
+      const rimGrad = ctx.createRadialGradient(
+        planetPulse * 0.3, planetPulse * 0.3, planetPulse * 0.75,
+        0, 0, planetPulse
+      );
+      rimGrad.addColorStop(0, 'transparent');
+      rimGrad.addColorStop(0.8, primaryColor + '44');
+      rimGrad.addColorStop(0.98, '#ffffff');
+
+      ctx.fillStyle = rimGrad;
+      ctx.beginPath();
+      ctx.arc(0, 0, planetPulse, 0, Math.PI * 2);
+      ctx.fill();
+
+      // E. Interlocking 3D Energy Orbit Rings around the Planet Heart
+      for (let r = 0; r < 3; r++) {
+        ctx.save();
+        ctx.rotate(time * 0.6 + (r * Math.PI) / 3);
+        ctx.strokeStyle = r % 2 === 0 ? primaryColor : secondaryColor;
+        ctx.lineWidth = 2.2 * pinchScale;
+        ctx.shadowColor = primaryColor;
+        ctx.shadowBlur = 18;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, planetPulse * 1.25, planetPulse * 0.4, 0, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // 3D Revolving Quantum Electron Node on Orbit Ring
+        const nodeA = time * (1.5 + r * 0.3);
+        const nx = Math.cos(nodeA) * (planetPulse * 1.25);
+        const ny = Math.sin(nodeA) * (planetPulse * 0.4);
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowColor = primaryColor;
+        ctx.shadowBlur = 20;
+        ctx.beginPath();
+        ctx.arc(nx, ny, 4.5 * pinchScale, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+      }
+
+      // F. Sleek Sci-Fi Glass Lens Rim Ring
+      ctx.strokeStyle = primaryColor;
+      ctx.lineWidth = 2.5 * pinchScale;
+      ctx.shadowColor = primaryColor;
+      ctx.shadowBlur = 22;
+      ctx.beginPath();
+      ctx.arc(0, 0, planetPulse, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.restore();
+
       ctx.restore();
       animationId = requestAnimationFrame(render);
     };
