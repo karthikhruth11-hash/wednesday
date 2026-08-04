@@ -441,7 +441,9 @@ export const systemApi = {
         if (wikiRes.ok) {
           const wikiData = await wikiRes.json();
           if (wikiData && wikiData.extract && wikiData.type !== 'disambiguation' && !wikiData.title.toLowerCase().includes('(codename)')) {
-            const reply = `**${wikiData.title}**\n\n${wikiData.extract}${wikiData.description ? `\n\n*${wikiData.description}*` : ''}`;
+            const imgUrl = (wikiData.originalimage && wikiData.originalimage.source) || (wikiData.thumbnail && wikiData.thumbnail.source);
+            const imgMarkdown = imgUrl ? `![${wikiData.title}](${imgUrl})\n\n` : '';
+            const reply = `**${wikiData.title}**\n\n${imgMarkdown}${wikiData.extract}${wikiData.description ? `\n\n*${wikiData.description}*` : ''}`;
             return { success: true, reply };
           }
         }
@@ -463,9 +465,11 @@ export const systemApi = {
             if (summaryRes.ok) {
               const summaryData = await summaryRes.json();
               if (summaryData && summaryData.extract) {
+                const imgUrl = (summaryData.originalimage && summaryData.originalimage.source) || (summaryData.thumbnail && summaryData.thumbnail.source);
+                const imgMarkdown = imgUrl ? `![${summaryData.title}](${imgUrl})\n\n` : '';
                 return {
                   success: true,
-                  reply: `**${summaryData.title}**\n\n${summaryData.extract}`
+                  reply: `**${summaryData.title}**\n\n${imgMarkdown}${summaryData.extract}`
                 };
               }
             }

@@ -313,23 +313,11 @@ export default function App() {
             </button>
           </div>
           {activeNav === 'aichat' && (
-            <>
-              {/* ✨ GALAXY CORE Canvas ✨ */}
-              <div className="galaxy-core-card">
-                <ArcReactorVisualizer
-                  state={appState}
-                  activeGesture={activeGesture}
-                  handPos={handPos}
-                />
-              </div>
-
-              {/* Stream Conversation Console */}
-              <ChatGPTConsole
-                messages={messages}
-                interimTranscript={interimTranscript}
-                onSendMessage={handleSendMessage}
-              />
-            </>
+            <ChatGPTConsole
+              messages={messages}
+              interimTranscript={interimTranscript}
+              onSendMessage={handleSendMessage}
+            />
           )}
 
           {activeNav === 'dashboard' && <TelemetryPanel soundMuted={false} onToggleSound={() => {}} onOpenSettings={() => setIsSettingsOpen(true)} />}
