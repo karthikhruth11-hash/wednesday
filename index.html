@@ -5,6 +5,20 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
+    <script>
+      (function() {
+        const buildVer = "VER_SERENITY_SPACE_20260804";
+        if (localStorage.getItem("wednesday_ver") !== buildVer) {
+          localStorage.setItem("wednesday_ver", buildVer);
+          if ('caches' in window) {
+            caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+          }
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
+          }
+        }
+      })();
+    </script>
     <link rel="icon" type="image/svg+xml" href="./vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>W.E.D.N.E.S.D.A.Y. - Stark AI Assistant</title>
