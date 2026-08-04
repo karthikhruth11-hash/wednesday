@@ -384,21 +384,22 @@ export class AIAgentEngine {
       lower.includes('google search') ||
       lower.includes('search in google') ||
       lower.includes('in google search') ||
-      lower.includes('search about') ||
-      lower.includes('search on google') ||
+      lower.includes('in google') ||
+      lower.includes('on google') ||
       lower.includes('search google') ||
-      (lower.includes('google') && lower.includes('search'))
+      lower.startsWith('search about') ||
+      (lower.includes('google') && (lower.includes('search') || lower.includes('about') || lower.includes('find')))
     );
 
-    if (!result && isGoogleSearchCmd && !isInfoQuery) {
+    if (!result && isGoogleSearchCmd) {
       let gQuery = rawQuery
-        .replace(/^(please\s+)?(in\s+google\s+search\s+about|in\s+google\s+search|search\s+about|search\s+on\s+google|search\s+in\s+google|search\s+google\s+for|search\s+google|google\s+search\s+for|google\s+search|open\s+google\s+search|google|search)\s+/i, '')
-        .replace(/\s+(in|on|using)\s+google$/i, '')
+        .replace(/^(please\s+)?(in\s+google\s+search\s+about|in\s+google\s+search|search\s+about|search\s+on\s+google|search\s+in\s+google|search\s+google\s+for|search\s+google|google\s+search\s+for|google\s+search|open\s+google\s+search|about|find|look\s+up|search)\s+/i, '')
+        .replace(/\s+(in|on|using|via)\s+google$/i, '')
         .replace(/\s+about$/i, '')
         .trim();
 
-      if (!gQuery || gQuery.toLowerCase() === 'google' || gQuery.toLowerCase() === 'search') {
-        gQuery = 'earth';
+      if (!gQuery) {
+        gQuery = rawQuery;
       }
 
       const googleUrl = `https://www.google.com/search?q=${encodeURIComponent(gQuery)}`;
