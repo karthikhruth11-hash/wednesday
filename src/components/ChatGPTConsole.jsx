@@ -4,21 +4,65 @@ import { Bot, User } from 'lucide-react';
 function renderFormattedMessage(text) {
   if (!text) return null;
 
-  const linkRegex = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)|(https?:\/\/[^\s)]+)/g;
+  const masterRegex = /!\[([^\]]*)\]\((https?:\/\/[^\s)]+)\)|\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)|(https?:\/\/[^\s)]+)/g;
   const parts = [];
   let lastIdx = 0;
   let match;
 
-  while ((match = linkRegex.exec(text)) !== null) {
+  while ((match = masterRegex.exec(text)) !== null) {
     if (match.index > lastIdx) {
       parts.push(text.substring(lastIdx, match.index));
     }
 
-    if (match[1] && match[2]) {
+    if (match[1] !== undefined && match[2]) {
+      const altText = match[1] || 'Visual Matrix';
+      const imgUrl = match[2];
+      parts.push(
+        <div
+          key={match.index}
+          style={{
+            marginTop: '0.8rem',
+            marginBottom: '0.8rem',
+            borderRadius: '12px',
+            overflow: 'hidden',
+            border: '1px solid rgba(0, 240, 255, 0.4)',
+            boxShadow: '0 4px 20px rgba(0, 240, 255, 0.25)',
+            background: 'rgba(6, 18, 36, 0.9)'
+          }}
+        >
+          <img
+            src={imgUrl}
+            alt={altText}
+            loading="lazy"
+            style={{
+              width: '100%',
+              maxHeight: '300px',
+              objectFit: 'cover',
+              display: 'block'
+            }}
+          />
+          <div
+            style={{
+              padding: '0.4rem 0.8rem',
+              background: 'rgba(0, 240, 255, 0.08)',
+              color: '#00f0ff',
+              fontSize: '0.72rem',
+              fontFamily: 'Orbitron, sans-serif',
+              borderTop: '1px solid rgba(0, 240, 255, 0.2)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem'
+            }}
+          >
+            🖼️ {altText}
+          </div>
+        </div>
+      );
+    } else if (match[3] && match[4]) {
       parts.push(
         <a
           key={match.index}
-          href={match[2]}
+          href={match[4]}
           target="_blank"
           rel="noopener noreferrer"
           style={{
@@ -36,23 +80,23 @@ function renderFormattedMessage(text) {
             boxShadow: '0 0 10px rgba(0, 240, 255, 0.2)'
           }}
         >
-          {match[1]} ↗
+          {match[3]} ↗
         </a>
       );
-    } else if (match[3]) {
+    } else if (match[5]) {
       parts.push(
         <a
           key={match.index}
-          href={match[3]}
+          href={match[5]}
           target="_blank"
           rel="noopener noreferrer"
           style={{ color: '#00f0ff', textDecoration: 'underline' }}
         >
-          {match[3]}
+          {match[5]}
         </a>
       );
     }
-    lastIdx = linkRegex.lastIndex;
+    lastIdx = masterRegex.lastIndex;
   }
 
   if (lastIdx < text.length) {

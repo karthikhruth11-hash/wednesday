@@ -556,27 +556,32 @@ function generateAutonomousKnowledge(prompt, personaMode) {
   }
 
   if (p.includes('difference') || p.includes('defference') || p.includes('diffence') || p.includes('deffence') || p.includes('compare') || p.includes('versus') || p.includes('vs')) {
+    const diffImg = `![Coding vs Programming](https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800&auto=format&fit=crop&q=80)`;
     return personaMode === 'girlfriend'
-      ? `Here is the difference between **Coding** and **Programming** babe! 💻\n\n- **Coding**: Translating human logic into specific programming syntax (writing line-by-line code).\n- **Programming**: The broader engineering lifecycle — designing software architecture, algorithms, data structures, testing, and debugging!\n\nCoding is a core part of programming, sweetheart! 💕`
-      : `**Comparison: Coding vs. Programming** 💻\n\n1. **Coding (Implementation)**:\n   - Writing syntax using a programming language (like Python, JS, C++) to convert instructions into machine-readable code.\n\n2. **Programming (Software Engineering)**:\n   - The overarching software engineering process comprising algorithm development, system design, testing, debugging, and deployment.\n\n3. **Analogy**:\n   - Coding is like laying bricks; Programming is designing and building the entire architectural skyscraper, Boss Karthik! ⚡`;
+      ? `Here is the difference between **Coding** and **Programming** babe! 💻\n\n${diffImg}\n\n- **Coding**: Translating human logic into specific programming syntax (writing line-by-line code).\n- **Programming**: The broader engineering lifecycle — designing software architecture, algorithms, data structures, testing, and debugging!\n\nCoding is a core part of programming, sweetheart! 💕`
+      : `**Comparison: Coding vs. Programming** 💻\n\n${diffImg}\n\n1. **Coding (Implementation)**:\n   - Writing syntax using a programming language (like Python, JS, C++) to convert instructions into machine-readable code.\n\n2. **Programming (Software Engineering)**:\n   - The overarching software engineering process comprising algorithm development, system design, testing, debugging, and deployment.\n\n3. **Analogy**:\n   - Coding is like laying bricks; Programming is designing and building the entire architectural skyscraper, Boss Karthik! ⚡`;
   }
 
   if (p.includes('python')) {
+    const pyImg = `![Python Programming](https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&auto=format&fit=crop&q=80)`;
     return personaMode === 'girlfriend'
-      ? `Here is the definition of **Python** for you babe! 🐍\n\n**Python** is a high-level, general-purpose, interpreted programming language created by Guido van Rossum and released in 1991. It is world-renowned for its clean syntax, high readability, and vast library ecosystem (AI, Web, Data Science)! Anything else you'd like to code together sweetheart? 💕`
-      : `**Python Programming Language (Technical Definition)** 🐍\n\nPython is a high-level, interpreted, general-purpose programming language created by Guido van Rossum in 1991.\n\n- **Key Features**: Dynamic typing, garbage collection, highly readable syntax, and multi-paradigm support (OOP, Functional, Procedural).\n- **Primary Applications**: Artificial Intelligence & Machine Learning (TensorFlow/PyTorch), Data Analytics (Pandas/NumPy), Web Development (Django/FastAPI), and Automation Scripts, Boss Karthik! ⚡`;
+      ? `Here is the definition of **Python** for you babe! 🐍\n\n${pyImg}\n\n**Python** is a high-level, general-purpose, interpreted programming language created by Guido van Rossum and released in 1991. It is world-renowned for its clean syntax, high readability, and vast library ecosystem (AI, Web, Data Science)! Anything else you'd like to code together sweetheart? 💕`
+      : `**Python Programming Language (Technical Definition)** 🐍\n\n${pyImg}\n\nPython is a high-level, interpreted, general-purpose programming language created by Guido van Rossum in 1991.\n\n- **Key Features**: Dynamic typing, garbage collection, highly readable syntax, and multi-paradigm support (OOP, Functional, Procedural).\n- **Primary Applications**: Artificial Intelligence & Machine Learning (TensorFlow/PyTorch), Data Analytics (Pandas/NumPy), Web Development (Django/FastAPI), and Automation Scripts, Boss Karthik! ⚡`;
   }
 
   if (p.includes('human') || p.includes('homo sapien')) {
-    return `**Human (Homo sapiens)** 🧬\n\nHumans are the most advanced, bipedal primate species on Earth, characterized by large, highly developed brains capable of abstract reasoning, language, emotional complexity, science, philosophy, and technology development, Boss Karthik! ⚡`;
+    const humanImg = `![Human Species](https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&auto=format&fit=crop&q=80)`;
+    return `**Human (Homo sapiens)** 🧬\n\n${humanImg}\n\nHumans are the most advanced, bipedal primate species on Earth, characterized by large, highly developed brains capable of abstract reasoning, language, emotional complexity, science, philosophy, and technology development, Boss Karthik! ⚡`;
   }
 
   if (p.includes('code') || p.includes('programming') || p.includes('software')) {
-    return `**Computer Programming & Software Code** 💻\n\nProgramming is the process of writing instructions (code) in languages like JavaScript, Python, C++, or Java to execute algorithms and power software applications, operating systems, and AI engines, Boss Karthik! ⚡`;
+    const codeImg = `![Programming Code](https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&auto=format&fit=crop&q=80)`;
+    return `**Computer Programming & Software Code** 💻\n\n${codeImg}\n\nProgramming is the process of writing instructions (code) in languages like JavaScript, Python, C++, or Java to execute algorithms and power software applications, operating systems, and AI engines, Boss Karthik! ⚡`;
   }
 
   if (p.includes('ai') || p.includes('artificial intelligence')) {
-    return `**Artificial Intelligence (AI)** 🤖\n\nArtificial Intelligence refers to computer systems trained to simulate human cognition, learning, reasoning, visual perception, decision making, and natural language processing, Boss Karthik! ⚡`;
+    const aiImg = `![Artificial Intelligence](https://images.unsplash.com/photo-1677442136019-21780efad99a?w=800&auto=format&fit=crop&q=80)`;
+    return `**Artificial Intelligence (AI)** 🤖\n\n${aiImg}\n\nArtificial Intelligence refers to computer systems trained to simulate human cognition, learning, reasoning, visual perception, decision making, and natural language processing, Boss Karthik! ⚡`;
   }
 
   // Basic Arithmetic calculation evaluation fallback
@@ -594,20 +599,22 @@ function generateAutonomousKnowledge(prompt, personaMode) {
     .replace(/\?$/g, '')
     .trim();
   const capTopic = topic ? (topic.charAt(0).toUpperCase() + topic.slice(1)) : rawP;
+  const topicImg = `![${capTopic} Matrix](https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&auto=format&fit=crop&q=80)`;
 
   if (personaMode === 'girlfriend') {
-    return `Here is the complete breakdown on **${capTopic}** babe! 💕\n\n**${capTopic}** represents an essential domain of knowledge. It encompasses core principles, practical applications, and functional structures that shape our understanding.\n\n- **Core Definition**: ${capTopic} establishes systematic methods to solve problems and analyze complex structures.\n- **Primary Applications**: Widely applied across research, practical engineering, technology, and daily life.\n\nWhat specific detail about **${capTopic}** would you like to explore deeper with me, sweetheart? 💖`;
+    return `Here is the complete breakdown on **${capTopic}** babe! 💕\n\n${topicImg}\n\n**${capTopic}** represents an essential domain of knowledge. It encompasses core principles, practical applications, and functional structures that shape our understanding.\n\n- **Core Definition**: ${capTopic} establishes systematic methods to solve problems and analyze complex structures.\n- **Primary Applications**: Widely applied across research, practical engineering, technology, and daily life.\n\nWhat specific detail about **${capTopic}** would you like to explore deeper with me, sweetheart? 💖`;
   }
 
   if (personaMode === 'lawyer') {
-    return `**Legal & Constitutional Assessment: ${capTopic}** ⚖️\n\n1. **Legal Framework**: Under fundamental legal principles, statutory jurisprudence, and constitutional doctrine, **${capTopic}** involves procedural rights and obligations.\n2. **Analysis**: Legal principles ensure equality under the law, due process, and lawful administration for Boss Karthik. ⚖️`;
+    return `**Legal & Constitutional Assessment: ${capTopic}** ⚖️\n\n${topicImg}\n\n1. **Legal Framework**: Under fundamental legal principles, statutory jurisprudence, and constitutional doctrine, **${capTopic}** involves procedural rights and obligations.\n2. **Analysis**: Legal principles ensure equality under the law, due process, and lawful administration for Boss Karthik. ⚖️`;
   }
 
   if (personaMode === 'polyglot') {
-    return `**Polyglot & Code Matrix: ${capTopic}** 💻\n\n\`\`\`json\n{\n  "topic": "${capTopic}",\n  "status": "Verified",\n  "engine": "W.E.D.N.E.S.D.A.Y. Polyglot Core"\n}\n\`\`\`\n\n**${capTopic}** is fully mapped across programming logic and multi-language structures. Ask me for code generation or translations, Boss! 💻`;
+    return `**Polyglot & Code Matrix: ${capTopic}** 💻\n\n${topicImg}\n\n\`\`\`json\n{\n  "topic": "${capTopic}",\n  "status": "Verified",\n  "engine": "W.E.D.N.E.S.D.A.Y. Polyglot Core"\n}\n\`\`\`\n\n**${capTopic}** is fully mapped across programming logic and multi-language structures. Ask me for code generation or translations, Boss! 💻`;
   }
 
   return `**Overview & Detailed Analysis: ${capTopic}** ⚡\n\n` +
+         `${topicImg}\n\n` +
          `**${capTopic}** is an essential subject spanning modern technology, science, and analytical frameworks.\n\n` +
          `• **Core Definition**: Refers to the systematic principles, structures, or methodologies governing ${capTopic}.\n` +
          `• **Key Applications**: Widely implemented across research, engineering, practical problem-solving, and technology systems.\n` +

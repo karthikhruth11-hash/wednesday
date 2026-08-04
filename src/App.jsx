@@ -207,9 +207,18 @@ export default function App() {
   };
 
   return (
-    <div className="ascii-app-container">
+    <div className="ascii-app-container" style={{ position: 'relative' }}>
+      {/* ✨ FULLSCREEN COSMIC GALAXY ARC REACTOR BACKDROP ✨ */}
+      <div style={{ position: 'absolute', inset: 0, zIndex: 1, opacity: 0.65, pointerEvents: 'none' }}>
+        <ArcReactorVisualizer
+          state={appState}
+          activeGesture={activeGesture}
+          handPos={handPos}
+        />
+      </div>
+
       {/* Top Header Bar */}
-      <header className="ascii-top-header">
+      <header className="ascii-top-header" style={{ position: 'relative', zIndex: 100 }}>
         <div className="top-brand-group">
           <button className="dock-icon-btn" onClick={() => setIsSidebarCollapsed(prev => !prev)} title="Toggle Sidebar">
             <Menu size={18} />
@@ -256,7 +265,7 @@ export default function App() {
       </header>
 
       {/* Main Body: Left Sidebar + Center Stage */}
-      <main className="ascii-main-body">
+      <main className="ascii-main-body" style={{ position: 'relative', zIndex: 10 }}>
         {/* Left Sidebar Navigation Menu */}
         <aside className={`ascii-sidebar ${isSidebarCollapsed ? 'collapsed' : ''}`}>
           <button className={`nav-item-btn ${activeNav === 'aichat' ? 'active' : ''}`} onClick={() => setActiveNav('aichat')} style={{ background: activeNav !== 'aichat' ? 'rgba(0,240,255,0.08)' : undefined }}>
