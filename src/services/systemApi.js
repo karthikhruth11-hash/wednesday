@@ -99,12 +99,12 @@ export const systemApi = {
       targetUrl = `https://${targetUrl}`;
     }
 
-    // 1. Instant Client-Side Browser Tab Opening
+    // 1. Instant Client-Side Browser Tab Opening with Resilient Fallback
     if (typeof window !== 'undefined') {
       try {
         const win = window.open(targetUrl, '_blank');
-        if (!win) {
-          // If popup blocked, create link click
+        if (!win || win.closed || typeof win.closed === 'undefined') {
+          // If _blank popup is blocked, perform direct location navigation
           const link = document.createElement('a');
           link.href = targetUrl;
           link.target = '_blank';
@@ -112,9 +112,17 @@ export const systemApi = {
           document.body.appendChild(link);
           link.click();
           link.remove();
+          
+          setTimeout(() => {
+            if (!win || win.closed) {
+              window.open(targetUrl, '_top') || (window.location.href = targetUrl);
+            }
+          }, 300);
         }
       } catch {
-        // continue to backend
+        try {
+          window.location.href = targetUrl;
+        } catch { }
       }
     }
 
