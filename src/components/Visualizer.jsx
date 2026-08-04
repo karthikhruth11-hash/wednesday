@@ -1,15 +1,14 @@
 import React, { useEffect, useRef } from 'react';
-import { Sparkles } from 'lucide-react';
-import galaxyImgUrl from '../assets/galaxy-core.jpg';
+import spaceImgUrl from '../assets/serenity-space.jpg';
 
 export default function Visualizer({ state, activeGesture }) {
   const canvasRef = useRef(null);
-  const galaxyImgRef = useRef(null);
+  const spaceImgRef = useRef(null);
 
   useEffect(() => {
     const img = new Image();
-    galaxyImgRef.current = img;
-    img.src = galaxyImgUrl;
+    spaceImgRef.current = img;
+    img.src = spaceImgUrl;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -18,113 +17,93 @@ export default function Visualizer({ state, activeGesture }) {
     let animationId;
     let time = 0;
 
+    const particles = Array.from({ length: 140 }, () => ({
+      x: Math.random(),
+      y: Math.random(),
+      speedX: (Math.random() - 0.5) * 0.3,
+      speedY: (Math.random() - 0.5) * 0.3,
+      size: 0.8 + Math.random() * 2.5,
+      alpha: 0.2 + Math.random() * 0.8,
+      pulsePhase: Math.random() * Math.PI * 2
+    }));
+
     const render = () => {
-      const width = canvas.parentElement.clientWidth;
-      const height = canvas.parentElement.clientHeight;
-      if (canvas.width !== width || canvas.height !== height) {
-        canvas.width = width;
-        canvas.height = height;
+      const parent = canvas.parentElement;
+      if (!parent) return;
+      const width = parent.clientWidth;
+      const height = parent.clientHeight;
+      const dpr = window.devicePixelRatio || 1;
+
+      if (canvas.width !== width * dpr || canvas.height !== height * dpr) {
+        canvas.width = width * dpr;
+        canvas.height = height * dpr;
       }
 
+      ctx.save();
+      ctx.scale(dpr, dpr);
       ctx.clearRect(0, 0, width, height);
 
-      const centerX = width / 2;
-      const centerY = height / 2;
+      let speedMult = 1.0;
+      let primaryColor = '#a855f7';
+      let secondaryColor = '#00f0ff';
 
-      let speedMult = 1;
-      let primaryColor = '#06b6d4'; // Cyan
-      let secondaryColor = '#8b5cf6'; // Purple
-      let baseRadius = 50;
+      if (state === 'listening') speedMult = 2.0;
+      else if (state === 'processing') speedMult = 3.2;
+      else if (state === 'speaking') speedMult = 1.8;
 
-      if (activeGesture) {
-        speedMult = 3.0;
-        primaryColor = '#8b5cf6';
-        secondaryColor = '#f43f5e';
-        baseRadius = 65;
-      } else if (state === 'listening') {
-        speedMult = 2.2;
-        primaryColor = '#f43f5e'; // Rose
-        secondaryColor = '#f59e0b';
-        baseRadius = 62;
-      } else if (state === 'processing') {
-        speedMult = 3.5;
-        primaryColor = '#f59e0b'; // Amber
-        secondaryColor = '#06b6d4';
-        baseRadius = 55;
-      } else if (state === 'speaking') {
-        speedMult = 1.8;
-        primaryColor = '#10b981'; // Emerald
-        secondaryColor = '#06b6d4';
-        baseRadius = 68;
-      }
+      time += 0.012 * speedMult;
 
-      time += 0.015 * speedMult;
+      const spaceImg = spaceImgRef.current;
+      if (spaceImg && (spaceImg.complete || spaceImg.naturalWidth > 0)) {
+        const imgW = spaceImg.naturalWidth || spaceImg.width || 1920;
+        const imgH = spaceImg.naturalHeight || spaceImg.height || 1080;
+        const imgRatio = imgW / imgH;
+        const canvasRatio = width / height;
 
-      // Glow backdrop
-      const radialGlow = ctx.createRadialGradient(
-        centerX, centerY, 5,
-        centerX, centerY, baseRadius * 2
-      );
-      radialGlow.addColorStop(0, primaryColor + '66');
-      radialGlow.addColorStop(0.5, secondaryColor + '22');
-      radialGlow.addColorStop(1, 'rgba(0,0,0,0)');
-
-      ctx.fillStyle = radialGlow;
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, baseRadius * 2, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Fluid Plasma Layers
-      for (let layer = 0; layer < 4; layer++) {
-        ctx.save();
-        ctx.translate(centerX, centerY);
-
-        const currentRadius = baseRadius + layer * 6;
-        ctx.beginPath();
-        const points = 60;
-
-        for (let i = 0; i <= points; i++) {
-          const angle = (i / points) * Math.PI * 2;
-          const offset = Math.sin(angle * (3 + layer) + time * (1.5 + layer * 0.3)) * (8 + layer * 2);
-          const r = currentRadius + offset;
-
-          const x = Math.cos(angle) * r;
-          const y = Math.sin(angle) * r;
-
-          if (i === 0) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
+        let drawW, drawH;
+        if (canvasRatio > imgRatio) {
+          drawW = width * 1.08;
+          drawH = drawW / imgRatio;
+        } else {
+          drawH = height * 1.08;
+          drawW = drawH * imgRatio;
         }
 
-        ctx.closePath();
-        ctx.strokeStyle = layer % 2 === 0 ? primaryColor + 'cc' : secondaryColor + 'aa';
-        ctx.lineWidth = 2 - layer * 0.3;
+        const drawX = (width - drawW) / 2;
+        const drawY = (height - drawH) / 2;
+
+        ctx.drawImage(spaceImg, drawX, drawY, drawW, drawH);
+      } else {
+        const bgGrad = ctx.createRadialGradient(width / 2, height / 2, 50, width / 2, height / 2, width);
+        bgGrad.addColorStop(0, '#150a2a');
+        bgGrad.addColorStop(0.6, '#080d1e');
+        bgGrad.addColorStop(1, '#02040a');
+        ctx.fillStyle = bgGrad;
+        ctx.fillRect(0, 0, width, height);
+      }
+
+      particles.forEach(p => {
+        p.x = (p.x + p.speedX * 0.0006 * speedMult + 1) % 1;
+        p.y = (p.y + p.speedY * 0.0006 * speedMult + 1) % 1;
+        p.pulsePhase += 0.03 * speedMult;
+
+        const px = p.x * width;
+        const py = p.y * height;
+
+        const alpha = p.alpha * (0.5 + 0.5 * Math.sin(p.pulsePhase));
+        const col = Math.random() > 0.4 ? primaryColor : secondaryColor;
+
+        ctx.fillStyle = col;
         ctx.shadowColor = primaryColor;
-        ctx.shadowBlur = 15;
-        ctx.stroke();
-        ctx.restore();
-      }
-
-      // Real Galaxy Core Heart Image Center
-      if (galaxyImgRef.current && galaxyImgRef.current.complete) {
-        ctx.save();
-        ctx.translate(centerX, centerY);
-        ctx.rotate(time * 0.4);
-
+        ctx.shadowBlur = 8;
+        ctx.globalAlpha = alpha;
         ctx.beginPath();
-        ctx.arc(0, 0, baseRadius * 0.85, 0, Math.PI * 2);
-        ctx.clip();
+        ctx.arc(px, py, p.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1.0;
+      });
 
-        const imgSize = baseRadius * 2.0;
-        ctx.drawImage(
-          galaxyImgRef.current,
-          -imgSize / 2,
-          -imgSize / 2,
-          imgSize,
-          imgSize
-        );
-        ctx.restore();
-      }
-
+      ctx.restore();
       animationId = requestAnimationFrame(render);
     };
 
@@ -136,14 +115,8 @@ export default function Visualizer({ state, activeGesture }) {
   }, [state, activeGesture]);
 
   return (
-    <div className="canvas-container">
-      <canvas ref={canvasRef} />
-
-      {activeGesture && (
-        <div style={{ position: 'absolute', top: '10px', padding: '0.3rem 0.8rem', background: 'rgba(139,92,246,0.2)', border: '1px solid #8b5cf6', color: '#c084fc', borderRadius: '20px', fontSize: '0.72rem', fontFamily: 'Orbitron', display: 'flex', alignItems: 'center', gap: '0.4rem', zIndex: 10 }}>
-          <Sparkles size={12} /> GESTURE REACTIVE ORB ACTIVE
-        </div>
-      )}
+    <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+      <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />
     </div>
   );
 }
