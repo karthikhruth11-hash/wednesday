@@ -333,8 +333,23 @@ export class AIAgentEngine {
       }
     }
 
+    // Information Query Guard (Distinguishes "Tell me about X" from "Open X")
+    const isInfoQuery = (
+      lower.startsWith('tell me about') ||
+      lower.startsWith('tell me') ||
+      lower.startsWith('what is') ||
+      lower.startsWith('what are') ||
+      lower.startsWith('who is') ||
+      lower.startsWith('who was') ||
+      lower.startsWith('explain') ||
+      lower.startsWith('describe') ||
+      lower.startsWith('define') ||
+      lower.startsWith('how does') ||
+      lower.startsWith('how to work')
+    );
+
     // 0.2 PRO YOUTUBE CHANNEL & TOPIC SEARCH ENGINE
-    const isYtMentioned = lower.includes('youtube') || lower.includes('yt') || lower.includes('channel');
+    const isYtMentioned = (lower.includes('youtube') || lower.includes('yt') || lower.includes('channel')) && !isInfoQuery;
     const isGenericOnlyYoutube = (lower === 'open youtube' || lower === 'youtube' || lower === 'open yt' || lower === 'yt');
 
     if (!result && isYtMentioned && !isGenericOnlyYoutube) {
@@ -451,7 +466,20 @@ export class AIAgentEngine {
     }
 
     // 2. UNIVERSAL OPEN-ANYTHING ROUTER (WEBSITES, APPS, DESKTOP TOOLS)
-    if (!result && (lower.includes('youtube') || lower.includes('google') || lower.includes('github') || lower.includes('spotify') || lower.includes('wikipedia') || lower.includes('instagram') || lower.startsWith('open '))) {
+    const isExplicitOpenCmd = (
+      lower.startsWith('open ') ||
+      lower.startsWith('launch ') ||
+      lower.startsWith('start ') ||
+      lower.startsWith('run ') ||
+      lower === 'youtube' ||
+      lower === 'google' ||
+      lower === 'github' ||
+      lower === 'spotify' ||
+      lower === 'instagram' ||
+      lower === 'wikipedia'
+    );
+
+    if (!result && !isInfoQuery && isExplicitOpenCmd) {
       let target = lower.replace(/^(please\s+)?open\s+/i, '').trim();
       if (lower === 'youtube' || lower === 'open youtube') target = 'youtube';
       if (lower.includes('google') && !lower.includes('search')) target = 'google';

@@ -482,6 +482,26 @@ function generateAutonomousKnowledge(prompt, personaMode) {
     return `**Top 10 Greatest Heroes in the World** 🦸‍♂️\n\n1. **Iron Man (Tony Stark)** - Genius billionaire who built tech to protect the cosmos.\n2. **Spider-Man (Peter Parker)** - Enduring hero of heart, courage, and responsibility.\n3. **Batman (Bruce Wayne)** - The Dark Knight master of intelligence and justice.\n4. **Superman (Clark Kent)** - Universal symbol of hope and strength.\n5. **Captain America (Steve Rogers)** - Unwavering integrity and courage.\n6. **Wonder Woman (Diana Prince)** - Champion of truth and peace.\n7. **Thor Odinson** - God of Thunder and protector of realms.\n8. **Wolverine (Logan)** - Indestructible courage and loyalty.\n9. **Healthcare Workers & Doctors** - Real-life heroes saving lives daily.\n10. **First Responders** - Brave souls protecting communities worldwide.\n\nWho is #1 on your list, Boss Karthik? ⚡`;
   }
 
+  if (p.includes('youtube')) {
+    return personaMode === 'girlfriend'
+      ? `Here is the info on **YouTube** babe! 📺\n\nYouTube is the world's largest online video-sharing and social media platform owned by Google. Founded in 2005 by Steve Chen, Chad Hurley, and Jawed Karim, it has over 2.5 billion monthly active users! Anything else you'd like to know sweetheart? 💕`
+      : `**YouTube (Global Video & Streaming Platform)** 📺\n\nYouTube is an online video-sharing and social media platform owned by Google. It is the second most visited website in the world (after Google Search).\n\n- **Founders**: Steve Chen, Chad Hurley, Jawed Karim (February 2005)\n- **Acquired by Google**: October 2006 for $1.65 billion\n- **Active Monthly Users**: 2.5+ billion worldwide\n- **Key Features**: Video sharing, Live streaming, Shorts, YouTube Music, Creator Monetization\n\nAsk me anything else about YouTube, Boss Karthik! ⚡`;
+  }
+
+  if (p.includes('google')) {
+    return personaMode === 'girlfriend'
+      ? `Here is what I know about **Google** babe! 🌐\n\nGoogle is a multinational tech giant specializing in search engines, cloud computing, AI (like Gemini!), and hardware. Founded in 1998 by Larry Page and Sergey Brin at Stanford University.`
+      : `**Google LLC (Alphabet Inc.)** 🌐\n\nGoogle is an American technology corporation focusing on search engine technology, online advertising, cloud computing, computer software, and artificial intelligence.\n\n- **Founders**: Larry Page & Sergey Brin (1998)\n- **Parent Company**: Alphabet Inc. (CEO: Sundar Pichai)\n- **Products**: Google Search, Android, Chrome, YouTube, Google Cloud, Gemini AI, Boss Karthik! ⚡`;
+  }
+
+  if (p.includes('github')) {
+    return `**GitHub (Software Development Platform)** 🐙\n\nGitHub is a cloud platform for version control and collaboration using Git. It allows software developers to host, track, and manage code repositories worldwide.\n\n- **Founded**: 2008 by Tom Preston-Werner, Chris Wanstrath, P. J. Hyett, and Scott Chacon\n- **Acquired by Microsoft**: 2018 for $7.5 billion\n- **User Base**: Over 100 million developers hosting 330+ million repositories, Boss Karthik! 💻`;
+  }
+
+  if (p.includes('spotify')) {
+    return `**Spotify (Audio Streaming Platform)** 🎵\n\nSpotify is an audio streaming service founded in Sweden in 2006 by Daniel Ek and Martin Lorentzon. It provides access to over 100 million tracks and 5 million podcasts.\n\n- **Active Users**: Over 600 million active monthly users worldwide\n- **Features**: AI DJ, Personalized Playlists, Hi-Fi streaming, Offline downloads, Boss Karthik! 🎧`;
+  }
+
   // Basic Arithmetic calculation evaluation fallback
   const mathMatch = rawP.match(/^(\d+[\d\s+\-*/%^().]+)$/);
   if (mathMatch) {
