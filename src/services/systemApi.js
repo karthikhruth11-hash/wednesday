@@ -387,15 +387,47 @@ export const systemApi = {
     const cleanTopic = prompt
       .replace(/^(please\s+)?(tell\s+me\s+about\s+the|tell\s+me\s+about|tell\s+me|show\s+me|what\s+is|what\s+are|who\s+is|who\s+was|explain|describe|define|where\s+is|how\s+does|how\s+to|which\s+is|list|top\s+10|top)\s+/i, '')
       .replace(/\?$/g, '')
-      .trim();
+      .trim()
+      .toLowerCase();
+
+    const techDisambiguationMap = {
+      'python': 'Python_(programming_language)',
+      'java': 'Java_(programming_language)',
+      'c': 'C_(programming_language)',
+      'cpp': 'C%2B%2B',
+      'c++': 'C%2B%2B',
+      'c#': 'C_Sharp_(programming_language)',
+      'csharp': 'C_Sharp_(programming_language)',
+      'ruby': 'Ruby_(programming_language)',
+      'rust': 'Rust_(programming_language)',
+      'swift': 'Swift_(programming_language)',
+      'go': 'Go_(programming_language)',
+      'golang': 'Go_(programming_language)',
+      'react': 'React_(JavaScript_library)',
+      'reactjs': 'React_(JavaScript_library)',
+      'angular': 'Angular_(application_architecture)',
+      'vue': 'Vue.js',
+      'git': 'Git',
+      'docker': 'Docker_(software)',
+      'linux': 'Linux',
+      'windows': 'Microsoft_Windows',
+      'android': 'Android_(operating_system)',
+      'apple': 'Apple_Inc.',
+      'amazon': 'Amazon_(company)',
+      'human': 'Human',
+      'h2o': 'Water',
+      'water': 'Water'
+    };
+
+    const wikiTarget = techDisambiguationMap[cleanTopic] || encodeURIComponent(cleanTopic);
 
     if (cleanTopic.length >= 2) {
       try {
-        const wikiUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(cleanTopic)}`;
+        const wikiUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${wikiTarget}`;
         const wikiRes = await fetch(wikiUrl);
         if (wikiRes.ok) {
           const wikiData = await wikiRes.json();
-          if (wikiData && wikiData.extract && wikiData.type !== 'disambiguation') {
+          if (wikiData && wikiData.extract && wikiData.type !== 'disambiguation' && !wikiData.title.toLowerCase().includes('(codename)')) {
             const reply = `**${wikiData.title}**\n\n${wikiData.extract}${wikiData.description ? `\n\n*${wikiData.description}*` : ''}`;
             return { success: true, reply };
           }
@@ -410,9 +442,9 @@ export const systemApi = {
         if (searchRes.ok) {
           const searchData = await searchRes.json();
           if (searchData && searchData.query && searchData.query.search && searchData.query.search.length > 0) {
-            const firstResult = searchData.query.search[0];
-            const pageTitle = firstResult.title;
-            const snippet = firstResult.snippet.replace(/<[^>]*>/g, '');
+            const validResult = searchData.query.search.find(item => !item.title.toLowerCase().includes('(codename)') && !item.title.toLowerCase().includes('disambiguation')) || searchData.query.search[0];
+            const pageTitle = validResult.title;
+            const snippet = validResult.snippet.replace(/<[^>]*>/g, '');
 
             const summaryRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(pageTitle)}`);
             if (summaryRes.ok) {
