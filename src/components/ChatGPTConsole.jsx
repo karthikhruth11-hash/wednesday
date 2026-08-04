@@ -1,6 +1,67 @@
 import React, { useRef, useEffect } from 'react';
 import { Bot, User } from 'lucide-react';
 
+function renderFormattedMessage(text) {
+  if (!text) return null;
+
+  const linkRegex = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)|(https?:\/\/[^\s)]+)/g;
+  const parts = [];
+  let lastIdx = 0;
+  let match;
+
+  while ((match = linkRegex.exec(text)) !== null) {
+    if (match.index > lastIdx) {
+      parts.push(text.substring(lastIdx, match.index));
+    }
+
+    if (match[1] && match[2]) {
+      parts.push(
+        <a
+          key={match.index}
+          href={match[2]}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            color: '#00f0ff',
+            textDecoration: 'none',
+            fontWeight: 'bold',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.3rem',
+            background: 'rgba(0, 240, 255, 0.15)',
+            padding: '0.3rem 0.7rem',
+            borderRadius: '6px',
+            border: '1px solid rgba(0, 240, 255, 0.5)',
+            marginTop: '0.3rem',
+            boxShadow: '0 0 10px rgba(0, 240, 255, 0.2)'
+          }}
+        >
+          {match[1]} ↗
+        </a>
+      );
+    } else if (match[3]) {
+      parts.push(
+        <a
+          key={match.index}
+          href={match[3]}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ color: '#00f0ff', textDecoration: 'underline' }}
+        >
+          {match[3]}
+        </a>
+      );
+    }
+    lastIdx = linkRegex.lastIndex;
+  }
+
+  if (lastIdx < text.length) {
+    parts.push(text.substring(lastIdx));
+  }
+
+  return parts;
+}
+
 export default function ChatGPTConsole({
   messages,
   interimTranscript,
@@ -46,7 +107,9 @@ export default function ChatGPTConsole({
               <div className="bubble-meta">
                 {msg.sender === 'user' ? 'YOU' : 'W.E.D.N.E.S.D.A.Y.'} • {msg.timestamp}
               </div>
-              <div style={{ whiteSpace: 'pre-wrap' }}>{msg.text}</div>
+              <div style={{ whiteSpace: 'pre-wrap' }}>
+                {renderFormattedMessage(msg.text)}
+              </div>
             </div>
           </div>
         ))}

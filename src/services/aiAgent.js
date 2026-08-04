@@ -372,11 +372,43 @@ export class AIAgentEngine {
         await systemApi.openUrl(ytUrl);
         result = {
           reply: personaMode === 'girlfriend'
-            ? `Opening YouTube for ${isChannel ? 'channel' : 'search'} "${ytQuery}" babe! 📺`
-            : `Opening YouTube ${isChannel ? 'channel' : 'search'} "${ytQuery}", Boss Karthik! 📺`,
+            ? `Opening YouTube for ${isChannel ? 'channel' : 'search'} "${ytQuery}" babe! 📺\n\n👉 [Click here to open YouTube](${ytUrl})`
+            : `Opening YouTube ${isChannel ? 'channel' : 'search'} "${ytQuery}", Boss Karthik! 📺\n\n👉 [Click here to open YouTube](${ytUrl})`,
           toolUsed: 'YOUTUBE_PRO_SEARCH'
         };
       }
+    }
+
+    // 0.3 PRO GOOGLE SEARCH ROUTER
+    const isGoogleSearchCmd = (
+      lower.includes('google search') ||
+      lower.includes('search in google') ||
+      lower.includes('in google search') ||
+      lower.includes('search about') ||
+      lower.includes('search on google') ||
+      lower.includes('search google') ||
+      (lower.includes('google') && lower.includes('search'))
+    );
+
+    if (!result && isGoogleSearchCmd && !isInfoQuery) {
+      let gQuery = rawQuery
+        .replace(/^(please\s+)?(in\s+google\s+search\s+about|in\s+google\s+search|search\s+about|search\s+on\s+google|search\s+in\s+google|search\s+google\s+for|search\s+google|google\s+search\s+for|google\s+search|open\s+google\s+search|google|search)\s+/i, '')
+        .replace(/\s+(in|on|using)\s+google$/i, '')
+        .replace(/\s+about$/i, '')
+        .trim();
+
+      if (!gQuery || gQuery.toLowerCase() === 'google' || gQuery.toLowerCase() === 'search') {
+        gQuery = 'earth';
+      }
+
+      const googleUrl = `https://www.google.com/search?q=${encodeURIComponent(gQuery)}`;
+      await systemApi.openUrl(googleUrl);
+      result = {
+        reply: personaMode === 'girlfriend'
+          ? `Opening Google Search for "${gQuery}" babe! 🌐\n\n👉 [Click here to open Google Search](${googleUrl})`
+          : `Opening Google Search for "${gQuery}", Boss Karthik! 🌐\n\n👉 [Click here to open Google Search](${googleUrl})`,
+        toolUsed: 'GOOGLE_PRO_SEARCH'
+      };
     }
 
     // 0.5 MUSIC & PLAY SONG COMMAND ENGINE
@@ -403,8 +435,8 @@ export class AIAgentEngine {
       await systemApi.openUrl(playUrl);
       result = {
         reply: personaMode === 'girlfriend'
-          ? `Playing "${songQuery}" for you babe on ${platform}! 🎵`
-          : `Playing "${songQuery}" on ${platform}, Boss Karthik! 🎵`,
+          ? `Playing "${songQuery}" for you babe on ${platform}! 🎵\n\n👉 [Click here to listen on ${platform}](${playUrl})`
+          : `Playing "${songQuery}" on ${platform}, Boss Karthik! 🎵\n\n👉 [Click here to listen on ${platform}](${playUrl})`,
         toolUsed: 'PLAY_SONG'
       };
     }
@@ -541,9 +573,12 @@ export class AIAgentEngine {
       };
 
       if (commonSites[target]) {
-        await systemApi.openUrl(commonSites[target]);
+        const siteUrl = commonSites[target];
+        await systemApi.openUrl(siteUrl);
         result = {
-          reply: personaMode === 'girlfriend' ? `Opening ${target} for you babe!` : `Opening ${target}, Boss Karthik. 🌐`,
+          reply: personaMode === 'girlfriend'
+            ? `Opening ${target} for you babe! 🌐\n\n👉 [Click here to open ${target}](${siteUrl})`
+            : `Opening ${target}, Boss Karthik. 🌐\n\n👉 [Click here to open ${target}](${siteUrl})`,
           toolUsed: 'OPEN_URL'
         };
       } else if (knownAppsMap[target]) {
@@ -555,19 +590,22 @@ export class AIAgentEngine {
           toolUsed: 'LAUNCH_APP'
         };
       } else if (target.includes('.') || target.includes('www') || target.includes('http')) {
-        await systemApi.openUrl(target);
+        let siteUrl = target;
+        if (!siteUrl.startsWith('http://') && !siteUrl.startsWith('https://')) siteUrl = `https://${siteUrl}`;
+        await systemApi.openUrl(siteUrl);
         result = {
-          reply: `Opening ${target}, Boss Karthik. 🌐`,
+          reply: `Opening ${target}, Boss Karthik. 🌐\n\n👉 [Click here to open ${target}](${siteUrl})`,
           toolUsed: 'OPEN_URL'
         };
       } else {
         // Desktop App or generic URL fallback
         const appRes = await systemApi.launchApp(target);
+        const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(target)}`;
         if (!appRes.success || appRes.message.includes('requires running')) {
-          await systemApi.openUrl(`https://www.google.com/search?q=${encodeURIComponent(target)}`);
+          await systemApi.openUrl(searchUrl);
         }
         result = {
-          reply: `Opening ${target}, Boss Karthik. ⚡`,
+          reply: `Opening ${target}, Boss Karthik. ⚡\n\n👉 [Click here to open Google Search](${searchUrl})`,
           toolUsed: 'OPEN_APP_OR_WEB'
         };
       }
