@@ -210,7 +210,16 @@ class SpeechEngine {
       else if (/[\u0400-\u04FF]/.test(text)) effectiveLang = 'ru-RU'; // Russian
     }
 
-    const utterance = new SpeechSynthesisUtterance(text);
+    // Clean raw markdown syntax for smooth speech synthesis (removes image tags, URLs, asterisks)
+    const cleanText = text
+      .replace(/!\[([^\]]*)\]\([^)]*\)/g, '')
+      .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+      .replace(/https?:\/\/[^\s)]+/g, '')
+      .replace(/[*#_`~]/g, '')
+      .trim();
+
+    const spokenChunk = cleanText.length > 300 ? cleanText.substring(0, 300) + '...' : cleanText;
+    const utterance = new SpeechSynthesisUtterance(spokenChunk || 'Information ready');
     if (effectiveLang) {
       utterance.lang = effectiveLang;
       const voices = this.getAvailableVoices();

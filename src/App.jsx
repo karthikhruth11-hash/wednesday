@@ -151,24 +151,36 @@ export default function App() {
     setInputText('');
     setAppState('processing');
 
-    const res = await aiAgent.processQuery(trimmed, personaMode);
+    try {
+      const res = await aiAgent.processQuery(trimmed, personaMode);
+      soundFx.playResponseReady();
 
-    soundFx.playResponseReady();
+      const replyText = (res && res.reply) ? res.reply : systemApi.generateAutonomousKnowledge(trimmed, personaMode);
 
-    const assistantMsg = {
-      sender: 'assistant',
-      text: res.reply,
-      timestamp: new Date().toLocaleTimeString()
-    };
+      const assistantMsg = {
+        sender: 'assistant',
+        text: replyText,
+        timestamp: new Date().toLocaleTimeString()
+      };
 
-    setMessages(prev => [...prev, assistantMsg]);
+      setMessages(prev => [...prev, assistantMsg]);
 
-    speechEngine.speak(
-      res.spokenReply || res.reply,
-      () => setAppState('speaking'),
-      () => setAppState('idle'),
-      res.speakLang
-    );
+      speechEngine.speak(
+        (res && res.spokenReply) || replyText,
+        () => setAppState('speaking'),
+        () => setAppState('idle'),
+        res?.speakLang
+      );
+    } catch (err) {
+      console.error("Query processing exception:", err);
+      const fallbackText = systemApi.generateAutonomousKnowledge(trimmed, personaMode);
+      const assistantMsg = {
+        sender: 'assistant',
+        text: fallbackText,
+        timestamp: new Date().toLocaleTimeString()
+      };
+      setMessages(prev => [...prev, assistantMsg]);
+    }
   }, [personaMode]);
 
   const lastGestureActionTimeRef = useRef(0);
