@@ -4,32 +4,26 @@ import { Bot, User } from 'lucide-react';
 function renderFormattedMessage(text) {
   if (!text) return null;
 
-  const masterRegex = /!\[([^\]]*)\]\((https?:\/\/[^\s)]+)\)|\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)|(https?:\/\/[^\s)]+)/g;
-  const parts = [];
-  let lastIdx = 0;
-  let match;
-
-  while ((match = masterRegex.exec(text)) !== null) {
-    if (match.index > lastIdx) {
-      parts.push(text.substring(lastIdx, match.index));
-    }
-
-    if (match[1] !== undefined && match[2]) {
-      const altText = match[1] || 'Visual Matrix';
-      const imgUrl = match[2];
-      parts.push(
+  const lines = text.split('\n');
+  return lines.map((line, lineIdx) => {
+    // Check if line contains markdown image
+    const imgMatch = line.match(/!\[([^\]]*)\]\((https?:\/\/[^\s)]+)\)/);
+    if (imgMatch) {
+      const altText = imgMatch[1] || 'Visual Matrix';
+      const imgUrl = imgMatch[2];
+      return (
         <div
-          key={match.index}
+          key={lineIdx}
           style={{
             marginTop: '0.8rem',
             marginBottom: '0.8rem',
-            maxWidth: '480px',
+            maxWidth: '520px',
             marginLeft: 'auto',
             marginRight: 'auto',
-            borderRadius: '14px',
+            borderRadius: '16px',
             overflow: 'hidden',
             border: '1px solid rgba(0, 240, 255, 0.4)',
-            boxShadow: '0 4px 20px rgba(0, 240, 255, 0.25)',
+            boxShadow: '0 4px 25px rgba(0, 240, 255, 0.25)',
             background: 'rgba(2, 8, 20, 0.95)'
           }}
         >
@@ -40,8 +34,8 @@ function renderFormattedMessage(text) {
             style={{
               width: '100%',
               height: 'auto',
-              maxHeight: '280px',
-              objectFit: 'contain',
+              maxHeight: '320px',
+              objectFit: 'cover',
               display: 'block',
               margin: '0 auto',
               background: '#020612'
@@ -49,15 +43,15 @@ function renderFormattedMessage(text) {
           />
           <div
             style={{
-              padding: '0.4rem 0.8rem',
+              padding: '0.5rem 1rem',
               background: 'rgba(0, 240, 255, 0.1)',
               color: '#00f0ff',
-              fontSize: '0.72rem',
+              fontSize: '0.75rem',
               fontFamily: 'Orbitron, sans-serif',
               borderTop: '1px solid rgba(0, 240, 255, 0.25)',
               display: 'flex',
               alignItems: 'center',
-              justify: 'center',
+              justifyContent: 'center',
               gap: '0.4rem'
             }}
           >
@@ -65,52 +59,57 @@ function renderFormattedMessage(text) {
           </div>
         </div>
       );
-    } else if (match[3] && match[4]) {
-      parts.push(
-        <a
-          key={match.index}
-          href={match[4]}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            color: '#00f0ff',
-            textDecoration: 'none',
-            fontWeight: 'bold',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.3rem',
-            background: 'rgba(0, 240, 255, 0.15)',
-            padding: '0.3rem 0.7rem',
-            borderRadius: '6px',
-            border: '1px solid rgba(0, 240, 255, 0.5)',
-            marginTop: '0.3rem',
-            boxShadow: '0 0 10px rgba(0, 240, 255, 0.2)'
-          }}
-        >
-          {match[3]} ↗
-        </a>
-      );
-    } else if (match[5]) {
-      parts.push(
-        <a
-          key={match.index}
-          href={match[5]}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ color: '#00f0ff', textDecoration: 'underline' }}
-        >
-          {match[5]}
-        </a>
+    }
+
+    // Check if line contains markdown link [text](url)
+    const linkMatch = line.match(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/);
+    if (linkMatch) {
+      return (
+        <div key={lineIdx} style={{ margin: '0.4rem 0' }}>
+          <a
+            href={linkMatch[2]}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              color: '#00f0ff',
+              textDecoration: 'none',
+              fontWeight: 'bold',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              background: 'rgba(0, 240, 255, 0.15)',
+              padding: '0.4rem 0.9rem',
+              borderRadius: '8px',
+              border: '1px solid rgba(0, 240, 255, 0.5)',
+              boxShadow: '0 0 12px rgba(0, 240, 255, 0.25)'
+            }}
+          >
+            👉 {linkMatch[1]} ↗
+          </a>
+        </div>
       );
     }
-    lastIdx = masterRegex.lastIndex;
-  }
 
-  if (lastIdx < text.length) {
-    parts.push(text.substring(lastIdx));
-  }
+    if (!line.trim()) {
+      return <div key={lineIdx} style={{ height: '0.5rem' }} />;
+    }
 
-  return parts;
+    const parts = line.split(/(\*\*[^*]+\*\*)/g);
+    return (
+      <div key={lineIdx} style={{ marginBottom: '0.35rem', lineHeight: '1.6' }}>
+        {parts.map((part, partIdx) => {
+          if (part.startsWith('**') && part.endsWith('**')) {
+            return (
+              <strong key={partIdx} style={{ color: '#00f0ff', fontWeight: '700' }}>
+                {part.slice(2, -2)}
+              </strong>
+            );
+          }
+          return part;
+        })}
+      </div>
+    );
+  });
 }
 
 export default function ChatGPTConsole({
