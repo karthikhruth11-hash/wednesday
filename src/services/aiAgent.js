@@ -445,6 +445,110 @@ export class AIAgentEngine {
       }
     }
 
+    // Dedicated Spotify Command Router (Handles "play telugu songs in spotify", "play X on spotify", "open spotify")
+    const isExplicitSpotifyCmd = !isNegativeTabCmd && (
+      lower.includes('spotify') || lower.startsWith('spotify ')
+    );
+
+    if (!result && isExplicitSpotifyCmd) {
+      let sTarget = rawQuery
+        .replace(/^(please\s+)?(open|launch|start|show|play|sing|search|listen\s+to)\s+/i, '')
+        .replace(/^(in\s+spotify|on\s+spotify|open\s+in\s+spotify)\s+/i, '')
+        .replace(/\s+(on|in|at|using|via)\s+spotify$/i, '')
+        .replace(/^spotify\s+(and\s+)?(play|search|for|show|open)?\s*/i, '')
+        .replace(/\s+songs?$/i, '')
+        .trim();
+
+      if (sTarget.toLowerCase() === 'spotify' || !sTarget) {
+        const spotifyUrl = 'https://open.spotify.com';
+        await systemApi.openUrl(spotifyUrl);
+        result = {
+          reply: personaMode === 'girlfriend'
+            ? `Opening Spotify for you babe! 🎵\n\n👉 [Click here to open Spotify](${spotifyUrl})`
+            : `Opening Spotify, Boss Karthik! 🎵\n\n👉 [Click here to open Spotify](${spotifyUrl})`,
+          toolUsed: 'SPOTIFY_OPEN'
+        };
+      } else {
+        const spotifySearchUrl = `https://open.spotify.com/search/${encodeURIComponent(sTarget)}`;
+        await systemApi.openUrl(spotifySearchUrl);
+        result = {
+          reply: personaMode === 'girlfriend'
+            ? `Playing "${sTarget}" on Spotify for you babe! 🎵\n\n👉 [Click here to listen on Spotify](${spotifySearchUrl})`
+            : `Playing "${sTarget}" on Spotify, Boss Karthik! 🎵\n\n👉 [Click here to listen on Spotify](${spotifySearchUrl})`,
+          toolUsed: 'SPOTIFY_PLAY'
+        };
+      }
+    }
+
+    // Dedicated WhatsApp Command Router (Handles "open whatsapp", "open whatsapp for Mom", "chat with Mom on whatsapp", "open John in whatsapp")
+    const isExplicitWhatsAppCmd = !isNegativeTabCmd && (
+      lower.includes('whatsapp') || lower.includes('whats app') || lower.startsWith('whatsapp ')
+    );
+
+    if (!result && isExplicitWhatsAppCmd) {
+      let wTarget = rawQuery
+        .replace(/^(please\s+)?(open|launch|start|show|chat\s+with|message|send\s+message\s+to)\s+/i, '')
+        .replace(/^(in\s+whatsapp|on\s+whatsapp|open\s+in\s+whatsapp)\s+/i, '')
+        .replace(/\s+(on|in|at|using|via)\s+(whatsapp|whats\s+app)$/i, '')
+        .replace(/^(whatsapp|whats\s+app)\s+(for|to|contact)?\s*/i, '')
+        .trim();
+
+      let waUrl = 'https://web.whatsapp.com';
+      const phoneDigits = wTarget.replace(/[^0-9]/g, '');
+
+      if (phoneDigits.length >= 10) {
+        waUrl = `https://web.whatsapp.com/send?phone=${phoneDigits}`;
+      }
+
+      await systemApi.openUrl(waUrl);
+
+      if (wTarget.toLowerCase() === 'whatsapp' || wTarget.toLowerCase() === 'whats app' || !wTarget) {
+        result = {
+          reply: personaMode === 'girlfriend'
+            ? `Opening WhatsApp Web for you babe! 💬\n\n👉 [Click here to open WhatsApp Web](${waUrl})`
+            : `Opening WhatsApp Web, Boss Karthik! 💬\n\n👉 [Click here to open WhatsApp Web](${waUrl})`,
+          toolUsed: 'WHATSAPP_OPEN'
+        };
+      } else {
+        result = {
+          reply: personaMode === 'girlfriend'
+            ? `Opening WhatsApp Web for contact "${wTarget}" babe! 💬\n\n👉 [Click here to chat on WhatsApp](${waUrl})`
+            : `Opening WhatsApp Web for contact "${wTarget}", Boss Karthik! 💬\n\n👉 [Click here to chat on WhatsApp](${waUrl})`,
+          toolUsed: 'WHATSAPP_CONTACT'
+        };
+      }
+    }
+
+    // Dedicated Notepad & PC Dictation Command Router (Handles "open notepad in pc", "open notepad and write Hello", "write python script in notepad")
+    const isExplicitNotepadCmd = !isNegativeTabCmd && (
+      lower.includes('notepad') || lower.includes('note pad')
+    );
+
+    if (!result && isExplicitNotepadCmd) {
+      let noteText = rawQuery
+        .replace(/^(please\s+)?(open|launch|start)\s+/i, '')
+        .replace(/^(notepad|note\s+pad)\s+(in\s+pc\s+)?(and\s+)?(write|print|type)?\s*/i, '')
+        .replace(/\s+(in|on)\s+(notepad|note\s+pad|pc)$/i, '')
+        .replace(/^(write|print|type)\s+/i, '')
+        .trim();
+
+      if (noteText.toLowerCase() === 'notepad' || noteText.toLowerCase() === 'in pc' || !noteText) {
+        noteText = 'Note by Boss Karthik - ' + new Date().toLocaleString();
+      }
+
+      await systemApi.openApp('notepad');
+
+      const blob = new Blob([noteText], { type: 'text/plain;charset=utf-8' });
+      const noteUrl = URL.createObjectURL(blob);
+
+      result = {
+        reply: personaMode === 'girlfriend'
+          ? `Opening Notepad on your PC babe! 📝\n\n**Dictated Content**:\n\`\`\`text\n${noteText}\n\`\`\`\n👉 [Click here to download text note](${noteUrl})`
+          : `Opening Notepad on your PC, Boss Karthik! 📝\n\n**Dictated Content**:\n\`\`\`text\n${noteText}\n\`\`\`\n👉 [Click here to download text note](${noteUrl})`,
+        toolUsed: 'NOTEPAD_DICTATE'
+      };
+    }
+
     // 0.1 PRO MULTI-LANGUAGE TRANSLATOR ENGINE (EXPLICIT TRANSLATION COMMANDS ONLY)
     const isExplicitTranslateReq = isTransAction || lower.startsWith('translate ') || lower.startsWith('convert ') || lower.startsWith('how to say ');
 
