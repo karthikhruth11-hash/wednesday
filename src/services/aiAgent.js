@@ -363,8 +363,58 @@ export class AIAgentEngine {
       }
     }
 
-    // 0.1 PRO MULTI-LANGUAGE TRANSLATOR ENGINE (ONE-SHOT & CONTINUOUS ACTIVE MODE)
-    if (!result && (this.activeTranslationLang || isTransAction || (foundLangKey && (lower.includes('in ') || lower.includes('into ') || lower.includes('to ')))) ) {
+    // Negative / Anti-Tab Phrase Guard
+    const isNegativeTabCmd = (
+      lower.includes('not asking') ||
+      lower.includes("don't open") ||
+      lower.includes('dont open') ||
+      lower.includes('stop opening') ||
+      lower.includes('no tab') ||
+      lower.includes('do not open') ||
+      lower.includes('not open')
+    );
+
+    // Dedicated YouTube Command Router (Handles "TELUGU SONGS IN YOUTUBE", "OPEN IN YOUTUBE TELUGU SONGS", "open youtube", "search X on youtube", "play X on youtube")
+    const isExplicitYtCmd = !isNegativeTabCmd && (
+      lower.includes('youtube') || lower.includes(' yt ') || lower.endsWith(' yt') || lower.startsWith('yt ')
+    );
+
+    if (!result && isExplicitYtCmd) {
+      let ytTarget = rawQuery
+        .replace(/^(please\s+)?(open|launch|start|show|play|search|find|look\s+up)\s+/i, '')
+        .replace(/^(in\s+youtube|on\s+youtube|open\s+in\s+youtube)\s+/i, '')
+        .replace(/\s+(on|in|at|using|via)\s+youtube$/i, '')
+        .replace(/\s+(on|in|at)\s+yt$/i, '')
+        .replace(/^youtube\s+(and\s+)?(search|play|for|show|open)?\s*/i, '')
+        .replace(/^yt\s+(and\s+)?(search|play|for|show|open)?\s*/i, '')
+        .replace(/\s*channel\s*/gi, ' ')
+        .trim();
+
+      if (ytTarget.toLowerCase() === 'youtube' || ytTarget.toLowerCase() === 'yt' || !ytTarget) {
+        const ytUrl = 'https://www.youtube.com';
+        await systemApi.openUrl(ytUrl);
+        result = {
+          reply: personaMode === 'girlfriend'
+            ? `Opening YouTube for you babe! 📺\n\n👉 [Click here to open YouTube](${ytUrl})`
+            : `Opening YouTube, Boss Karthik! 📺\n\n👉 [Click here to open YouTube](${ytUrl})`,
+          toolUsed: 'YOUTUBE_OPEN'
+        };
+      } else {
+        const ytSearchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(ytTarget)}`;
+        await systemApi.openUrl(ytSearchUrl);
+        result = {
+          reply: personaMode === 'girlfriend'
+            ? `Opening YouTube search for "${ytTarget}" babe! 📺\n\n👉 [Click here to open YouTube search](${ytSearchUrl})`
+            : `Opening YouTube search for "${ytTarget}", Boss Karthik! 📺\n\n👉 [Click here to open YouTube search](${ytSearchUrl})`,
+          toolUsed: 'YOUTUBE_SEARCH'
+        };
+      }
+    }
+
+    // 0.1 PRO MULTI-LANGUAGE TRANSLATOR ENGINE (EXPLICIT TRANSLATION COMMANDS ONLY)
+    const isExplicitTranslateReq = isTransAction || lower.startsWith('translate ') || lower.startsWith('convert ') || lower.startsWith('how to say ');
+
+    if (!result && (this.activeTranslationLang || isExplicitTranslateReq)) {
       let targetLang = foundLangKey ? (LANG_MAP[foundLangKey]?.name || foundLangKey) : (this.activeTranslationLang || 'Telugu');
       let textToTranslate = null;
 
@@ -401,68 +451,6 @@ export class AIAgentEngine {
           spokenReply: translationRes.translatedText,
           speakLang: translationRes.locale,
           toolUsed: 'MULTI_LANGUAGE_TRANSLATOR'
-        };
-      }
-    }
-
-    // Information Query Guard (Distinguishes "Tell me about X" from "Open X")
-    const isInfoQuery = (
-      lower.startsWith('tell me about') ||
-      lower.startsWith('tell me') ||
-      lower.startsWith('what is') ||
-      lower.startsWith('what are') ||
-      lower.startsWith('who is') ||
-      lower.startsWith('who was') ||
-      lower.startsWith('explain') ||
-      lower.startsWith('describe') ||
-      lower.startsWith('define') ||
-      lower.startsWith('how does') ||
-      lower.startsWith('how to work')
-    );
-
-    // Negative / Anti-Tab Phrase Guard
-    const isNegativeTabCmd = (
-      lower.includes('not asking') ||
-      lower.includes("don't open") ||
-      lower.includes('dont open') ||
-      lower.includes('stop opening') ||
-      lower.includes('no tab') ||
-      lower.includes('do not open') ||
-      lower.includes('not open')
-    );
-
-    // Dedicated YouTube Command Router (Handles "open youtube", "open youtube for X", "search X on youtube", "play X on youtube", "open youtube channel X")
-    const isExplicitYtCmd = !isNegativeTabCmd && (
-      lower.includes('youtube') || lower.includes(' yt ') || lower.endsWith(' yt') || lower.startsWith('yt ')
-    );
-
-    if (!result && isExplicitYtCmd) {
-      let ytTarget = rawQuery
-        .replace(/^(please\s+)?(open|launch|start|show|play|search|find|look\s+up)\s+/i, '')
-        .replace(/\s+(on|in|at|using|via)\s+youtube$/i, '')
-        .replace(/\s+(on|in|at)\s+yt$/i, '')
-        .replace(/^youtube\s+(and\s+)?(search|play|for|show|open)?\s*/i, '')
-        .replace(/^yt\s+(and\s+)?(search|play|for|show|open)?\s*/i, '')
-        .replace(/\s*channel\s*/gi, ' ')
-        .trim();
-
-      if (ytTarget.toLowerCase() === 'youtube' || ytTarget.toLowerCase() === 'yt' || !ytTarget) {
-        const ytUrl = 'https://www.youtube.com';
-        await systemApi.openUrl(ytUrl);
-        result = {
-          reply: personaMode === 'girlfriend'
-            ? `Opening YouTube for you babe! 📺\n\n👉 [Click here to open YouTube](${ytUrl})`
-            : `Opening YouTube, Boss Karthik! 📺\n\n👉 [Click here to open YouTube](${ytUrl})`,
-          toolUsed: 'YOUTUBE_OPEN'
-        };
-      } else {
-        const ytSearchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(ytTarget)}`;
-        await systemApi.openUrl(ytSearchUrl);
-        result = {
-          reply: personaMode === 'girlfriend'
-            ? `Opening YouTube for "${ytTarget}" babe! 📺\n\n👉 [Click here to open YouTube search](${ytSearchUrl})`
-            : `Opening YouTube search for "${ytTarget}", Boss Karthik! 📺\n\n👉 [Click here to open YouTube search](${ytSearchUrl})`,
-          toolUsed: 'YOUTUBE_SEARCH'
         };
       }
     }
