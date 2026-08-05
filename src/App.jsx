@@ -84,9 +84,65 @@ export default function App() {
   const handleSendMessage = useCallback(async (text) => {
     if (!text.trim()) return;
 
+    const trimmed = text.trim();
+    const clean = trimmed.toLowerCase().replace(/[^a-z0-9\s]/gi, '').trim();
+
+    // 1. Flexible Voice Interception: Stop Speech ("Hey, stop.", "stop speaking", "wednesday stop", etc.)
+    const isStopSpeech = (
+      clean === 'stop' || clean === 'hey stop' || clean === 'wednesday stop' ||
+      clean === 'please stop' || clean === 'stop please' || clean === 'stop speaking' ||
+      clean === 'hey stop speaking' || clean === 'stop talking' || clean === 'be quiet' ||
+      clean === 'shut up' || clean === 'pause' || clean === 'quiet' || clean === 'silence' ||
+      clean === 'mute' ||
+      /^(hey\s+|please\s+|wednesday\s+)?(stop|pause|quiet|shut\s*up|silence|mute)(\s+speaking|\s+talking|\s+now|\s+wednesday)?$/i.test(clean)
+    );
+
+    if (isStopSpeech) {
+      speechEngine.stopSpeaking();
+      setAppState('idle');
+      setInterimTranscript('');
+      soundFx.playClick();
+      return;
+    }
+
+    // 2. Voice Interception: Pause Microphone
+    const isStopMic = (
+      clean === 'stop listening' || clean === 'mute mic' || clean === 'turn off mic' ||
+      clean === 'stop mic' || clean === 'pause listening' ||
+      /^(hey\s+|please\s+|wednesday\s+)?(stop\s+listening|mute\s+mic|turn\s+off\s+mic|pause\s+listening)$/i.test(clean)
+    );
+
+    if (isStopMic) {
+      speechEngine.stopSpeaking();
+      speechEngine.stopListening();
+      speechEngine.setContinuousVoiceMode(false);
+      setIsHandsFree(false);
+      setIsListening(false);
+      setAppState('idle');
+      setInterimTranscript('');
+      soundFx.playClick();
+      return;
+    }
+
+    // 3. Voice Interception: Clear Chat
+    if (clean === 'clear chat' || clean === 'clear history' || clean === 'clean chat' || clean === 'delete messages' || clean === 'clear') {
+      speechEngine.stopSpeaking();
+      setMessages([
+        {
+          sender: 'assistant',
+          text: "Chat history cleared, Boss Karthik! ✨ Standing by.",
+          timestamp: new Date().toLocaleTimeString()
+        }
+      ]);
+      setInputText('');
+      setInterimTranscript('');
+      soundFx.playClick();
+      return;
+    }
+
     const userMsg = {
       sender: 'user',
-      text,
+      text: trimmed,
       timestamp: new Date().toLocaleTimeString()
     };
 
@@ -94,7 +150,7 @@ export default function App() {
     setInputText('');
     setAppState('processing');
 
-    const res = await aiAgent.processQuery(text, personaMode);
+    const res = await aiAgent.processQuery(trimmed, personaMode);
 
     soundFx.playResponseReady();
 
@@ -342,6 +398,21 @@ export default function App() {
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
         />
+
+        {appState === 'speaking' && (
+          <button
+            type="button"
+            className="btn-prompt-icon"
+            style={{ background: '#ff0055', color: '#fff', border: '1px solid #ff0055', cursor: 'pointer' }}
+            onClick={() => {
+              speechEngine.stopSpeaking();
+              setAppState('idle');
+            }}
+            title="Stop Assistant Speaking"
+          >
+            ⏹️ Stop
+          </button>
+        )}
 
         <button
           type="button"

@@ -41,6 +41,9 @@ class SpeechEngine {
       };
 
       this.recognition.onresult = (event) => {
+        // Mute/ignore transcript processing if assistant is currently speaking or muted
+        if (this.isSpeaking) return;
+
         let interim = '';
         let final = '';
 
@@ -52,7 +55,7 @@ class SpeechEngine {
           }
         }
 
-        if (this.onTranscript) {
+        if (this.onTranscript && !this.isSpeaking) {
           this.onTranscript({ final, interim });
         }
       };
@@ -70,13 +73,13 @@ class SpeechEngine {
       this.recognition.onend = () => {
         this.isListening = false;
         if (this.onSpeechEnd) this.onSpeechEnd();
-        // If continuous hands-free voice mode is active and not speaking, immediately re-arm microphone
+        // If continuous hands-free voice mode is active and not speaking, re-arm microphone after echo delay
         if (this.continuousVoiceMode && !this.isSpeaking) {
           setTimeout(() => {
             if (this.continuousVoiceMode && !this.isListening && !this.isSpeaking) {
               this.startListening();
             }
-          }, 200);
+          }, 800);
         }
       };
     }
@@ -132,6 +135,7 @@ class SpeechEngine {
   }
 
   startListening() {
+    if (this.isSpeaking) return;
     if (this.recognition && !this.isListening) {
       try {
         this.recognition.start();
@@ -205,13 +209,13 @@ class SpeechEngine {
     const handleSpeechFinished = () => {
       this.isSpeaking = false;
       if (onEnd) onEnd();
-      // If continuous hands-free voice mode is active, re-arm listening after speaking finishes
+      // If continuous hands-free voice mode is active, re-arm listening after speaking finishes (with 800ms echo buffer)
       if (this.continuousVoiceMode) {
         setTimeout(() => {
-          if (this.continuousVoiceMode && !this.isListening) {
+          if (this.continuousVoiceMode && !this.isListening && !this.isSpeaking) {
             this.startListening();
           }
-        }, 500);
+        }, 800);
       }
     };
 

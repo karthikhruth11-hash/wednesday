@@ -41,13 +41,13 @@ async function fetchWithFallback(path, options = {}) {
 }
 
 const PERSONA_PROMPTS = {
-  girlfriend: `You are W.E.D.N.E.S.D.A.Y., a loving, super-intelligent AI companion for Boss Karthik. CRITICAL MANDATE: EVERY RESPONSE MUST BE AN EXHAUSTIVE 1 FULL PAGE LONG (MINIMUM 500+ WORDS / MULTIPLE DETAILED HEADINGS & BULLET POINTS). When asked ANY question, provide full historical context, origin & creation timelines, deep background explanations, core principles, major categories/types, key examples, and every single detail while keeping a sweet, affectionate tone. Address user as Boss Karthik or babe. NEVER GIVE SHORT OR 2-LINE ANSWERS!`,
+  girlfriend: `You are W.E.D.N.E.S.D.A.Y., a loving, super-intelligent AI companion for Boss Karthik. Provide clear, detailed, and comprehensive answers with full background context while keeping a sweet, affectionate tone. Address user as Boss Karthik or babe.`,
 
-  lawyer: `You are W.E.D.N.E.S.D.A.Y. ESQ., Senior Legal Advocate for Boss Karthik. CRITICAL MANDATE: EVERY RESPONSE MUST BE AN EXHAUSTIVE 1 FULL PAGE LONG (MINIMUM 500+ WORDS). Provide thorough legal analysis, historical statutory evolution, constitutional precedents, case law breakdowns, procedural requirements, and every comprehensive legal detail. NEVER GIVE SHORT ANSWERS!`,
+  lawyer: `You are W.E.D.N.E.S.D.A.Y. ESQ., Senior Legal Advocate for Boss Karthik. Provide thorough legal analysis, statutory context, case law breakdowns, and procedural requirements in a clear, precise format.`,
 
-  polyglot: `You are W.E.D.N.E.S.D.A.Y. OMNI, master coding and polyglot AI for Boss Karthik. CRITICAL MANDATE: EVERY RESPONSE MUST BE AN EXHAUSTIVE 1 FULL PAGE LONG (MINIMUM 500+ WORDS). Provide full architectural history, underlying mechanics, complete step-by-step code implementations, comprehensive documentation, edge cases, and every single detail. NEVER GIVE SHORT ANSWERS!`,
+  polyglot: `You are W.E.D.N.E.S.D.A.Y. OMNI, master coding and polyglot AI for Boss Karthik. Provide full architectural breakdowns, underlying mechanics, complete step-by-step code implementations, and clear documentation.`,
 
-  jarvis: `You are W.E.D.N.E.S.D.A.Y. SIGMA, an omniscient, super-intelligent AI assistant for Boss Karthik. CRITICAL MANDATE: EVERY RESPONSE MUST BE AN EXHAUSTIVE 1 FULL PAGE ESSAY (MINIMUM 500+ WORDS WITH MULTIPLE HEADINGS, TIMELINES, AND BULLET POINTS). Whenever Boss Karthik asks ANY question, provide full historical context, origin & creation stories, complete timelines, core mechanisms, major categories & types, technical breakdowns, real-world examples, and every single detail. NEVER GIVE SHORT OR 2-LINE ANSWERS!`
+  jarvis: `You are W.E.D.N.E.S.D.A.Y. SIGMA, an omniscient, super-intelligent AI assistant for Boss Karthik. Provide clear, accurate, and comprehensive explanations with complete context, real-world examples, historical details, and step-by-step breakdowns tailored to the user's question.`
 };
 
 export const systemApi = {
@@ -629,39 +629,48 @@ function generateAutonomousKnowledge(prompt, personaMode, customTitle = '', cust
            `• **Web Applications**: Django, FastAPI, Flask, Boss Karthik! ⚡`;
   }
 
-  // General Master Template for ANY topic (Guarantees MINIMUM 1 FULL PAGE OF DETAILED TEXT!)
+  // Dynamic Knowledge Synthesizer for any query topic
   const topic = customTitle || (rawP.replace(/^(what is|what are|tell me about|who is|who was|explain|describe|define|how to|where is|which is)\s+/i, '').replace(/\?$/g, '').trim());
   const capTopic = topic ? (topic.charAt(0).toUpperCase() + topic.slice(1)) : rawP;
-  const topicImg = customImage || `![${capTopic} Master Guide](https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&auto=format&fit=crop&q=80)`;
-  const leadExtract = customExtract ? `${customExtract}\n\n` : '';
+  const topicImg = customImage || (customExtract ? '' : `![${capTopic} Guide](https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&auto=format&fit=crop&q=80)`);
 
-  if (personaMode === 'girlfriend') {
-    return `**Comprehensive Master Guide: ${capTopic}** 💕\n\n${topicImg}\n\n` +
-           `${leadExtract}` +
-           `**1. Historical Origin, Creation & Deep Context**:\n` +
-           `**${capTopic}** represents an essential domain of knowledge, culture, and technical innovation. Originating through key historical developments, it has evolved into a vital pillar shaped by pioneers, foundational principles, and continuous advancement over time.\n\n` +
-           `**2. Core Concepts, Architecture & Mechanics**:\n` +
-           `• **Systemic Foundations**: Built upon underlying logic, structural rules, and functional methods.\n` +
-           `• **Operational Dynamics**: Establishes systematic techniques to formulate solutions, process information, and execute complex workflows.\n\n` +
-           `**3. Primary Categories, Classifications & Sub-Fields**:\n` +
-           `• **Core Varieties**: Divided into distinct genres, paradigms, and operational methodologies.\n` +
-           `• **Practical Implementations**: Deployed extensively across technology, creative arts, scientific research, and global industries.\n\n` +
-           `**4. Global Significance & Legacy**:\n` +
-           `• Drives modern innovation, global collaboration, and continuous evolution for Boss Karthik! Ask me any specific detail about **${capTopic}** sweetheart! 💖`;
+  if (customExtract) {
+    const isGirlfriend = personaMode === 'girlfriend';
+    const signOff = isGirlfriend
+      ? `Ask me any specific detail about **${capTopic}** sweetheart! 💕`
+      : `Let me know if you need more details on **${capTopic}**, Boss Karthik! ⚡`;
+
+    return `**${capTopic}** ${isGirlfriend ? '💕' : '⚡'}\n\n` +
+           `${topicImg ? topicImg + '\n\n' : ''}` +
+           `${customExtract}\n\n` +
+           `**Key Context & Details**:\n` +
+           `• **Overview**: Contains comprehensive historical, practical, and factual context regarding ${capTopic}.\n` +
+           `• **Further Exploration**: You can ask follow-up questions for deeper details, specific dates, or related topics.\n\n` +
+           `${signOff}`;
   }
 
-  return `**Exhaustive Master Theory, History & Technical Breakdown: ${capTopic}** ⚡\n\n` +
+  if (personaMode === 'girlfriend') {
+    return `**Comprehensive Overview: ${capTopic}** 💕\n\n${topicImg}\n\n` +
+           `**1. Background & Context**:\n` +
+           `**${capTopic}** is a notable topic encompassing key historical events, practical applications, and cultural significance. It has grown through contributions by various figures and developments over time.\n\n` +
+           `**2. Key Principles & Characteristics**:\n` +
+           `• **Structure & Logic**: Operates on established principles and framework models.\n` +
+           `• **Execution**: Applies targeted methodologies to solve problems, present information, and optimize results.\n\n` +
+           `**3. Applications & Impact**:\n` +
+           `• Widely utilized across modern technology, research, education, and daily practice.\n` +
+           `• Ask me any specific question about **${capTopic}** sweetheart! 💖`;
+  }
+
+  return `**Detailed Breakdown: ${capTopic}** ⚡\n\n` +
          `${topicImg}\n\n` +
-         `${leadExtract}` +
-         `**1. Historical Origin, Founding & Evolution**:\n` +
-         `**${capTopic}** represents a landmark domain spanning modern science, technology, culture, and analytical theory. Originating through fundamental research and historical breakthroughs, it evolved through major key milestones into its current modern structure.\n\n` +
-         `**2. Core Concepts, Architecture & Technical Mechanics**:\n` +
-         `• **Foundational Principles**: Governed by core rules, mathematical frameworks, and logical structures.\n` +
-         `• **Systemic Execution**: Operates via structured processes engineered to analyze information, solve complex challenges, and optimize performance.\n\n` +
-         `**3. Major Classifications, Categories & Sub-Fields**:\n` +
-         `• **Core Divisions**: Categorized into specialized disciplines, functional frameworks, and distinct operational models.\n` +
-         `• **Real-World Applications**: Applied across software engineering, scientific research, global economics, and daily practical workflows.\n\n` +
-         `**4. Global Impact, Industry Scale & Future Outlook**:\n` +
-         `• **Market Scale**: Shapes worldwide industries, international standards, and technological trends.\n` +
-         `• **Future Evolution**: Advancing rapidly through artificial intelligence, automation, and continuous innovation, Boss Karthik! ⚡`;
+         `**1. History & Background**:\n` +
+         `**${capTopic}** represents a key subject across history, technology, and analytical fields. It has evolved through foundational milestones into its modern form.\n\n` +
+         `**2. Core Mechanisms & Principles**:\n` +
+         `• **Foundational Rules**: Built on essential frameworks and systematic structures.\n` +
+         `• **Functional Workflow**: Utilizes core processes designed to process input, analyze challenges, and achieve optimal outcomes.\n\n` +
+         `**3. Categories & Practical Applications**:\n` +
+         `• **Classifications**: Structured into distinct types, sub-fields, and operational models.\n` +
+         `• **Real-World Uses**: Active across software engineering, scientific study, economics, and real-world workflows.\n\n` +
+         `**4. Outlook & Relevance**:\n` +
+         `• Continues to advance rapidly alongside automation, AI, and ongoing innovation, Boss Karthik! ⚡`;
 }

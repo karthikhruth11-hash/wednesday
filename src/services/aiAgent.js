@@ -130,6 +130,8 @@ export class AIAgentEngine {
   constructor() {
     this.tasks = JSON.parse(localStorage.getItem('wednesday_tasks') || '[]');
     this.activeTranslationLang = localStorage.getItem('wednesday_active_trans_lang') || null;
+    this.activeTopic = localStorage.getItem('wednesday_active_topic') || null;
+    this.chatHistory = [];
   }
 
   saveTasks() {
@@ -176,6 +178,76 @@ export class AIAgentEngine {
     const rawQuery = query.trim();
     const lower = rawQuery.toLowerCase();
     let result = null;
+
+    // Active Topic Context Resolution
+    let effectiveQuery = rawQuery;
+    const isNewTopicTrigger = (
+      lower.startsWith('tell me about') ||
+      lower.startsWith('what is') ||
+      lower.startsWith('what are') ||
+      lower.startsWith('who is') ||
+      lower.startsWith('who was') ||
+      lower.startsWith('explain') ||
+      lower.startsWith('describe') ||
+      lower.startsWith('history of')
+    );
+
+    if (isNewTopicTrigger) {
+      const extractedTopic = rawQuery
+        .replace(/^(please\s+)?(tell\s+me\s+about\s+the|tell\s+me\s+about|tell\s+me|what\s+is|what\s+are|who\s+is|who\s+was|explain|describe|history\s+of)\s+/i, '')
+        .replace(/\?$/g, '')
+        .trim();
+      if (extractedTopic && extractedTopic.length > 2) {
+        this.activeTopic = extractedTopic;
+        localStorage.setItem('wednesday_active_topic', extractedTopic);
+      }
+    } else if (this.activeTopic) {
+      const isFollowUp = (
+        lower.includes('it') || lower.includes('its') || lower.includes('this') || lower.includes('that') ||
+        lower.includes('subtopic') || lower.includes('sub topic') || lower.includes('subtopics') ||
+        lower.includes('types') || lower.includes('example') || lower.includes('code') ||
+        lower.includes('function') || lower.includes('variable') || lower.includes('data type') ||
+        lower.includes('more detail') || lower.includes('next') || lower.includes('more about') ||
+        lower.includes('tell me more') || lower.includes('what else') || lower.includes('how does')
+      );
+
+      if (isFollowUp && !lower.includes(this.activeTopic.toLowerCase())) {
+        effectiveQuery = `${rawQuery} in ${this.activeTopic}`;
+      }
+    }
+
+    // -2. INSTANT VOICE CONTROL COMMAND INTERCEPTION
+    const cleanCmd = lower.replace(/[^a-z0-9\s]/gi, '').trim();
+    const isStopSpeechCmd = (
+      cleanCmd === 'stop' || cleanCmd === 'hey stop' || cleanCmd === 'wednesday stop' ||
+      cleanCmd === 'please stop' || cleanCmd === 'stop please' || cleanCmd === 'stop speaking' ||
+      cleanCmd === 'hey stop speaking' || cleanCmd === 'stop talking' || cleanCmd === 'be quiet' ||
+      cleanCmd === 'shut up' || cleanCmd === 'pause' || cleanCmd === 'quiet' || cleanCmd === 'silence' ||
+      cleanCmd === 'mute' ||
+      /^(hey\s+|please\s+|wednesday\s+)?(stop|pause|quiet|shut\s*up|silence|mute)(\s+speaking|\s+talking|\s+now|\s+wednesday)?$/i.test(cleanCmd)
+    );
+
+    if (isStopSpeechCmd) {
+      speechEngine.stopSpeaking();
+      return {
+        reply: personaMode === 'girlfriend' ? 'Stopped speaking babe! 💕' : 'Stopped speaking, Boss Karthik. ⚡',
+        toolUsed: 'STOP_SPEECH'
+      };
+    }
+
+    const isStopMicCmd = (
+      cleanCmd === 'stop listening' || cleanCmd === 'mute mic' || cleanCmd === 'turn off mic' || cleanCmd === 'pause mic' ||
+      /^(hey\s+|please\s+|wednesday\s+)?(stop\s+listening|mute\s+mic|turn\s+off\s+mic|pause\s+listening)$/i.test(cleanCmd)
+    );
+
+    if (isStopMicCmd) {
+      speechEngine.stopListening();
+      speechEngine.setContinuousVoiceMode(false);
+      return {
+        reply: personaMode === 'girlfriend' ? 'Paused microphone listening babe! 💕' : 'Paused microphone listening, Boss Karthik. ⚡',
+        toolUsed: 'PAUSE_MIC'
+      };
+    }
 
     // -1. AUTOMATIC API KEY PASTE DETECTION (Groq: gsk_..., OpenAI: sk-..., Gemini: AIza...)
     const groqKeyMatch = rawQuery.match(/\b(gsk_[A-Za-z0-9_-]{20,})\b/);
