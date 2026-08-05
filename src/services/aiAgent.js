@@ -420,69 +420,16 @@ export class AIAgentEngine {
       lower.startsWith('how to work')
     );
 
-    // 0.2 PRO YOUTUBE CHANNEL & TOPIC SEARCH ENGINE
-    const isYtMentioned = (lower.includes('youtube') || lower.includes('yt') || lower.includes('channel')) && !isInfoQuery;
-    const isGenericOnlyYoutube = (lower === 'open youtube' || lower === 'youtube' || lower === 'open yt' || lower === 'yt');
-
-    if (!result && isYtMentioned && !isGenericOnlyYoutube) {
-      let ytQuery = rawQuery
-        .replace(/^(please\s+)?(open\s+youtube\s+channel|open\s+channel|open\s+youtube\s+and\s+search|open\s+youtube\s+for|open\s+youtube\s+topic|open\s+youtube|open|search\s+on\s+youtube|search\s+youtube|search|show\s+on\s+youtube|show|play\s+on\s+youtube|play\s+channel|play)\s+/i, '')
-        .replace(/\s+channel(\s+(on|in)\s+youtube)?$/i, '')
-        .replace(/\s+(on|in)\s+youtube$/i, '')
-        .replace(/^youtube\s+/i, '')
-        .trim();
-
-      if (!ytQuery && lower.includes('channel')) {
-        ytQuery = rawQuery.replace(/\s*channel\s*/gi, '').replace(/^(open|play|show|search)\s+/gi, '').trim();
-      }
-
-      if (ytQuery && ytQuery.toLowerCase() !== 'youtube' && ytQuery.toLowerCase() !== 'open') {
-        const isChannel = lower.includes('channel');
-        const searchQuery = isChannel ? `${ytQuery} channel` : ytQuery;
-        const ytUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(searchQuery)}`;
-
-        await systemApi.openUrl(ytUrl);
-        result = {
-          reply: personaMode === 'girlfriend'
-            ? `Opening YouTube for ${isChannel ? 'channel' : 'search'} "${ytQuery}" babe! 📺\n\n👉 [Click here to open YouTube](${ytUrl})`
-            : `Opening YouTube ${isChannel ? 'channel' : 'search'} "${ytQuery}", Boss Karthik! 📺\n\n👉 [Click here to open YouTube](${ytUrl})`,
-          toolUsed: 'YOUTUBE_PRO_SEARCH'
-        };
-      }
-    }
-
-    // 0.3 PRO GOOGLE SEARCH ROUTER
-    const isGoogleSearchCmd = (
-      lower.includes('google search') ||
-      lower.includes('search in google') ||
-      lower.includes('in google search') ||
-      lower.includes('in google') ||
-      lower.includes('on google') ||
-      lower.includes('search google') ||
-      lower.startsWith('search about') ||
-      (lower.includes('google') && (lower.includes('search') || lower.includes('about') || lower.includes('find')))
+    // Negative / Anti-Tab Phrase Guard
+    const isNegativeTabCmd = (
+      lower.includes('not asking') ||
+      lower.includes("don't open") ||
+      lower.includes('dont open') ||
+      lower.includes('stop opening') ||
+      lower.includes('no tab') ||
+      lower.includes('do not open') ||
+      lower.includes('not open')
     );
-
-    if (!result && isGoogleSearchCmd) {
-      let gQuery = rawQuery
-        .replace(/^(please\s+)?(in\s+google\s+search\s+about|in\s+google\s+search|search\s+about|search\s+on\s+google|search\s+in\s+google|search\s+google\s+for|search\s+google|google\s+search\s+for|google\s+search|open\s+google\s+search|about|find|look\s+up|search)\s+/i, '')
-        .replace(/\s+(in|on|using|via)\s+google$/i, '')
-        .replace(/\s+about$/i, '')
-        .trim();
-
-      if (!gQuery) {
-        gQuery = rawQuery;
-      }
-
-      const googleUrl = `https://www.google.com/search?q=${encodeURIComponent(gQuery)}`;
-      await systemApi.openUrl(googleUrl);
-      result = {
-        reply: personaMode === 'girlfriend'
-          ? `Opening Google Search for "${gQuery}" babe! 🌐\n\n👉 [Click here to open Google Search](${googleUrl})`
-          : `Opening Google Search for "${gQuery}", Boss Karthik! 🌐\n\n👉 [Click here to open Google Search](${googleUrl})`,
-        toolUsed: 'GOOGLE_PRO_SEARCH'
-      };
-    }
 
     // 0.5 MUSIC & PLAY SONG COMMAND ENGINE
     if (!result && (lower.startsWith('play ') || lower.startsWith('sing ') || lower.includes('play song') || lower.includes('play music') || lower.includes('listen to'))) {
@@ -571,7 +518,7 @@ export class AIAgentEngine {
     }
 
     // 2. UNIVERSAL OPEN-ANYTHING ROUTER (WEBSITES, APPS, DESKTOP TOOLS)
-    const isExplicitOpenCmd = (
+    const isExplicitOpenCmd = !isNegativeTabCmd && (
       lower.startsWith('open ') ||
       lower.startsWith('launch ') ||
       lower.startsWith('start ') ||
@@ -585,13 +532,13 @@ export class AIAgentEngine {
     );
 
     if (!result && !isInfoQuery && isExplicitOpenCmd) {
-      let target = lower.replace(/^(please\s+)?open\s+/i, '').trim();
+      let target = lower.replace(/^(please\s+)?(open|launch|start|run)\s+/i, '').trim();
       if (lower === 'youtube' || lower === 'open youtube') target = 'youtube';
-      if (lower.includes('google') && !lower.includes('search')) target = 'google';
-      if (lower.includes('spotify') && !lower.includes('play')) target = 'spotify';
-      if (lower.includes('github')) target = 'github';
-      if (lower.includes('wikipedia')) target = 'wikipedia';
-      if (lower.includes('instagram')) target = 'instagram';
+      else if (lower === 'google' || lower === 'open google') target = 'google';
+      else if (lower === 'spotify' || lower === 'open spotify') target = 'spotify';
+      else if (lower === 'github' || lower === 'open github') target = 'github';
+      else if (lower === 'wikipedia' || lower === 'open wikipedia') target = 'wikipedia';
+      else if (lower === 'instagram' || lower === 'open instagram') target = 'instagram';
 
       const commonSites = {
         'youtube': 'https://www.youtube.com',
