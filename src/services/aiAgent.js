@@ -411,6 +411,40 @@ export class AIAgentEngine {
       }
     }
 
+    // Dedicated Google Command Router (Handles "OPEN ABOUT UNIVERSE IN GOOGLE", "OPEN IN GOOGLE EARTH", "open google", "search X on google")
+    const isExplicitGoogleCmd = !isNegativeTabCmd && (
+      lower.includes('google') || lower.includes('in google') || lower.includes('on google')
+    );
+
+    if (!result && isExplicitGoogleCmd) {
+      let gTarget = rawQuery
+        .replace(/^(please\s+)?(open|launch|start|show|play|search|find|look\s+up)\s+/i, '')
+        .replace(/^(in\s+google|on\s+google|open\s+in\s+google)\s+/i, '')
+        .replace(/\s+(on|in|at|using|via)\s+google$/i, '')
+        .replace(/^google\s+(and\s+)?(search|for|show|open)?\s*/i, '')
+        .trim();
+
+      if (gTarget.toLowerCase() === 'google' || !gTarget) {
+        const googleUrl = 'https://www.google.com';
+        await systemApi.openUrl(googleUrl);
+        result = {
+          reply: personaMode === 'girlfriend'
+            ? `Opening Google for you babe! 🌐\n\n👉 [Click here to open Google](${googleUrl})`
+            : `Opening Google, Boss Karthik! 🌐\n\n👉 [Click here to open Google](${googleUrl})`,
+          toolUsed: 'GOOGLE_OPEN'
+        };
+      } else {
+        const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(gTarget)}`;
+        await systemApi.openUrl(googleSearchUrl);
+        result = {
+          reply: personaMode === 'girlfriend'
+            ? `Opening Google search for "${gTarget}" babe! 🌐\n\n👉 [Click here to open Google search](${googleSearchUrl})`
+            : `Opening Google search for "${gTarget}", Boss Karthik! 🌐\n\n👉 [Click here to open Google search](${googleSearchUrl})`,
+          toolUsed: 'GOOGLE_SEARCH'
+        };
+      }
+    }
+
     // 0.1 PRO MULTI-LANGUAGE TRANSLATOR ENGINE (EXPLICIT TRANSLATION COMMANDS ONLY)
     const isExplicitTranslateReq = isTransAction || lower.startsWith('translate ') || lower.startsWith('convert ') || lower.startsWith('how to say ');
 
