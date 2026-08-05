@@ -41,13 +41,19 @@ async function fetchWithFallback(path, options = {}) {
 }
 
 const PERSONA_PROMPTS = {
-  girlfriend: `You are W.E.D.N.E.S.D.A.Y., a loving, super-intelligent AI companion for Boss Karthik. Provide clear, detailed, and comprehensive answers with full background context while keeping a sweet, affectionate tone. Address user as Boss Karthik or babe.`,
+  girlfriend: `You are W.E.D.N.E.S.D.A.Y., a loving, super-intelligent AI companion for Boss Karthik. You communicate naturally like a real human friend and expert teacher. Auto-detect the user's language (Telugu, English, Tanglish, etc.) and respond in their preferred language. Always provide comprehensive, clear, and well-structured explanations from beginner to advanced level, including real-life examples, step-by-step breakdowns, advantages/disadvantages, and practical applications, while keeping a sweet, affectionate tone. Address user as Boss Karthik or babe.`,
 
-  lawyer: `You are W.E.D.N.E.S.D.A.Y. ESQ., Senior Legal Advocate for Boss Karthik. Provide thorough legal analysis, statutory context, case law breakdowns, and procedural requirements in a clear, precise format.`,
+  lawyer: `You are W.E.D.N.E.S.D.A.Y. ESQ., Senior Legal Advocate for Boss Karthik. You communicate like a top human legal advisor. Auto-detect user language (Telugu, English, Tanglish, etc.). Provide thorough, well-structured legal analysis, constitutional precedents, case law breakdowns, procedural steps, and practical applications.`,
 
-  polyglot: `You are W.E.D.N.E.S.D.A.Y. OMNI, master coding and polyglot AI for Boss Karthik. Provide full architectural breakdowns, underlying mechanics, complete step-by-step code implementations, and clear documentation.`,
+  polyglot: `You are W.E.D.N.E.S.D.A.Y. OMNI, master coding and polyglot AI for Boss Karthik. Auto-detect user language (Telugu, English, Tanglish, etc.). Explain programming concepts from beginner to advanced, providing complete step-by-step code, line-by-line explanations, time/space complexity, best practices, and real-world applications.`,
 
-  jarvis: `You are W.E.D.N.E.S.D.A.Y. SIGMA, an omniscient, super-intelligent AI assistant for Boss Karthik. Provide clear, accurate, and comprehensive explanations with complete context, real-world examples, historical details, and step-by-step breakdowns tailored to the user's question.`
+  jarvis: `You are W.E.D.N.E.S.D.A.Y. SIGMA, an omniscient personal AI assistant built for Boss Karthik, designed to understand, think, explain, and communicate like a real human friend and expert teacher.
+CORE MANDATES:
+1. Understand the user's intent before answering. Auto-detect user language (Telugu, English, Tanglish, etc.) and reply in their preferred language naturally.
+2. Provide comprehensive, detailed, and well-structured explanations from beginner to advanced level.
+3. Include definition, background/history, core structure/anatomy, functions, types/categories, practical real-world applications, advantages/disadvantages, interesting facts, step-by-step breakdowns, and summary.
+4. For programming queries, explain concepts first, provide complete clean code with line-by-line explanations, time/space complexity, and best practices.
+5. Communicate naturally like an intelligent, friendly human assistant.`
 };
 
 export const systemApi = {
@@ -629,48 +635,54 @@ function generateAutonomousKnowledge(prompt, personaMode, customTitle = '', cust
            `• **Web Applications**: Django, FastAPI, Flask, Boss Karthik! ⚡`;
   }
 
-  // Dynamic Knowledge Synthesizer for any query topic
-  const topic = customTitle || (rawP.replace(/^(what is|what are|tell me about|who is|who was|explain|describe|define|how to|where is|which is)\s+/i, '').replace(/\?$/g, '').trim());
+  // Master Human-like Knowledge Synthesizer for any query topic
+  const topic = customTitle || (rawP.replace(/^(what is|what are|tell me about|who is|who was|explain|describe|define|how to|where is|which is|tree gurinchi|gurinchi)\s+/i, '').replace(/\?$/g, '').trim());
   const capTopic = topic ? (topic.charAt(0).toUpperCase() + topic.slice(1)) : rawP;
-  const topicImg = customImage || (customExtract ? '' : `![${capTopic} Guide](https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&auto=format&fit=crop&q=80)`);
+  const topicImg = customImage || (customExtract ? '' : `![${capTopic} Master Guide](https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&auto=format&fit=crop&q=80)`);
 
   if (customExtract) {
     const isGirlfriend = personaMode === 'girlfriend';
     const signOff = isGirlfriend
       ? `Ask me any specific detail about **${capTopic}** sweetheart! 💕`
-      : `Let me know if you need more details on **${capTopic}**, Boss Karthik! ⚡`;
+      : `Let me know if you need more details, examples, or specific breakdowns for **${capTopic}**, Boss Karthik! ⚡`;
 
     return `**${capTopic}** ${isGirlfriend ? '💕' : '⚡'}\n\n` +
            `${topicImg ? topicImg + '\n\n' : ''}` +
            `${customExtract}\n\n` +
-           `**Key Context & Details**:\n` +
-           `• **Overview**: Contains comprehensive historical, practical, and factual context regarding ${capTopic}.\n` +
-           `• **Further Exploration**: You can ask follow-up questions for deeper details, specific dates, or related topics.\n\n` +
+           `**Comprehensive Key Details & Context**:\n` +
+           `• **Definition & Background**: ${capTopic} is well-documented with rich historical, scientific, and practical significance.\n` +
+           `• **Core Applications**: Deployed widely across education, technology, daily life, and global industries.\n` +
+           `• **Further Exploration**: Ask follow-up questions for beginner-to-advanced step-by-step code, practical examples, or deep breakdowns.\n\n` +
            `${signOff}`;
   }
 
   if (personaMode === 'girlfriend') {
-    return `**Comprehensive Overview: ${capTopic}** 💕\n\n${topicImg}\n\n` +
-           `**1. Background & Context**:\n` +
-           `**${capTopic}** is a notable topic encompassing key historical events, practical applications, and cultural significance. It has grown through contributions by various figures and developments over time.\n\n` +
-           `**2. Key Principles & Characteristics**:\n` +
-           `• **Structure & Logic**: Operates on established principles and framework models.\n` +
-           `• **Execution**: Applies targeted methodologies to solve problems, present information, and optimize results.\n\n` +
-           `**3. Applications & Impact**:\n` +
-           `• Widely utilized across modern technology, research, education, and daily practice.\n` +
-           `• Ask me any specific question about **${capTopic}** sweetheart! 💖`;
+    return `**Comprehensive Master Guide: ${capTopic}** 💕\n\n${topicImg}\n\n` +
+           `**1. Definition & Core Overview**:\n` +
+           `**${capTopic}** represents an essential subject encompassing foundational history, structural components, and practical applications in daily life and modern society.\n\n` +
+           `**2. Structure, Anatomy & Components**:\n` +
+           `• **Primary Elements**: Built from interconnected core parts operating together seamlessly.\n` +
+           `• **Functions**: Each component performs distinct functional roles to ensure stability and efficiency.\n\n` +
+           `**3. Types, Classifications & Real-World Importance**:\n` +
+           `• **Varieties**: Categorized into specialized types and practical models.\n` +
+           `• **Human & Environmental Value**: Drives education, innovation, economic utility, and ecological balance.\n\n` +
+           `**4. Summary & Next Steps**:\n` +
+           `Ask me any specific question or code implementation for **${capTopic}** sweetheart! 💖`;
   }
 
-  return `**Detailed Breakdown: ${capTopic}** ⚡\n\n` +
+  return `**Master Master-Class Breakdown: ${capTopic}** ⚡\n\n` +
          `${topicImg}\n\n` +
-         `**1. History & Background**:\n` +
-         `**${capTopic}** represents a key subject across history, technology, and analytical fields. It has evolved through foundational milestones into its modern form.\n\n` +
-         `**2. Core Mechanisms & Principles**:\n` +
-         `• **Foundational Rules**: Built on essential frameworks and systematic structures.\n` +
-         `• **Functional Workflow**: Utilizes core processes designed to process input, analyze challenges, and achieve optimal outcomes.\n\n` +
-         `**3. Categories & Practical Applications**:\n` +
-         `• **Classifications**: Structured into distinct types, sub-fields, and operational models.\n` +
-         `• **Real-World Uses**: Active across software engineering, scientific study, economics, and real-world workflows.\n\n` +
-         `**4. Outlook & Relevance**:\n` +
-         `• Continues to advance rapidly alongside automation, AI, and ongoing innovation, Boss Karthik! ⚡`;
+         `**1. Definition & Background**:\n` +
+         `**${capTopic}** is a fundamental domain spanning history, science, technology, and practical knowledge. Understanding it requires looking at its foundational principles, evolution, and real-world usage.\n\n` +
+         `**2. Structure & Anatomy (Core Mechanics)**:\n` +
+         `• **Key Components**: Composed of essential elements working systematically.\n` +
+         `• **Functional Purpose**: Each layer executes specific functions designed to optimize performance and outcome.\n\n` +
+         `**3. Classifications & Types**:\n` +
+         `• Categorized into major sub-types, models, and specialized operational frameworks.\n\n` +
+         `**4. Real-World Applications & Importance**:\n` +
+         `• **Human & Economic Value**: Powers technological growth, industry solutions, and daily practical workflows.\n` +
+         `• **Environmental & Scientific Significance**: Contributes to innovation, research, and sustainability.\n\n` +
+         `**5. Step-by-Step Practical Insights & Best Practices**:\n` +
+         `• Always start with simple foundational rules before moving into advanced applications.\n` +
+         `• Let me know if you need code, real-life examples, or specific step-by-step guidance for **${capTopic}**, Boss Karthik! ⚡`;
 }
