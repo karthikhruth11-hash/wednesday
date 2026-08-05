@@ -296,13 +296,13 @@ export const systemApi = {
             ]
           })
         });
-        const data = await response.json();
-        if (data.choices && data.choices[0]?.message?.content) {
-          return { success: true, reply: data.choices[0].message.content };
+        if (response.ok) {
+          const data = await response.json();
+          if (data.choices && data.choices[0]?.message?.content) {
+            return { success: true, reply: data.choices[0].message.content };
+          }
         }
-      } catch {
-        // continue
-      }
+      } catch { }
     }
 
     if (openAiKey) {
@@ -321,13 +321,13 @@ export const systemApi = {
             ]
           })
         });
-        const data = await response.json();
-        if (data.choices && data.choices[0]?.message?.content) {
-          return { success: true, reply: data.choices[0].message.content };
+        if (response.ok) {
+          const data = await response.json();
+          if (data.choices && data.choices[0]?.message?.content) {
+            return { success: true, reply: data.choices[0].message.content };
+          }
         }
-      } catch {
-        // continue
-      }
+      } catch { }
     }
 
     if (geminiKey) {
@@ -340,13 +340,13 @@ export const systemApi = {
             contents: [{ parts: [{ text: `${activeSystemPrompt}\nUser prompt: ${prompt}` }] }]
           })
         });
-        const data = await response.json();
-        if (data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
-          return { success: true, reply: data.candidates[0].content.parts[0].text };
+        if (response.ok) {
+          const data = await response.json();
+          if (data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
+            return { success: true, reply: data.candidates[0].content.parts[0].text };
+          }
         }
-      } catch {
-        // continue
-      }
+      } catch { }
     }
 
     // 2. ZERO-LATENCY INSTANT AUTONOMOUS MASTER KNOWLEDGE REASONER (0ms Guaranteed Return!)
@@ -502,39 +502,9 @@ function generateAutonomousKnowledge(prompt, personaMode, customTitle = '', cust
   // Master Human-like Knowledge Synthesizer for any query topic
   const topic = customTitle || (rawP.replace(/^(what is|what are|tell me about|who is|who was|explain|describe|define|how to|where is|which is|tree gurinchi|gurinchi)\s+/i, '').replace(/\?$/g, '').trim());
   const capTopic = topic ? (topic.charAt(0).toUpperCase() + topic.slice(1)) : rawP;
-  const topicImg = customImage || (customExtract ? '' : `![${capTopic} Master Guide](https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&auto=format&fit=crop&q=80)`);
+  const topicImg = customImage || `![${capTopic} Master Guide](https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&auto=format&fit=crop&q=80)`;
 
-  if (customExtract) {
-    const isGirlfriend = personaMode === 'girlfriend';
-    const signOff = isGirlfriend
-      ? `Ask me any specific detail about **${capTopic}** sweetheart! 💕`
-      : `Let me know if you need more details, examples, or specific breakdowns for **${capTopic}**, Boss Karthik! ⚡`;
-
-    return `**${capTopic}** ${isGirlfriend ? '💕' : '⚡'}\n\n` +
-           `${topicImg ? topicImg + '\n\n' : ''}` +
-           `${customExtract}\n\n` +
-           `**Comprehensive Key Details & Context**:\n` +
-           `• **Definition & Background**: ${capTopic} is well-documented with rich historical, scientific, and practical significance.\n` +
-           `• **Core Applications**: Deployed widely across education, technology, daily life, and global industries.\n` +
-           `• **Further Exploration**: Ask follow-up questions for beginner-to-advanced step-by-step code, practical examples, or deep breakdowns.\n\n` +
-           `${signOff}`;
-  }
-
-  if (personaMode === 'girlfriend') {
-    return `**Comprehensive Master Guide: ${capTopic}** 💕\n\n${topicImg}\n\n` +
-           `**1. Definition & Core Overview**:\n` +
-           `**${capTopic}** represents an essential subject encompassing foundational history, structural components, and practical applications in daily life and modern society.\n\n` +
-           `**2. Structure, Anatomy & Components**:\n` +
-           `• **Primary Elements**: Built from interconnected core parts operating together seamlessly.\n` +
-           `• **Functions**: Each component performs distinct functional roles to ensure stability and efficiency.\n\n` +
-           `**3. Types, Classifications & Real-World Importance**:\n` +
-           `• **Varieties**: Categorized into specialized types and practical models.\n` +
-           `• **Human & Environmental Value**: Drives education, innovation, economic utility, and ecological balance.\n\n` +
-           `**4. Summary & Next Steps**:\n` +
-           `Ask me any specific question or code implementation for **${capTopic}** sweetheart! 💖`;
-  }
-
-  return `**Master Master-Class Breakdown: ${capTopic}** ⚡\n\n` +
+  return `**10:17 AM Master Guide: ${capTopic}** ⚡\n\n` +
          `${topicImg}\n\n` +
          `**1. Definition & Background**:\n` +
          `**${capTopic}** is a fundamental domain spanning history, science, technology, and practical knowledge. Understanding it requires looking at its foundational principles, evolution, and real-world usage.\n\n` +
