@@ -27,13 +27,26 @@ class SpeechEngine {
     this.continuousVoiceMode = enabled;
   }
 
+  setRecognitionLanguage(langCode) {
+    const code = langCode || localStorage.getItem('wednesday_mic_lang') || 'te-IN';
+    localStorage.setItem('wednesday_mic_lang', code);
+    if (this.recognition) {
+      this.recognition.lang = code;
+    }
+  }
+
+  getRecognitionLanguage() {
+    return (this.recognition && this.recognition.lang) || localStorage.getItem('wednesday_mic_lang') || 'te-IN';
+  }
+
   initRecognition() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
       this.recognition = new SpeechRecognition();
       this.recognition.continuous = true;
       this.recognition.interimResults = true;
-      this.recognition.lang = 'en-US';
+      const savedMicLang = localStorage.getItem('wednesday_mic_lang') || 'te-IN';
+      this.recognition.lang = savedMicLang;
 
       this.recognition.onstart = () => {
         this.isListening = true;
@@ -181,11 +194,27 @@ class SpeechEngine {
     this.stopListening();
     this.synthesis.cancel(); // Stop ongoing speech
 
+    // Auto-detect non-English native script if langCode not explicitly passed
+    let effectiveLang = langCode;
+    if (!effectiveLang) {
+      if (/[\u0C00-\u0C7F]/.test(text)) effectiveLang = 'te-IN'; // Telugu
+      else if (/[\u0900-\u097F]/.test(text)) effectiveLang = 'hi-IN'; // Hindi
+      else if (/[\u0B80-\u0BFF]/.test(text)) effectiveLang = 'ta-IN'; // Tamil
+      else if (/[\u0C80-\u0CFF]/.test(text)) effectiveLang = 'kn-IN'; // Kannada
+      else if (/[\u0D00-\u0D7F]/.test(text)) effectiveLang = 'ml-IN'; // Malayalam
+      else if (/[\u0980-\u09FF]/.test(text)) effectiveLang = 'bn-IN'; // Bengali
+      else if (/[\u4E00-\u9FFF]/.test(text)) effectiveLang = 'zh-CN'; // Chinese
+      else if (/[\u3040-\u30FF]/.test(text)) effectiveLang = 'ja-JP'; // Japanese
+      else if (/[\uAC00-\uD7AF]/.test(text)) effectiveLang = 'ko-KR'; // Korean
+      else if (/[\u0600-\u06FF]/.test(text)) effectiveLang = 'ar-SA'; // Arabic
+      else if (/[\u0400-\u04FF]/.test(text)) effectiveLang = 'ru-RU'; // Russian
+    }
+
     const utterance = new SpeechSynthesisUtterance(text);
-    if (langCode) {
-      utterance.lang = langCode;
+    if (effectiveLang) {
+      utterance.lang = effectiveLang;
       const voices = this.getAvailableVoices();
-      const matchVoice = voices.find(v => v.lang.toLowerCase().startsWith(langCode.toLowerCase().slice(0, 2)));
+      const matchVoice = voices.find(v => v.lang.toLowerCase().startsWith(effectiveLang.toLowerCase().slice(0, 2)));
       if (matchVoice) {
         utterance.voice = matchVoice;
       } else if (this.selectedVoice) {

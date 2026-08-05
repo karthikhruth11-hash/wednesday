@@ -12,7 +12,28 @@ export default function SettingsModal({ isOpen, onClose, onPersonaChange }) {
   const [selectedVoiceName, setSelectedVoiceName] = useState(localStorage.getItem('wednesday_voice_name') || '');
   const [speechRate, setSpeechRate] = useState(localStorage.getItem('wednesday_speech_rate') || '1.0');
   const [speechPitch, setSpeechPitch] = useState(localStorage.getItem('wednesday_speech_pitch') || '1.0');
+  const [micLang, setMicLang] = useState(localStorage.getItem('wednesday_mic_lang') || 'te-IN');
   const [savedStatus, setSavedStatus] = useState('');
+
+  const MIC_LANGUAGES = [
+    { code: 'te-IN', label: '🇮🇳 Telugu (తెలుగు)' },
+    { code: 'hi-IN', label: '🇮🇳 Hindi (हिंदी)' },
+    { code: 'ta-IN', label: '🇮🇳 Tamil (தமிழ்)' },
+    { code: 'kn-IN', label: '🇮🇳 Kannada (కన్నడ)' },
+    { code: 'ml-IN', label: '🇮🇳 Malayalam (മലയാളം)' },
+    { code: 'mr-IN', label: '🇮🇳 Marathi (మరాఠీ)' },
+    { code: 'bn-IN', label: '🇮🇳 Bengali (బెంగాలీ)' },
+    { code: 'en-US', label: '🇺🇸 English (US)' },
+    { code: 'en-IN', label: '🇮🇳 English (India)' },
+    { code: 'es-ES', label: '🇪🇸 Spanish (Español)' },
+    { code: 'fr-FR', label: '🇫🇷 French (Français)' },
+    { code: 'de-DE', label: '🇩🇪 German (Deutsch)' },
+    { code: 'ja-JP', label: '🇯🇵 Japanese (日本語)' },
+    { code: 'ko-KR', label: '🇰🇷 Korean (한국어)' },
+    { code: 'zh-CN', label: '🇨🇳 Chinese (中文)' },
+    { code: 'ar-SA', label: '🇸🇦 Arabic (العربية)' },
+    { code: 'ru-RU', label: '🇷🇺 Russian (Русский)' }
+  ];
 
   useEffect(() => {
     if (isOpen) {
@@ -49,6 +70,7 @@ export default function SettingsModal({ isOpen, onClose, onPersonaChange }) {
     localStorage.setItem('wednesday_ai_provider', provider);
     localStorage.setItem('wednesday_api_key', apiKey.trim());
     localStorage.setItem('wednesday_persona_mode', personaMode);
+    speechEngine.setRecognitionLanguage(micLang);
 
     if (onPersonaChange) {
       onPersonaChange(personaMode);
@@ -60,7 +82,7 @@ export default function SettingsModal({ isOpen, onClose, onPersonaChange }) {
     localStorage.setItem('wednesday_speech_rate', speechRate);
     localStorage.setItem('wednesday_speech_pitch', speechPitch);
 
-    setSavedStatus('Settings & Human Voice Preference Saved!');
+    setSavedStatus('Settings & Multi-Language Voice Saved!');
     setTimeout(() => {
       setSavedStatus('');
       onClose();
@@ -141,6 +163,31 @@ export default function SettingsModal({ isOpen, onClose, onPersonaChange }) {
               </div>
             </div>
           )}
+
+          {/* Speech Recognition Input Language */}
+          <div style={{ padding: '0.75rem', background: 'rgba(0, 240, 255, 0.04)', border: '1px solid rgba(0, 240, 255, 0.2)', borderRadius: '8px' }}>
+            <label style={{ fontSize: '0.8rem', color: '#00f0ff', fontFamily: 'Orbitron', display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.5rem' }}>
+              🎙️ Microphone Speech Recognition Language
+            </label>
+            <select
+              className="input-hud"
+              value={micLang}
+              onChange={(e) => {
+                setMicLang(e.target.value);
+                speechEngine.setRecognitionLanguage(e.target.value);
+              }}
+              style={{ width: '100%' }}
+            >
+              {MIC_LANGUAGES.map((l) => (
+                <option key={l.code} value={l.code}>
+                  {l.label}
+                </option>
+              ))}
+            </select>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.3rem' }}>
+              Select your spoken language (Telugu, Hindi, Tamil, English, etc.) for Web Speech API transcription.
+            </div>
+          </div>
 
           {/* Voice Customization Section (Human vs Robo Voice) */}
           <div style={{ padding: '0.75rem', background: 'rgba(0, 240, 255, 0.04)', border: '1px solid rgba(0, 240, 255, 0.2)', borderRadius: '8px' }}>

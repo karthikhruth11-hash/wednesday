@@ -38,7 +38,7 @@ export class OmniscientKnowledgeEngine {
       'age of universe': '13.8 billion years',
       'nearest star to earth': 'The Sun (Proxima Centauri is nearest non-solar star at 4.24 light-years)',
 
-      // Common Greetings & Self Identity
+      // Common Greetings & Self Identity (English + Telugu)
       'how are you': 'I am doing great, Boss Karthik! All SIGMA Arc Reactor core systems are 100% online and running smoothly.',
       'who are you': 'I am W.E.D.N.E.S.D.A.Y., your autonomous omniscient SIGMA AI assistant built for Boss Karthik.',
       'who is your boss': 'Boss Karthik is my creator and boss.',
@@ -49,13 +49,23 @@ export class OmniscientKnowledgeEngine {
       'helo': 'Hello, Boss Karthik! W.E.D.N.E.S.D.A.Y. SIGMA Core online and ready. How can I assist you today? ⚡',
       'hello': 'Hello, Boss Karthik! W.E.D.N.E.S.D.A.Y. SIGMA Core online and ready. How can I assist you today? ⚡',
       'hey': 'Hello, Boss Karthik! W.E.D.N.E.S.D.A.Y. SIGMA Core online and ready. How can I assist you today? ⚡',
-      'namaste': 'Namaste, Boss Karthik! W.E.D.N.E.S.D.A.Y. SIGMA Core online and ready. How can I assist you today? ⚡'
+      'namaste': 'Namaste, Boss Karthik! W.E.D.N.E.S.D.A.Y. SIGMA Core online and ready. How can I assist you today? ⚡',
+      'namaskaram': 'Namaskaram, Boss Karthik! W.E.D.N.E.S.D.A.Y. SIGMA Core online and ready. How can I assist you today? ⚡',
+      'ela unnavu': 'Nenu chala bagunnanu, Boss Karthik! All SIGMA core systems online. ⚡',
+      'ela unnav': 'Nenu chala bagunnanu, Boss Karthik! All SIGMA core systems online. ⚡',
+      'meeru evaru': 'Nenu W.E.D.N.E.S.D.A.Y., meekoosam tayaraina autonomous SIGMA AI assistant. ⚡',
+      'నమస్కారం': 'నమస్కారం బాస్ కార్తీక్! W.E.D.N.E.S.D.A.Y. సిగ్మా కోర్ ఆన్‌లైన్‌లో ఉంది. నేను మీకు ఎలా సహాయపడగలను? ⚡',
+      'నమస్తే': 'నమస్తే బాస్ కార్తీక్! W.E.D.N.E.S.D.A.Y. మీ సేవలో సిద్ధంగా ఉంది. ⚡',
+      'ఎలా ఉన్నావు': 'నేను చాలా బాగున్నాను బాస్ కార్తీక్! సిస్టమ్ 100% ఆన్‌లైన్‌లో నడుస్తోంది. ⚡',
+      'ఎలా ఉన్నావ్': 'నేను చాలా బాగున్నాను బాస్ కార్తీక్! సిస్టమ్ 100% ఆన్‌లైన్‌లో నడుస్తోంది. ⚡',
+      'బాగున్నావా': 'నేను చాలా బాగున్నాను బాస్ కార్తీక్! సిస్టమ్స్ అన్నీ సిద్ధంగా ఉన్నాయి. ⚡',
+      'నువ్వు ఎవరు': 'నేను W.E.D.N.E.S.D.A.Y., బాస్ కార్తీక్ కోసం ప్రత్యేకంగా రూపొందించబడిన SIGMA AI అసిస్టెంట్‌ని. ⚡'
     };
   }
 
   findInstantAnswer(query) {
     const raw = query.toLowerCase().trim();
-    const clean = raw.replace(/[^a-z0-9\s]/gi, '').trim();
+    const clean = raw.replace(/[^\p{L}\p{N}\s]/gu, '').trim();
 
     // Do not intercept if user is trying to perform an action
     if (clean.includes('open') || clean.includes('play') || clean.includes('create') || clean.includes('launch') || clean.includes('close') || clean.includes('run')) {

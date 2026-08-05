@@ -29,6 +29,7 @@ export default function App() {
   const [inputText, setInputText] = useState('');
   const [searchBarInput, setSearchBarInput] = useState('');
   const [interimTranscript, setInterimTranscript] = useState('');
+  const [currentMicLang, setCurrentMicLang] = useState(speechEngine.getRecognitionLanguage());
   const [activeGesture, setActiveGesture] = useState(null);
   const [handPos, setHandPos] = useState(null);
 
@@ -434,6 +435,45 @@ export default function App() {
         >
           {isListening ? <MicOff size={18} /> : <Mic size={18} />}
         </button>
+
+        <select
+          value={currentMicLang}
+          onChange={(e) => {
+            const newLang = e.target.value;
+            setCurrentMicLang(newLang);
+            speechEngine.setRecognitionLanguage(newLang);
+          }}
+          title="Select Spoken Voice Language"
+          style={{
+            background: 'rgba(0, 240, 255, 0.12)',
+            color: '#00f0ff',
+            border: '1px solid rgba(0, 240, 255, 0.4)',
+            borderRadius: '16px',
+            padding: '0.2rem 0.5rem',
+            fontSize: '0.75rem',
+            fontFamily: 'Orbitron, sans-serif',
+            cursor: 'pointer',
+            outline: 'none'
+          }}
+        >
+          <option value="te-IN">🇮🇳 Telugu (తెలుగు)</option>
+          <option value="hi-IN">🇮🇳 Hindi (हिंदी)</option>
+          <option value="ta-IN">🇮🇳 Tamil (தமிழ்)</option>
+          <option value="kn-IN">🇮🇳 Kannada (కన్నడ)</option>
+          <option value="ml-IN">🇮🇳 Malayalam (മലയാളం)</option>
+          <option value="mr-IN">🇮🇳 Marathi (మరాఠీ)</option>
+          <option value="bn-IN">🇮🇳 Bengali (బెంగాలీ)</option>
+          <option value="en-US">🇺🇸 English (US)</option>
+          <option value="en-IN">🇮🇳 English (IN)</option>
+          <option value="es-ES">🇪🇸 Spanish</option>
+          <option value="fr-FR">🇫🇷 French</option>
+          <option value="de-DE">🇩🇪 German</option>
+          <option value="ja-JP">🇯🇵 Japanese</option>
+          <option value="ko-KR">🇰🇷 Korean</option>
+          <option value="zh-CN">🇨🇳 Chinese</option>
+          <option value="ar-SA">🇸🇦 Arabic</option>
+          <option value="ru-RU">🇷🇺 Russian</option>
+        </select>
 
         <button type="submit" className="btn-prompt-submit">
           <Send size={14} /> Send
