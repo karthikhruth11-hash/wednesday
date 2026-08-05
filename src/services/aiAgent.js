@@ -873,9 +873,10 @@ export class AIAgentEngine {
     }
 
     if (!result) {
+      const fallbackReply = systemApi.generateAutonomousKnowledge(rawQuery, personaMode);
       result = {
-        reply: `I have processed your request for "${rawQuery}", Boss Karthik. Is there anything specific you would like me to analyze further?`,
-        toolUsed: 'GENERAL'
+        reply: fallbackReply,
+        toolUsed: 'AUTONOMOUS_SYNTHESIZER'
       };
     }
 
