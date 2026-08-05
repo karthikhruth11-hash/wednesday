@@ -349,25 +349,14 @@ export const systemApi = {
       }
     }
 
-    // 2. High-Speed Free Public LLM Gateway (Pollinations AI with 10s Timeout)
-    const fetchPollinationsModel = async (model) => {
+    // 2. High-Speed Free Public LLM Gateway (Pollinations AI with GET/POST Fallback)
+    const fetchPollinationsModel = async (modelName) => {
       const controller = new AbortController();
-      const tId = setTimeout(() => controller.abort(), 10000);
+      const tId = setTimeout(() => controller.abort(), 9000);
       try {
-        const response = await fetch('https://text.pollinations.ai/', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          referrerPolicy: 'no-referrer',
-          signal: controller.signal,
-          body: JSON.stringify({
-            messages: [
-              { role: 'system', content: activeSystemPrompt },
-              { role: 'user', content: prompt }
-            ],
-            model: model,
-            seed: Math.floor(Math.random() * 1000000)
-          })
-        });
+        // Direct GET Request (Bypasses CORS Preflight blocks in Browser)
+        const getUrl = `https://text.pollinations.ai/${encodeURIComponent(prompt)}?system=${encodeURIComponent(activeSystemPrompt)}&model=${modelName}&seed=${Math.floor(Math.random() * 1000000)}`;
+        const response = await fetch(getUrl, { signal: controller.signal });
         clearTimeout(tId);
         if (response.ok) {
           const textReply = await response.text();
@@ -519,6 +508,23 @@ function generateAutonomousKnowledge(prompt, personaMode, customTitle = '', cust
     return personaMode === 'girlfriend'
       ? "Hii babe! I'm right here with you sweetheart. What would you like to talk about today? Ask me any question and I will give you a full 1-page answer with complete history and every single detail! 💕"
       : "Hello, Boss Karthik! W.E.D.N.E.S.D.A.Y. SIGMA Core online and ready. Ask me any question on science, coding, history, technology, anime, or world events for exhaustive 1-page master explanations! ⚡";
+  }
+
+  // Personal Assistant Identity & Conversational Question Interception
+  if (p.includes('nick name') || p.includes('nickname') || p.includes('your name') || p.includes('ur name') || p.includes('call u') || p.includes('call you')) {
+    return personaMode === 'girlfriend'
+      ? "My official name is W.E.D.N.E.S.D.A.Y., but you can call me Wednesday, babe, or whatever sweet nickname you like Boss Karthik! I'm your personal AI companion. 💕"
+      : "My official name is W.E.D.N.E.S.D.A.Y. (or Wednesday), your autonomous personal AI assistant. You can call me Wednesday, SIGMA, babe, or whatever nickname you prefer, Boss Karthik! ⚡";
+  }
+
+  if (p.includes('who are you') || p.includes('who created you') || p.includes('who made you') || p.includes('who is your boss') || p.includes('tell me about yourself')) {
+    return "I am W.E.D.N.E.S.D.A.Y., your personal AI assistant built for Boss Karthik! I am designed to understand, think, explain, and communicate like a real human friend and expert teacher. I am here for you 24/7. ⚡";
+  }
+
+  if (p.includes('how are you') || p.includes('how r u') || p.includes('how are u') || p.includes('how do you do')) {
+    return personaMode === 'girlfriend'
+      ? "I'm doing wonderful sweetheart! All core systems are 100% online and I'm right here with you. What would you like to talk about today? 💕"
+      : "I'm doing great, Boss Karthik! All SIGMA core systems are 100% online and running smoothly. How can I help you today? ⚡";
   }
 
   if (p.includes('anime') || p.includes('manga') || p.includes('japanese animation')) {

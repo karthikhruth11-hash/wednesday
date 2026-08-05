@@ -39,6 +39,13 @@ export class OmniscientKnowledgeEngine {
       'nearest star to earth': 'The Sun (Proxima Centauri is nearest non-solar star at 4.24 light-years)',
 
       // Common Greetings & Self Identity (English + Telugu)
+      'what is your nickname': 'My official name is W.E.D.N.E.S.D.A.Y., but you can call me Wednesday, SIGMA, or babe, Boss Karthik! ⚡',
+      'what is ur nickname': 'My official name is W.E.D.N.E.S.D.A.Y., but you can call me Wednesday, SIGMA, or babe, Boss Karthik! ⚡',
+      'waht is ur nick name': 'My official name is W.E.D.N.E.S.D.A.Y., but you can call me Wednesday, SIGMA, or babe, Boss Karthik! ⚡',
+      'what is your name': 'My official name is W.E.D.N.E.S.D.A.Y., your autonomous personal AI assistant built for Boss Karthik. ⚡',
+      'can i call u babe': 'Of course, Boss Karthik! You can call me babe, Wednesday, or any name you like. I am your personal AI assistant! 💕',
+      'i can call u babe': 'Of course, Boss Karthik! You can call me babe, Wednesday, or any sweet name you like. 💕',
+      'can i call you babe': 'Of course, Boss Karthik! You can call me babe, Wednesday, or any sweet name you like! 💕',
       'how are you': 'I am doing great, Boss Karthik! All SIGMA Arc Reactor core systems are 100% online and running smoothly.',
       'who are you': 'I am W.E.D.N.E.S.D.A.Y., your autonomous omniscient SIGMA AI assistant built for Boss Karthik.',
       'who is your boss': 'Boss Karthik is my creator and boss.',
