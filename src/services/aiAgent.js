@@ -431,6 +431,42 @@ export class AIAgentEngine {
       lower.includes('not open')
     );
 
+    // Dedicated YouTube Command Router (Handles "open youtube", "open youtube for X", "search X on youtube", "play X on youtube", "open youtube channel X")
+    const isExplicitYtCmd = !isNegativeTabCmd && (
+      lower.includes('youtube') || lower.includes(' yt ') || lower.endsWith(' yt') || lower.startsWith('yt ')
+    );
+
+    if (!result && isExplicitYtCmd) {
+      let ytTarget = rawQuery
+        .replace(/^(please\s+)?(open|launch|start|show|play|search|find|look\s+up)\s+/i, '')
+        .replace(/\s+(on|in|at|using|via)\s+youtube$/i, '')
+        .replace(/\s+(on|in|at)\s+yt$/i, '')
+        .replace(/^youtube\s+(and\s+)?(search|play|for|show|open)?\s*/i, '')
+        .replace(/^yt\s+(and\s+)?(search|play|for|show|open)?\s*/i, '')
+        .replace(/\s*channel\s*/gi, ' ')
+        .trim();
+
+      if (ytTarget.toLowerCase() === 'youtube' || ytTarget.toLowerCase() === 'yt' || !ytTarget) {
+        const ytUrl = 'https://www.youtube.com';
+        await systemApi.openUrl(ytUrl);
+        result = {
+          reply: personaMode === 'girlfriend'
+            ? `Opening YouTube for you babe! 📺\n\n👉 [Click here to open YouTube](${ytUrl})`
+            : `Opening YouTube, Boss Karthik! 📺\n\n👉 [Click here to open YouTube](${ytUrl})`,
+          toolUsed: 'YOUTUBE_OPEN'
+        };
+      } else {
+        const ytSearchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(ytTarget)}`;
+        await systemApi.openUrl(ytSearchUrl);
+        result = {
+          reply: personaMode === 'girlfriend'
+            ? `Opening YouTube for "${ytTarget}" babe! 📺\n\n👉 [Click here to open YouTube search](${ytSearchUrl})`
+            : `Opening YouTube search for "${ytTarget}", Boss Karthik! 📺\n\n👉 [Click here to open YouTube search](${ytSearchUrl})`,
+          toolUsed: 'YOUTUBE_SEARCH'
+        };
+      }
+    }
+
     // 0.5 MUSIC & PLAY SONG COMMAND ENGINE
     if (!result && (lower.startsWith('play ') || lower.startsWith('sing ') || lower.includes('play song') || lower.includes('play music') || lower.includes('listen to'))) {
       let songQuery = rawQuery
