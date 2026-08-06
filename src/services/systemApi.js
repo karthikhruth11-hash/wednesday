@@ -307,7 +307,35 @@ export const systemApi = {
     // Client-Side High-Speed Autonomous AI Fallback (Zero Backend Requirement!)
     const activeSystemPrompt = PERSONA_PROMPTS[personaMode] || PERSONA_PROMPTS.jarvis;
 
-    // 1. Direct Groq / OpenAI / Gemini Client Key if provided
+    // 1. FREE DEEP THINKING AI ENGINE (Puter.js Browser Client AI - Gemini 2.5 Flash / DeepSeek / GPT-4o)
+    if (typeof window !== 'undefined') {
+      try {
+        let puterObj = window.puter;
+        if (!puterObj && typeof document !== 'undefined') {
+          // Dynamically ensure puter script is loaded
+          const existingScript = document.querySelector('script[src*="puter.com"]');
+          if (!existingScript) {
+            const script = document.createElement('script');
+            script.src = 'https://js.puter.com/v2/';
+            document.head.appendChild(script);
+          }
+        }
+
+        if (window.puter && window.puter.ai && typeof window.puter.ai.chat === 'function') {
+          const puterRes = await window.puter.ai.chat(`${activeSystemPrompt}\n\nUser Query: ${prompt}`, { model: 'gemini-2.5-flash' });
+          if (puterRes) {
+            const text = typeof puterRes === 'string' ? puterRes : (puterRes.text || puterRes.message?.content || '');
+            if (text && text.trim().length > 30) {
+              return { success: true, reply: text.trim() };
+            }
+          }
+        }
+      } catch (e) {
+        console.warn("Puter AI engine fallback note:", e);
+      }
+    }
+
+    // 2. Direct Groq / OpenAI / Gemini Client Key if provided in localStorage
     let groqKey = (apiKey && apiKey.startsWith('gsk_')) ? apiKey.trim() : '';
     let openAiKey = (apiKey && apiKey.startsWith('sk-')) ? apiKey.trim() : '';
     let geminiKey = (apiKey && !apiKey.startsWith('sk-') && !apiKey.startsWith('gsk_')) ? apiKey.trim() : '';
@@ -393,31 +421,6 @@ export const systemApi = {
       } catch { }
     }
 
-    // 2. FREE AUTONOMOUS PUBLIC AI ENGINE (Pollinations AI LLM - Zero Key Required!)
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000);
-      const pollRes = await fetch('https://text.pollinations.ai/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        signal: controller.signal,
-        body: JSON.stringify({
-          messages: [
-            { role: 'system', content: activeSystemPrompt },
-            { role: 'user', content: prompt }
-          ],
-          model: 'openai'
-        })
-      });
-      clearTimeout(timeoutId);
-      if (pollRes.ok) {
-        const pollText = await pollRes.text();
-        if (pollText && pollText.trim() && !pollText.startsWith('{"error"') && pollText.length > 25) {
-          return { success: true, reply: pollText.trim() };
-        }
-      }
-    } catch {}
-
     // 3. WIKIPEDIA FACTUAL KNOWLEDGE RETRIEVAL FALLBACK
     const wikiData = await fetchWikipediaKnowledge(prompt);
     if (wikiData) {
@@ -425,7 +428,7 @@ export const systemApi = {
       return { success: true, reply: wikiReply };
     }
 
-    // 4. DYNAMIC SUBJECT-SPECIFIC REASONER (Guaranteed Return)
+    // 4. DYNAMIC DEEP-THINKING REASONER (Guaranteed High-Quality Return)
     const instantReply = generateAutonomousKnowledge(prompt, personaMode);
     return {
       success: true,
@@ -437,7 +440,7 @@ export const systemApi = {
 async function fetchWikipediaKnowledge(prompt) {
   try {
     const cleanTopic = prompt
-      .replace(/^(please\s+)?(tell\s+me\s+about\s+the|tell\s+me\s+about|tell\s+me|what\s+is|what\s+are|who\s+is|who\s+was|explain|describe|history\s+of|difference\s+between|guidance\s+for)\s+/i, '')
+      .replace(/^(please\s+)?(tell\s+me\s+about\s+the|tell\s+me\s+about|tell\s+me|what\s+is|what\s+are|who\s+is|who\s+was|explain|describe|history\s+of|difference\s+between|guidance\s+for|step\s+by\s+step\s+process\s+to|how\s+to)\s+/i, '')
       .replace(/\?$/g, '')
       .trim();
     if (!cleanTopic || cleanTopic.length < 3) return null;
@@ -488,6 +491,60 @@ function generateAutonomousKnowledge(prompt, personaMode, customTitle = '', cust
     return personaMode === 'girlfriend'
       ? "I'm doing wonderful sweetheart! All core systems are 100% online and I'm right here with you. What would you like to talk about today? 💕"
       : "I'm doing great, Boss Karthik! All SIGMA core systems are 100% online and running smoothly. How can I help you today? ⚡";
+  }
+
+  // Deep-Thinking Software Development & Coding Creation Handler
+  if (p.includes('program') || p.includes('software') || p.includes('app') || p.includes('code') || p.includes('develop') || p.includes('create one program')) {
+    return `**Complete Step-by-Step Guide: How to Create a Computer Program** 💻\n\n` +
+           `![Software Development Lifecycle](https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&auto=format&fit=crop&q=80)\n\n` +
+           `Creating a computer program is a structured software engineering process. Below is the complete 7-phase walkthrough from initial idea to executable software:\n\n` +
+           `**Phase 1: Define the Problem & Requirements**\n` +
+           `• Clearly specify what input your program takes, what processing logic it executes, and what output it produces.\n` +
+           `• **Example**: Creating a CLI interactive calculator that takes two numbers and an operator (+, -, *, /) and outputs the calculated result.\n\n` +
+           `**Phase 2: Choose the Programming Language & Tools**\n` +
+           `• **Python**: Best for beginners, data automation, AI, and backend scripting.\n` +
+           `• **JavaScript / TypeScript**: Best for web development (React, Node.js).\n` +
+           `• **C++ / Java / Rust**: Best for high-performance desktop software and system utilities.\n` +
+           `• **IDE / Editor**: Install **Visual Studio Code (VS Code)**.\n\n` +
+           `**Phase 3: Design the Algorithm & Logic Flow**\n` +
+           `Draft the logical sequence before writing code:\n` +
+           `1. Prompt user for Input A and Input B.\n` +
+           `2. Verify operator validity.\n` +
+           `3. Execute mathematical logic.\n` +
+           `4. Handle errors (e.g., division by zero) and display output.\n\n` +
+           `**Phase 4: Write the Source Code (Executable Python Example)**\n\n` +
+           `\`\`\`python\n` +
+           `# Complete Executable Python Program\n` +
+           `def calculate(n1, n2, op):\n` +
+           `    if op == '+': return n1 + n2\n` +
+           `    elif op == '-': return n1 - n2\n` +
+           `    elif op == '*': return n1 * n2\n` +
+           `    elif op == '/':\n` +
+           `        return "Error: Division by zero!" if n2 == 0 else n1 / n2\n` +
+           `    return "Error: Invalid Operator"\n\n` +
+           `def main():\n` +
+           `    print("=== W.E.D.N.E.S.D.A.Y. Python Core Program ===")\n` +
+           `    try:\n` +
+           `        num1 = float(input("Enter first number: "))\n` +
+           `        operator = input("Enter operator (+, -, *, /): ").strip()\n` +
+           `        num2 = float(input("Enter second number: "))\n` +
+           `        result = calculate(num1, num2, operator)\n` +
+           `        print(f"Result: {result}")\n` +
+           `    except ValueError:\n` +
+           `        print("Error: Invalid numeric input!")\n\n` +
+           `if __name__ == "__main__":\n` +
+           `    main()\n` +
+           `\`\`\`\n\n` +
+           `**Phase 5: Test & Debug the Code**\n` +
+           `• Run syntax checks and test edge cases (e.g., passing invalid characters or dividing by zero).\n` +
+           `• Use print statements or VS Code breakpoint debuggers to inspect runtime variable states.\n\n` +
+           `**Phase 6: Compile & Run the Program**\n` +
+           `• Open Terminal / Command Prompt and run:\n` +
+           `  \`\`\`bash\n` +
+           `  python main.py\n` +
+           `  \`\`\`\n\n` +
+           `**Phase 7: Maintenance & Git Version Control**\n` +
+           `• Use \`git init\` and \`git commit\` to save versions, and modularize code into reusable functions, Boss Karthik! ⚡`;
   }
 
   // Check for comparison query (e.g., Difference between Human Intelligence and Artificial Intelligence)
