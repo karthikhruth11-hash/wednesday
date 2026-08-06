@@ -180,6 +180,7 @@ export default function App() {
         timestamp: new Date().toLocaleTimeString()
       };
       setMessages(prev => [...prev, assistantMsg]);
+      setAppState('idle');
     }
   }, [personaMode]);
 

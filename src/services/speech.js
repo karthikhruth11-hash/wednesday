@@ -239,15 +239,25 @@ class SpeechEngine {
     utterance.rate = savedRate; // Natural human speech tempo
     utterance.pitch = savedPitch; // Human pitch
 
+    try {
+      this.synthesis.cancel();
+      this.synthesis.resume();
+    } catch {}
+
     utterance.onstart = () => {
       this.isSpeaking = true;
       if (onStart) onStart();
     };
 
+    let speechTimer = null;
+    let finished = false;
+
     const handleSpeechFinished = () => {
+      if (finished) return;
+      finished = true;
+      if (speechTimer) clearTimeout(speechTimer);
       this.isSpeaking = false;
       if (onEnd) onEnd();
-      // If continuous hands-free voice mode is active, re-arm listening after speaking finishes (with 800ms echo buffer)
       if (this.continuousVoiceMode) {
         setTimeout(() => {
           if (this.continuousVoiceMode && !this.isListening && !this.isSpeaking) {
@@ -264,7 +274,16 @@ class SpeechEngine {
       handleSpeechFinished();
     };
 
-    this.synthesis.speak(utterance);
+    // Safety timeout (10s) in case browser SpeechSynthesis freezes or doesn't fire events
+    speechTimer = setTimeout(() => {
+      handleSpeechFinished();
+    }, 10000);
+
+    try {
+      this.synthesis.speak(utterance);
+    } catch {
+      handleSpeechFinished();
+    }
   }
 
   stopSpeaking() {

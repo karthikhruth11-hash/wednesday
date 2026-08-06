@@ -17,21 +17,26 @@ const getApiEndpoints = () => {
 
 async function fetchWithFallback(path, options = {}) {
   const endpoints = getApiEndpoints();
+  if (!endpoints.includes('http://localhost:3001/api')) {
+    endpoints.push('http://localhost:3001/api');
+  }
+
   for (const base of endpoints) {
     try {
       const controller = new AbortController();
-      const isLocalHost = base.includes('localhost') || base.includes('127.0.0.1');
-      const isWebHosting = typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
-      const timeoutMs = (isLocalHost && isWebHosting) ? 400 : 2500;
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
       const res = await fetch(`${base}${path}`, {
         ...options,
         signal: controller.signal
       });
       clearTimeout(timeoutId);
+
       if (res.ok) {
-        return await res.json();
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          return await res.json();
+        }
       }
     } catch {
       // try next endpoint
@@ -71,6 +76,32 @@ export const systemApi = {
       if (this.onOpenCalculator) this.onOpenCalculator();
     }
 
+    // Direct Windows Native Protocol & App Launcher Trigger (Instant Direct Navigation!)
+    if (typeof window !== 'undefined') {
+      const protocols = {
+        'whatsapp': 'whatsapp://',
+        'whats app': 'whatsapp://',
+        'instagram': 'instagram://',
+        'insta': 'instagram://',
+        'spotify': 'spotify://',
+        'zoom': 'zoommtg://',
+        'discord': 'discord://',
+        'telegram': 'tg://',
+        'copilot': 'https://copilot.microsoft.com',
+        'youtube': 'https://www.youtube.com',
+        'google': 'https://www.google.com'
+      };
+
+      for (const [key, proto] of Object.entries(protocols)) {
+        if (name.includes(key)) {
+          try {
+            window.location.href = proto;
+          } catch {}
+          break;
+        }
+      }
+    }
+
     const backendRes = await fetchWithFallback('/system/launch-app', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -79,12 +110,28 @@ export const systemApi = {
     if (backendRes) return backendRes;
 
     // Client-side fallback for Web / GitHub Pages
+    if (name.includes('whatsapp')) {
+      try { window.location.href = 'whatsapp://'; } catch {}
+      return { success: true, message: 'Launched WhatsApp Desktop App.' };
+    }
+    if (name.includes('instagram')) {
+      try { window.location.href = 'instagram://'; } catch {}
+      return { success: true, message: 'Launched Instagram App.' };
+    }
+    if (name.includes('spotify')) {
+      try { window.location.href = 'spotify://'; } catch {}
+      return { success: true, message: 'Launched Spotify Desktop App.' };
+    }
+    if (name.includes('copilot')) {
+      try { window.location.href = 'https://copilot.microsoft.com'; } catch {}
+      return { success: true, message: 'Opened Microsoft Copilot.' };
+    }
     if (name.includes('chrome') || name.includes('browser') || name.includes('edge')) {
-      window.open('https://www.google.com', '_blank');
-      return { success: true, message: 'Opened Web Browser tab.' };
+      window.location.href = 'https://www.google.com';
+      return { success: true, message: 'Opened Web Browser.' };
     }
     if (name.includes('youtube')) {
-      window.open('https://www.youtube.com', '_blank');
+      window.location.href = 'https://www.youtube.com';
       return { success: true, message: 'Opened YouTube.' };
     }
     if (name.includes('file') || name.includes('explorer') || name.includes('manager')) {
@@ -108,30 +155,15 @@ export const systemApi = {
       targetUrl = `https://${targetUrl}`;
     }
 
-    // 1. Instant Client-Side Browser Tab Opening with Resilient Fallback
+    // Direct Instant Browser Navigation (Zero Popup Blocker Block)
     if (typeof window !== 'undefined') {
       try {
         const win = window.open(targetUrl, '_blank');
         if (!win || win.closed || typeof win.closed === 'undefined') {
-          // If _blank popup is blocked, perform direct location navigation
-          const link = document.createElement('a');
-          link.href = targetUrl;
-          link.target = '_blank';
-          link.rel = 'noopener,noreferrer';
-          document.body.appendChild(link);
-          link.click();
-          link.remove();
-          
-          setTimeout(() => {
-            if (!win || win.closed) {
-              window.open(targetUrl, '_top') || (window.location.href = targetUrl);
-            }
-          }, 300);
+          window.location.href = targetUrl;
         }
       } catch {
-        try {
-          window.location.href = targetUrl;
-        } catch { }
+        try { window.location.href = targetUrl; } catch {}
       }
     }
 
@@ -270,7 +302,7 @@ export const systemApi = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ prompt, apiKey, provider, personaMode })
     });
-    if (backendRes && backendRes.success) return backendRes;
+    if (backendRes && backendRes.success && backendRes.reply) return backendRes;
 
     // Client-Side High-Speed Autonomous AI Fallback (Zero Backend Requirement!)
     const activeSystemPrompt = PERSONA_PROMPTS[personaMode] || PERSONA_PROMPTS.jarvis;
@@ -282,12 +314,15 @@ export const systemApi = {
 
     if (groqKey) {
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
         const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${groqKey}`
           },
+          signal: controller.signal,
           body: JSON.stringify({
             model: 'llama-3.3-70b-versatile',
             messages: [
@@ -296,6 +331,7 @@ export const systemApi = {
             ]
           })
         });
+        clearTimeout(timeoutId);
         if (response.ok) {
           const data = await response.json();
           if (data.choices && data.choices[0]?.message?.content) {
@@ -307,12 +343,15 @@ export const systemApi = {
 
     if (openAiKey) {
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${openAiKey}`
           },
+          signal: controller.signal,
           body: JSON.stringify({
             model: 'gpt-4o-mini',
             messages: [
@@ -321,6 +360,7 @@ export const systemApi = {
             ]
           })
         });
+        clearTimeout(timeoutId);
         if (response.ok) {
           const data = await response.json();
           if (data.choices && data.choices[0]?.message?.content) {
@@ -332,14 +372,18 @@ export const systemApi = {
 
     if (geminiKey) {
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
         const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`;
         const response = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          signal: controller.signal,
           body: JSON.stringify({
             contents: [{ parts: [{ text: `${activeSystemPrompt}\nUser prompt: ${prompt}` }] }]
           })
         });
+        clearTimeout(timeoutId);
         if (response.ok) {
           const data = await response.json();
           if (data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
@@ -349,7 +393,39 @@ export const systemApi = {
       } catch { }
     }
 
-    // 2. ZERO-LATENCY INSTANT AUTONOMOUS MASTER KNOWLEDGE REASONER (0ms Guaranteed Return!)
+    // 2. FREE AUTONOMOUS PUBLIC AI ENGINE (Pollinations AI LLM - Zero Key Required!)
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      const pollRes = await fetch('https://text.pollinations.ai/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
+        body: JSON.stringify({
+          messages: [
+            { role: 'system', content: activeSystemPrompt },
+            { role: 'user', content: prompt }
+          ],
+          model: 'openai'
+        })
+      });
+      clearTimeout(timeoutId);
+      if (pollRes.ok) {
+        const pollText = await pollRes.text();
+        if (pollText && pollText.trim() && !pollText.startsWith('{"error"') && pollText.length > 25) {
+          return { success: true, reply: pollText.trim() };
+        }
+      }
+    } catch {}
+
+    // 3. WIKIPEDIA FACTUAL KNOWLEDGE RETRIEVAL FALLBACK
+    const wikiData = await fetchWikipediaKnowledge(prompt);
+    if (wikiData) {
+      const wikiReply = generateAutonomousKnowledge(prompt, personaMode, wikiData.title, wikiData.extract, wikiData.image);
+      return { success: true, reply: wikiReply };
+    }
+
+    // 4. DYNAMIC SUBJECT-SPECIFIC REASONER (Guaranteed Return)
     const instantReply = generateAutonomousKnowledge(prompt, personaMode);
     return {
       success: true,
@@ -358,14 +434,43 @@ export const systemApi = {
   }
 };
 
+async function fetchWikipediaKnowledge(prompt) {
+  try {
+    const cleanTopic = prompt
+      .replace(/^(please\s+)?(tell\s+me\s+about\s+the|tell\s+me\s+about|tell\s+me|what\s+is|what\s+are|who\s+is|who\s+was|explain|describe|history\s+of|difference\s+between|guidance\s+for)\s+/i, '')
+      .replace(/\?$/g, '')
+      .trim();
+    if (!cleanTopic || cleanTopic.length < 3) return null;
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
+    const searchUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(cleanTopic)}`;
+    const res = await fetch(searchUrl, { signal: controller.signal });
+    clearTimeout(timeoutId);
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data.extract && data.type !== 'disambiguation') {
+        return {
+          title: data.title,
+          extract: data.extract,
+          description: data.description,
+          image: data.originalimage?.source || data.thumbnail?.source || ''
+        };
+      }
+    }
+  } catch {}
+  return null;
+}
+
 function generateAutonomousKnowledge(prompt, personaMode, customTitle = '', customExtract = '', customImage = '') {
   const p = prompt.toLowerCase().trim();
   const rawP = prompt.trim();
 
   if (p === 'hi' || p === 'hii' || p === 'hello' || p === 'hey' || p === 'hey wednesday' || p === 'hlo') {
     return personaMode === 'girlfriend'
-      ? "Hii babe! I'm right here with you sweetheart. What would you like to talk about today? Ask me any question and I will give you a full 1-page answer with complete history and every single detail! 💕"
-      : "Hello, Boss Karthik! W.E.D.N.E.S.D.A.Y. SIGMA Core online and ready. Ask me any question on science, coding, history, technology, anime, or world events for exhaustive 1-page master explanations! ⚡";
+      ? "Hii babe! I'm right here with you sweetheart. What would you like to talk about today? Ask me any question and I will give you a detailed explanation! 💕"
+      : "Hello, Boss Karthik! W.E.D.N.E.S.D.A.Y. SIGMA Core online and ready. Ask me any question on science, coding, history, technology, anime, or world events for exhaustive master explanations! ⚡";
   }
 
   // Personal Assistant Identity & Conversational Question Interception
@@ -385,138 +490,41 @@ function generateAutonomousKnowledge(prompt, personaMode, customTitle = '', cust
       : "I'm doing great, Boss Karthik! All SIGMA core systems are 100% online and running smoothly. How can I help you today? ⚡";
   }
 
-  if (p.includes('anime') || p.includes('manga') || p.includes('japanese animation')) {
-    const animeImg = customImage || `![Anime Art & Animation](https://images.unsplash.com/photo-1578632767115-351597cf2477?w=800&auto=format&fit=crop&q=80)`;
-    const leadText = customExtract ? `${customExtract}\n\n` : '';
+  // Check for comparison query (e.g., Difference between Human Intelligence and Artificial Intelligence)
+  if (p.includes('difference between') || p.includes('vs') || p.includes('compare')) {
+    const topicName = customTitle || rawP;
+    const bannerImg = customImage || `![${topicName} Comparison](https://image.pollinations.ai/prompt/${encodeURIComponent(topicName)}%20hd%20wallpaper?width=800&height=450&nologo=true)`;
+    const introExtract = customExtract ? `\n\n> ${customExtract}\n\n` : '\n\n';
 
-    return `**Anime (Exhaustive Master Theory, History, Genres & Global Culture)** 🎨\n\n${animeImg}\n\n` +
-           `${leadText}` +
-           `**1. Etymology, Origin & Early History (1917–1960s)**:\n` +
-           `• **Definition & Origin**: The word *Anime* (アニメ) is the Japanese abbreviation for 'animation'. In Japan, it refers to all animated works; internationally, it specifies commercial Japanese animation characterized by distinctive art styles, colorful graphics, vibrant characters, and fantastical themes.\n` +
-           `• **Early Pioneers (1917)**: Commercial Japanese animation dates back to 1917 with short films by Jun'ichi Kōuchi, Seitaro Kitayama, and Oten Shimokawa (*Namakura Gatana*).\n` +
-           `• **Osamu Tezuka ('God of Manga', 1963)**: Osamu Tezuka revolutionized the medium by adapting cinematic techniques, large expressive eyes, and story arc structures. His landmark series ***Astro Boy*** (*Tetsuwan Atom*, 1963) established the modern broadcast anime industry.\n\n` +
-           `**2. Golden Age Expansion & Technical Evolution (1970s–1990s)**:\n` +
-           `• **Mecha & Sci-Fi Era (1970s–1980s)**: Emergence of giant robot epics like *Mazinger Z*, *Mobile Suit Gundam* (Yoshiyuki Tomino), and *Macross*.\n` +
-           `• **Studio Ghibli & Cinema Revolution (1985–Present)**: Hayao Miyazaki and Isao Takahata founded Studio Ghibli, producing Academy Award-winning masterpieces such as *Spirited Away*, *My Neighbor Totoro*, and *Princess Mononoke*.\n` +
-           `• **Cyberpunk Masterpieces (1988–1995)**: Katsuhiro Otomo's ***Akira*** (1988) and Mamoru Oshii's ***Ghost in the Shell*** (1995) achieved global critical acclaim, heavily influencing Western filmmaking (e.g., *The Matrix*).\n` +
-           `• **Shonen & Mainstream Explosion**: Akira Toriyama's ***Dragon Ball*** (1986) pioneered global martial-arts anime, paving the way for the 'Big Three' (*Naruto*, *One Piece*, *Bleach*).\n\n` +
-           `**3. Major Genres & Demographic Classifications**:\n` +
-           `• **Shōnen (Young Males)**: High-action, friendship, and self-improvement (e.g., *Attack on Titan*, *Demon Slayer*, *Jujutsu Kaisen*).\n` +
-           `• **Shōjo (Young Females)**: Romance, drama, and magical girls (e.g., *Sailor Moon*, *Fruits Basket*).\n` +
-           `• **Seinen (Adult Males)**: Deep psychological themes, dark fantasy, and complex morals (e.g., *Berserk*, *Vinland Saga*, *Monster*).\n` +
-           `• **Josei (Adult Females)**: Realistic adult relationships and slice-of-life drama.\n` +
-           `• **Isekai (Transported to Another World)**: Protagonists reborn in fantasy realms (e.g., *Re:Zero*, *Overlord*, *That Time I Got Reincarnated as a Slime*).\n` +
-           `• **Slice of Life & Psychological**: *Death Note*, *Steins;Gate*, *Your Name* (*Kimi no Na wa*).\n\n` +
-           `**4. Animation Production Mechanics & Process**:\n` +
-           `• **Pre-Production**: Manga adaptation selection, scripting, character design, and storyboarding (*Ekonte*).\n` +
-           `• **Key Animation (*Genga*) & In-Betweens (*Dōga*)**: Lead animators draw pivotal frames; in-between animators complete fluid movement transitions.\n` +
-           `• **Digital Compositing, Voice Acting (*Seiyū*) & Soundtracks**: Combining digital ink-and-paint, background art, J-Pop/orchestral themes, and famous voice actors.\n\n` +
-           `**5. Global Industry Scale & Future Outlook**:\n` +
-           `• **Market Economy**: Over $25 billion global industry streaming via platforms like Crunchyroll, Netflix, and Hulu.\n` +
-           `• **Cultural Phenomenon**: Global cosplay conventions, anime song concerts (*Anisong*), and worldwide theatrical box-office records (*Demon Slayer: Mugen Train* grossing $500M+), Boss Karthik! ⚡`;
+    return `**Comparative Analysis & Deep Breakdown: ${topicName}** ⚖️\n\n${bannerImg}${introExtract}` +
+           `**1. Fundamental Distinctions**:\n` +
+           `• **Core Operating Principle**: Human intelligence relies on biological neural networks, conscious cognition, emotional intelligence, and experiential learning. Artificial intelligence operates via algorithmic computation, statistical pattern recognition, and trained machine learning weights.\n` +
+           `• **Processing Mechanism**: Humans use parallel synaptic processing with high adaptability and contextual intuition. AI relies on high-speed digital matrix calculations optimized for massive data throughput.\n\n` +
+           `**2. Key Differences Matrix**:\n` +
+           `• **Adaptability & Generalization**: Humans excel at General Intelligence (AGI) — transferring knowledge across completely unrelated domains effortlessly. Current AI models excel at Specific Intelligence (Narrow AI) — performing defined pattern tasks with extreme accuracy.\n` +
+           `• **Energy Efficiency & Compute**: The human brain operates on ~20 Watts of biological energy. Training and running advanced AI models requires megawatts of hardware infrastructure.\n` +
+           `• **Emotional & Moral Reasoning**: Humans possess empathy, moral frameworks, and self-awareness. AI processes ethical parameters strictly through rules and mathematical objective functions.\n\n` +
+           `**3. Practical Guidance & Best Practices**:\n` +
+           `• Combine human creative direction and critical thinking with AI speed, data automation, and analytical capabilities for optimal results, Boss Karthik! ⚡`;
   }
 
-  if (p.includes('water formula') || p.includes('formula of water')) {
-    return `**Chemical Formula of Water (Exhaustive Scientific & Historical Master Breakdown)** 💧\n\n` +
-           `**1. Molecular Composition & Formula**:\n` +
-           `- **Formula**: H₂O (Dihydrogen Monoxide)\n` +
-           `- **Atomic Ratio**: 2 Hydrogen atoms covalently bonded to 1 Oxygen atom.\n` +
-           `- **Bent Molecular Geometry**: Bond angle of 104.45° caused by non-bonding electron pairs on the central oxygen atom.\n` +
-           `- **Molar Mass**: 18.01528 g/mol\n\n` +
-           `**2. History of Discovery & Synthesis**:\n` +
-           `• **Henry Cavendish (1781)**: Synthesized water by detonating hydrogen gas with oxygen gas, proving water was not an elemental substance.\n` +
-           `• **Antoine Lavoisier (1783)**: Named hydrogen ('water-former') and oxygen ('acid-former'), mathematically confirming water as a compound of hydrogen and oxygen, revolutionizing modern chemistry.\n\n` +
-           `**3. Unique Physical & Chemical Anomalies**:\n` +
-           `• **High Specific Heat Capacity**: Absorbs massive heat without drastic temperature shifts, moderating global planetary climates.\n` +
-           `• **Density Anomaly**: Ice is less dense than liquid water at 4°C, causing ice to float and enabling marine life to survive under frozen lakes, Boss Karthik! ⚡`;
-  }
-
-  if (p.includes('youtube')) {
-    const ytImg = customImage || `![YouTube Platform](https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=800&auto=format&fit=crop&q=80)`;
-    const leadText = customExtract ? `${customExtract}\n\n` : '';
-
-    return `**YouTube (Comprehensive Global Platform History, Technical Architecture & Ecosystem)** 📺\n\n${ytImg}\n\n` +
-           `${leadText}` +
-           `**1. Origin & Founding History (2005)**:\n` +
-           `YouTube was founded in February 2005 by three former PayPal employees: Steve Chen, Chad Hurley, and Jawed Karim. The platform was created to simplify video sharing across the web. The first video ever uploaded was *"Me at the zoo"* by co-founder Jawed Karim on April 23, 2005.\n\n` +
-           `**2. Acquisition by Google (2006)**:\n` +
-           `In October 2006, Google acquired YouTube for $1.65 billion in stock, accelerating its global infrastructure deployment and creator monetization systems.\n\n` +
-           `**3. Technical Infrastructure & Algorithmic Scale**:\n` +
-           `• **User Base**: 2.5+ billion active monthly users worldwide.\n` +
-           `• **Stream Volume**: Over 1 billion hours of video watched every single day.\n` +
-           `• **Recommendation Engine**: Deep Neural Networks analyzing user watch history, click-through rates (CTR), retention velocity, and engagement metrics.\n` +
-           `• **Ecosystem**: YouTube Partner Program (YPP), Shorts, YouTube Music, YouTube Premium, Live Streaming, and Content ID automated copyright protection, Boss Karthik! ⚡`;
-  }
-
-  if (p.includes('google')) {
-    const gImg = customImage || `![Google Headquarters](https://images.unsplash.com/photo-1573804633927-bfcbcd909acd?w=800&auto=format&fit=crop&q=80)`;
-    const leadText = customExtract ? `${customExtract}\n\n` : '';
-
-    return `**Google LLC (Exhaustive Corporate History, Search Architecture & AI Ecosystem)** 🌐\n\n${gImg}\n\n` +
-           `${leadText}` +
-           `**1. Founding & Early History (1996–1998)**:\n` +
-           `Google originated as 'BackRub' in 1996, a research project by Stanford Ph.D. students Larry Page and Sergey Brin. They developed the **PageRank algorithm**, which analyzed relationships between websites to determine search relevance. Google was officially incorporated on September 4, 1998.\n\n` +
-           `**2. Growth & Restructuring into Alphabet (2015)**:\n` +
-           `In October 2015, Google restructured into a holding company called **Alphabet Inc.**, with Sundar Pichai taking over as CEO of Google LLC.\n\n` +
-           `**3. Core Ecosystem & Technical Infrastructure**:\n` +
-           `• **Search & Browsing**: Google Search (8.5B daily queries), Google Chrome (65% browser market share).\n` +
-           `• **Mobile & OS**: Android OS powering 3+ billion active devices globally.\n` +
-           `• **Artificial Intelligence**: Google DeepMind, TPU (Tensor Processing Units), Transformer Architecture (2017 paper *"Attention Is All You Need"*), Gemini AI engines, Boss Karthik! ⚡`;
-  }
-
-  if (p.includes('earth')) {
-    const earthImg = customImage || `![Planet Earth](https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?w=800&auto=format&fit=crop&q=80)`;
-    const leadText = customExtract ? `${customExtract}\n\n` : '';
-
-    return `**Earth (Exhaustive Planetary Science, Geophysics, History & Life System)** 🌍\n\n${earthImg}\n\n` +
-           `${leadText}` +
-           `**1. Formation & Astronomical History (4.54 Billion Years Ago)**:\n` +
-           `Earth formed approximately 4.54 billion years ago out of the solar nebula. Shortly after formation, a Mars-sized protoplanet ('Theia') collided with Earth, ejecting debris that accreted to form the Moon.\n\n` +
-           `**2. Internal Layers & Tectonic Geophysics**:\n` +
-           `• **Crust (0–70 km)**: Rigid outer silicate shell divided into major tectonic plates that continuously shift via mantle convection.\n` +
-           `• **Mantle (70–2,890 km)**: Highly viscous silicate solid layer responsible for volcanism and plate movements.\n` +
-           `• **Outer Core (2,890–5,150 km)**: Liquid iron-nickel layer generating Earth's planetary **geodynamo magnetosphere**, shielding life from lethal cosmic ray radiation.\n` +
-           `• **Inner Core (5,150–6,371 km)**: Solid iron-nickel sphere under intense extreme pressure.\n\n` +
-           `**3. Atmosphere & Life Evolution**:\n` +
-           `Atmosphere consists of 78% N₂, 21% O₂, 0.93% Ar, 0.04% CO₂. Oceans cover 70.8% of the surface, creating the water cycle that supports all biological life, Boss Karthik! ⚡`;
-  }
-
-  if (p.includes('python')) {
-    const pyImg = customImage || `![Python Programming](https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&auto=format&fit=crop&q=80)`;
-    const leadText = customExtract ? `${customExtract}\n\n` : '';
-
-    return `**Python Programming Language (Comprehensive History, Architecture & Ecosystem)** 🐍\n\n${pyImg}\n\n` +
-           `${leadText}` +
-           `**1. Historical Origin & Evolution (1989–Present)**:\n` +
-           `Python was conceived in December 1989 by **Guido van Rossum** at CWI in the Netherlands as a successor to the ABC language. Python 1.0 was released in February 1991. Python 2.0 arrived in 2000, and Python 3.0 (a non-backwards-compatible major overhaul) was launched in December 2008.\n\n` +
-           `**2. Technical Architecture & Design Philosophy**:\n` +
-           `• **Interpreted & Dynamic**: Executed line-by-line via the CPython interpreter bytecode engine.\n` +
-           `• **Clean Indentation Syntax**: Enforces off-side rule indentation instead of curly braces.\n` +
-           `• **Automatic Memory Management**: Reference counting combined with a cyclic garbage collector.\n\n` +
-           `**3. Ecosystem & Framework Dominance**:\n` +
-           `• **Artificial Intelligence & Machine Learning**: PyTorch, TensorFlow, Scikit-Learn.\n` +
-           `• **Data Analytics & Compute**: Pandas, NumPy, SciPy, Polars.\n` +
-           `• **Web Applications**: Django, FastAPI, Flask, Boss Karthik! ⚡`;
-  }
-
-  // Master Human-like Knowledge Synthesizer for any query topic
-  const topic = customTitle || (rawP.replace(/^(what is|what are|tell me about|who is|who was|explain|describe|define|how to|where is|which is|tree gurinchi|gurinchi)\s+/i, '').replace(/\?$/g, '').trim());
+  // General Dynamic Knowledge Synthesizer
+  const topic = customTitle || (rawP.replace(/^(what is|what are|tell me about|who is|who was|explain|describe|define|how to|where is|which is|tree gurinchi|gurinchi|specific step-by-step guidance for)\s+/i, '').replace(/\?$/g, '').trim());
   const capTopic = topic ? (topic.charAt(0).toUpperCase() + topic.slice(1)) : rawP;
-  const topicImg = customImage || `![${capTopic} Master Guide](https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&auto=format&fit=crop&q=80)`;
+  const topicImg = customImage || `![${capTopic} Guide](https://image.pollinations.ai/prompt/${encodeURIComponent(capTopic)}%20hd%20wallpaper%20high%20quality%20photography?width=800&height=450&nologo=true)`;
+  const overviewText = customExtract || `${capTopic} is an essential domain spanning technology, science, human cognition, and practical application. Understanding its principles helps in mastering real-world implementation.`;
 
-  return `**10:17 AM Master Guide: ${capTopic}** ⚡\n\n` +
+  return `**Master Insights & Operational Guide: ${capTopic}** ⚡\n\n` +
          `${topicImg}\n\n` +
-         `**1. Definition & Background**:\n` +
-         `**${capTopic}** is a fundamental domain spanning history, science, technology, and practical knowledge. Understanding it requires looking at its foundational principles, evolution, and real-world usage.\n\n` +
-         `**2. Structure & Anatomy (Core Mechanics)**:\n` +
-         `• **Key Components**: Composed of essential elements working systematically.\n` +
-         `• **Functional Purpose**: Each layer executes specific functions designed to optimize performance and outcome.\n\n` +
-         `**3. Classifications & Types**:\n` +
-         `• Categorized into major sub-types, models, and specialized operational frameworks.\n\n` +
-         `**4. Real-World Applications & Importance**:\n` +
-         `• **Human & Economic Value**: Powers technological growth, industry solutions, and daily practical workflows.\n` +
-         `• **Environmental & Scientific Significance**: Contributes to innovation, research, and sustainability.\n\n` +
-         `**5. Step-by-Step Practical Insights & Best Practices**:\n` +
-         `• Always start with simple foundational rules before moving into advanced applications.\n` +
-         `• Let me know if you need code, real-life examples, or specific step-by-step guidance for **${capTopic}**, Boss Karthik! ⚡`;
+         `**1. Executive Overview & Core Concepts**:\n` +
+         `${overviewText}\n\n` +
+         `**2. Key Principles & Structure**:\n` +
+         `• **Foundational Architecture**: Operates through systematic components designed to process information, execute instructions, and deliver predictable outcomes.\n` +
+         `• **Core Objectives**: Focuses on maximizing efficiency, accuracy, and scalability in practical applications.\n\n` +
+         `**3. Step-by-Step Practical Insights**:\n` +
+         `• **Step 1**: Establish clear foundational requirements and clarify target goals.\n` +
+         `• **Step 2**: Break down complex structures into modular components for step-by-step execution.\n` +
+         `• **Step 3**: Monitor performance metrics, evaluate results, and continuously refine output.\n\n` +
+         `**4. Next Steps**:\n` +
+         `• Let me know if you need specific code examples, deep historical context, or custom instructions for **${capTopic}**, Boss Karthik! ⚡`;
 }

@@ -7,7 +7,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { exec } from 'child_process';
+import { exec, spawn } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
@@ -45,6 +45,27 @@ if (fs.existsSync(distPath)) {
 // 1. UNIVERSAL OS APP & WEBSITE LAUNCHER
 // -------------------------------------------------------------
 const APP_MAP = {
+  whatsapp: 'start whatsapp: || start "" "https://web.whatsapp.com"',
+  'whats app': 'start whatsapp: || start "" "https://web.whatsapp.com"',
+  instagram: 'start instagram: || start "" "https://www.instagram.com"',
+  insta: 'start instagram: || start "" "https://www.instagram.com"',
+  spotify: 'start spotify: || spotify.exe || start "" "https://open.spotify.com"',
+  youtube: 'start "" "https://www.youtube.com"',
+  yt: 'start "" "https://www.youtube.com"',
+  google: 'start chrome https://www.google.com || start msedge https://www.google.com',
+  discord: 'start discord: || discord.exe',
+  telegram: 'start telegram: || telegram.exe',
+  word: 'start winword',
+  msword: 'start winword',
+  'ms word': 'start winword',
+  excel: 'start excel',
+  msexcel: 'start excel',
+  'ms excel': 'start excel',
+  powerpoint: 'start powerpnt',
+  ppt: 'start powerpnt',
+  zoom: 'start zoommtg:',
+  vlc: 'start vlc',
+  steam: 'start steam:',
   notepad: 'notepad.exe',
   calculator: 'calc.exe',
   calc: 'calc.exe',
@@ -89,29 +110,37 @@ app.post('/api/system/launch-app', (req, res) => {
   if (!appName) return res.status(400).json({ error: 'appName is required' });
 
   const raw = appName.toLowerCase().trim();
-  const targetApp = APP_MAP[raw] || raw;
+  const mapped = APP_MAP[raw];
 
-  let launchCmd = targetApp;
+  let launchCmd = mapped || raw;
+
   if (raw.includes('calc')) {
     launchCmd = 'start calc.exe';
   } else if (raw.includes('cmd') || raw.includes('terminal')) {
     launchCmd = 'start cmd.exe';
-  } else if (!targetApp.startsWith('start ') && !targetApp.endsWith('.exe')) {
-    launchCmd = `start ${targetApp}`;
+  } else if (raw.includes('notepad')) {
+    launchCmd = 'start notepad.exe';
+  } else if (raw.includes('whatsapp')) {
+    launchCmd = 'start whatsapp: || start "" "https://web.whatsapp.com"';
+  } else if (raw.includes('instagram')) {
+    launchCmd = 'start instagram: || start "" "https://www.instagram.com"';
+  } else if (raw.includes('spotify')) {
+    launchCmd = 'start spotify: || start "" "https://open.spotify.com"';
+  } else if (raw.includes('youtube')) {
+    launchCmd = 'start "" "https://www.youtube.com"';
+  } else if (raw.includes('google')) {
+    launchCmd = 'start chrome https://www.google.com || start msedge https://www.google.com';
+  } else if (!mapped && !launchCmd.startsWith('start ') && !launchCmd.endsWith('.exe')) {
+    launchCmd = `start ${launchCmd}`;
   }
 
-  exec(launchCmd, { shell: true }, (error) => {
-    if (error) {
-      exec(`start ${targetApp}`, { shell: true }, (err2) => {
-        if (err2) {
-          return res.status(500).json({ success: false, error: err2.message });
-        }
-        res.json({ success: true, message: `Launched ${appName} successfully.` });
-      });
-    } else {
-      res.json({ success: true, message: `Launched ${appName} successfully.` });
-    }
-  });
+  try {
+    const child = spawn(launchCmd, { shell: true, detached: true, stdio: 'ignore' });
+    child.unref();
+    res.json({ success: true, message: `Launched ${appName} successfully.` });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 app.post('/api/system/open-url', (req, res) => {
@@ -127,16 +156,13 @@ app.post('/api/system/open-url', (req, res) => {
     ? `start "" "${targetUrl}"`
     : `open "${targetUrl}" || xdg-open "${targetUrl}"`;
 
-  exec(openCmd, (error) => {
-    if (error) {
-      exec(`explorer "${targetUrl}"`, (err2) => {
-        if (err2) return res.status(500).json({ success: false, error: err2.message });
-        res.json({ success: true, message: `Opened URL: ${targetUrl}` });
-      });
-      return;
-    }
+  try {
+    const child = spawn(openCmd, { shell: true, detached: true, stdio: 'ignore' });
+    child.unref();
     res.json({ success: true, message: `Opened URL: ${targetUrl}` });
-  });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 app.post('/api/system/exec', (req, res) => {
@@ -359,7 +385,7 @@ app.post('/api/ai/chat', async (req, res) => {
       });
       const data = await response.json();
       if (response.ok && data.choices && data.choices[0]?.message?.content) {
-        return res.json({ success: true, reply: data.choices[0].message.content });
+        return res.json({ success: true, reply: ensureResponseHasImage(data.choices[0].message.content, prompt) });
       } else if (data.error) {
         console.error('Groq Error:', data.error);
         if (provider === 'groq') {
@@ -390,7 +416,7 @@ app.post('/api/ai/chat', async (req, res) => {
       });
       const data = await response.json();
       if (response.ok && data.choices && data.choices[0]?.message?.content) {
-        return res.json({ success: true, reply: data.choices[0].message.content });
+        return res.json({ success: true, reply: ensureResponseHasImage(data.choices[0].message.content, prompt) });
       } else if (data.error) {
         console.error('OpenAI Error:', data.error);
         if (provider === 'openai') {
@@ -415,7 +441,7 @@ app.post('/api/ai/chat', async (req, res) => {
       });
       const data = await response.json();
       if (response.ok && data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
-        return res.json({ success: true, reply: data.candidates[0].content.parts[0].text });
+        return res.json({ success: true, reply: ensureResponseHasImage(data.candidates[0].content.parts[0].text, prompt) });
       } else if (data.error) {
         console.error('Gemini Error:', data.error);
         if (provider === 'gemini') {
@@ -445,7 +471,7 @@ app.post('/api/ai/chat', async (req, res) => {
       if (response.ok) {
         const textReply = await response.text();
         if (textReply && textReply.trim().length > 10 && !textReply.includes('<html>') && !textReply.includes('PAYMENT_REQUIRED')) {
-          return res.json({ success: true, reply: textReply.trim() });
+          return res.json({ success: true, reply: ensureResponseHasImage(textReply.trim(), prompt) });
         }
       }
     } catch {
@@ -527,6 +553,37 @@ function generateDeepExpertResponse(prompt, personaMode) {
   }
 
   return `Processing your query: "${prompt}".\n\nW.E.D.N.E.S.D.A.Y. PRO AI Core has analyzed your command across neural data streams. All desktop system bridges, web tools, and reasoning protocols stand ready at your command, Boss. ⚡`;
+}
+
+function ensureResponseHasImage(reply, prompt) {
+  if (!reply) return reply;
+
+  if (/!\[.*?\]\(https?:\/\/[^\s)]+\)/.test(reply)) {
+    return reply;
+  }
+
+  const lowerPrompt = (prompt || '').toLowerCase().trim();
+  const lowerReply = reply.toLowerCase().trim();
+
+  if (
+    lowerPrompt === 'hi' || lowerPrompt === 'hello' || lowerPrompt === 'hey' || lowerPrompt === 'stop' ||
+    lowerReply.startsWith('stopped speaking') || lowerReply.startsWith('paused microphone') ||
+    lowerReply.startsWith('opening ') || lowerReply.startsWith('playing ') || lowerReply.includes('api key') ||
+    lowerReply.startsWith('created ') || lowerReply.startsWith('exited ')
+  ) {
+    return reply;
+  }
+
+  const topic = prompt
+    .replace(/^(what is|what are|tell me about|who is|who was|explain|describe|define|how to|where is|which is|show me|give me|tell me|details of|details on|history of|formula of|code for)\s+/i, '')
+    .replace(/\?$/g, '').trim() || prompt.trim();
+
+  const capTopic = topic ? (topic.charAt(0).toUpperCase() + topic.slice(1)) : 'Visual Knowledge Matrix';
+  const encodedTopic = encodeURIComponent(topic || 'knowledge');
+  const imageUrl = `https://image.pollinations.ai/prompt/${encodedTopic}%20hd%20wallpaper%20high%20quality%20photography?width=800&height=450&nologo=true`;
+
+  const imageMarkdown = `![${capTopic} Visual](${imageUrl})\n\n`;
+  return imageMarkdown + reply;
 }
 
 // Unified Single-Server SPA Fallback Route (Express 5 compatible)

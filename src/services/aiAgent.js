@@ -391,12 +391,12 @@ export class AIAgentEngine {
         .trim();
 
       if (ytTarget.toLowerCase() === 'youtube' || ytTarget.toLowerCase() === 'yt' || !ytTarget) {
+        await systemApi.launchApp('youtube');
         const ytUrl = 'https://www.youtube.com';
-        await systemApi.openUrl(ytUrl);
         result = {
           reply: personaMode === 'girlfriend'
-            ? `Opening YouTube for you babe! 📺\n\n👉 [Click here to open YouTube](${ytUrl})`
-            : `Opening YouTube, Boss Karthik! 📺\n\n👉 [Click here to open YouTube](${ytUrl})`,
+            ? `Opening YouTube App on PC for you babe! 📺\n\n👉 [Click here to open YouTube Web](${ytUrl})`
+            : `Opening YouTube App on PC, Boss Karthik! 📺\n\n👉 [Click here to open YouTube Web](${ytUrl})`,
           toolUsed: 'YOUTUBE_OPEN'
         };
       } else {
@@ -425,12 +425,12 @@ export class AIAgentEngine {
         .trim();
 
       if (gTarget.toLowerCase() === 'google' || !gTarget) {
+        await systemApi.launchApp('google');
         const googleUrl = 'https://www.google.com';
-        await systemApi.openUrl(googleUrl);
         result = {
           reply: personaMode === 'girlfriend'
-            ? `Opening Google for you babe! 🌐\n\n👉 [Click here to open Google](${googleUrl})`
-            : `Opening Google, Boss Karthik! 🌐\n\n👉 [Click here to open Google](${googleUrl})`,
+            ? `Opening Google App/Browser on PC for you babe! 🌐\n\n👉 [Click here to open Google Web](${googleUrl})`
+            : `Opening Google App/Browser on PC, Boss Karthik! 🌐\n\n👉 [Click here to open Google Web](${googleUrl})`,
           toolUsed: 'GOOGLE_OPEN'
         };
       } else {
@@ -460,12 +460,12 @@ export class AIAgentEngine {
         .trim();
 
       if (sTarget.toLowerCase() === 'spotify' || !sTarget) {
+        await systemApi.launchApp('spotify');
         const spotifyUrl = 'https://open.spotify.com';
-        await systemApi.openUrl(spotifyUrl);
         result = {
           reply: personaMode === 'girlfriend'
-            ? `Opening Spotify for you babe! 🎵\n\n👉 [Click here to open Spotify](${spotifyUrl})`
-            : `Opening Spotify, Boss Karthik! 🎵\n\n👉 [Click here to open Spotify](${spotifyUrl})`,
+            ? `Opening Spotify Desktop App on PC for you babe! 🎵\n\n👉 [Click here to open Spotify Web](${spotifyUrl})`
+            : `Opening Spotify Desktop App on PC, Boss Karthik! 🎵\n\n👉 [Click here to open Spotify Web](${spotifyUrl})`,
           toolUsed: 'SPOTIFY_OPEN'
         };
       } else {
@@ -500,21 +500,56 @@ export class AIAgentEngine {
         waUrl = `https://web.whatsapp.com/send?phone=${phoneDigits}`;
       }
 
-      await systemApi.openUrl(waUrl);
+      await systemApi.launchApp('whatsapp');
 
       if (wTarget.toLowerCase() === 'whatsapp' || wTarget.toLowerCase() === 'whats app' || !wTarget) {
         result = {
           reply: personaMode === 'girlfriend'
-            ? `Opening WhatsApp Web for you babe! 💬\n\n👉 [Click here to open WhatsApp Web](${waUrl})`
-            : `Opening WhatsApp Web, Boss Karthik! 💬\n\n👉 [Click here to open WhatsApp Web](${waUrl})`,
+            ? `Opening WhatsApp Desktop App on PC for you babe! 💬\n\n👉 [Click here to open WhatsApp Web](${waUrl})`
+            : `Opening WhatsApp Desktop App on PC, Boss Karthik! 💬\n\n👉 [Click here to open WhatsApp Web](${waUrl})`,
           toolUsed: 'WHATSAPP_OPEN'
         };
       } else {
         result = {
           reply: personaMode === 'girlfriend'
-            ? `Opening WhatsApp Web for contact "${wTarget}" babe! 💬\n\n👉 [Click here to chat on WhatsApp](${waUrl})`
-            : `Opening WhatsApp Web for contact "${wTarget}", Boss Karthik! 💬\n\n👉 [Click here to chat on WhatsApp](${waUrl})`,
+            ? `Opening WhatsApp App for contact "${wTarget}" babe! 💬\n\n👉 [Click here to chat on WhatsApp](${waUrl})`
+            : `Opening WhatsApp App for contact "${wTarget}", Boss Karthik! 💬\n\n👉 [Click here to chat on WhatsApp](${waUrl})`,
           toolUsed: 'WHATSAPP_CONTACT'
+        };
+      }
+    }
+
+    // Dedicated Instagram Command Router (Handles "open instagram", "open instagram in pc", "launch instagram")
+    const isExplicitInstagramCmd = !isNegativeTabCmd && (
+      lower.includes('instagram') || lower.includes('insta') || lower.startsWith('instagram ')
+    );
+
+    if (!result && isExplicitInstagramCmd) {
+      let instaTarget = rawQuery
+        .replace(/^(please\s+)?(open|launch|start|show)\s+/i, '')
+        .replace(/^(in\s+instagram|on\s+instagram|open\s+in\s+instagram)\s+/i, '')
+        .replace(/\s+(on|in|at|using|via)\s+(instagram|insta)$/i, '')
+        .replace(/^(instagram|insta)\s*/i, '')
+        .trim();
+
+      await systemApi.launchApp('instagram');
+      const instaUrl = 'https://www.instagram.com';
+
+      if (!instaTarget || instaTarget.toLowerCase() === 'instagram' || instaTarget.toLowerCase() === 'insta') {
+        result = {
+          reply: personaMode === 'girlfriend'
+            ? `Opening Instagram App on PC for you babe! 📸\n\n👉 [Click here to open Instagram Web](${instaUrl})`
+            : `Opening Instagram App on PC, Boss Karthik! 📸\n\n👉 [Click here to open Instagram Web](${instaUrl})`,
+          toolUsed: 'INSTAGRAM_OPEN'
+        };
+      } else {
+        const profileUrl = `https://www.instagram.com/${encodeURIComponent(instaTarget)}`;
+        await systemApi.openUrl(profileUrl);
+        result = {
+          reply: personaMode === 'girlfriend'
+            ? `Opening Instagram profile for "${instaTarget}" babe! 📸\n\n👉 [Click here to view Instagram profile](${profileUrl})`
+            : `Opening Instagram profile for "${instaTarget}", Boss Karthik! 📸\n\n👉 [Click here to view Instagram profile](${profileUrl})`,
+          toolUsed: 'INSTAGRAM_PROFILE'
         };
       }
     }
@@ -536,7 +571,7 @@ export class AIAgentEngine {
         noteText = 'Note by Boss Karthik - ' + new Date().toLocaleString();
       }
 
-      await systemApi.openApp('notepad');
+      await systemApi.launchApp('notepad');
 
       const blob = new Blob([noteText], { type: 'text/plain;charset=utf-8' });
       const noteUrl = URL.createObjectURL(blob);
@@ -690,10 +725,11 @@ export class AIAgentEngine {
       lower === 'github' ||
       lower === 'spotify' ||
       lower === 'instagram' ||
-      lower === 'wikipedia'
+      lower === 'wikipedia' ||
+      lower === 'copilot'
     );
 
-    if (!result && !isInfoQuery && isExplicitOpenCmd) {
+    if (!result && isExplicitOpenCmd) {
       let target = lower.replace(/^(please\s+)?(open|launch|start|run)\s+/i, '').trim();
       if (lower === 'youtube' || lower === 'open youtube') target = 'youtube';
       else if (lower === 'google' || lower === 'open google') target = 'google';
@@ -701,6 +737,7 @@ export class AIAgentEngine {
       else if (lower === 'github' || lower === 'open github') target = 'github';
       else if (lower === 'wikipedia' || lower === 'open wikipedia') target = 'wikipedia';
       else if (lower === 'instagram' || lower === 'open instagram') target = 'instagram';
+      else if (lower === 'copilot' || lower === 'open copilot' || lower === 'copilt' || lower === 'open copilt') target = 'copilot';
 
       const commonSites = {
         'youtube': 'https://www.youtube.com',
@@ -715,10 +752,37 @@ export class AIAgentEngine {
         'x': 'https://www.x.com',
         'netflix': 'https://www.netflix.com',
         'maps': 'https://maps.google.com',
-        'gmail': 'https://mail.google.com'
+        'gmail': 'https://mail.google.com',
+        'copilot': 'https://copilot.microsoft.com',
+        'ms copilot': 'https://copilot.microsoft.com',
+        'copilt': 'https://copilot.microsoft.com'
       };
 
       const knownAppsMap = {
+        'whatsapp': 'whatsapp',
+        'whats app': 'whatsapp',
+        'instagram': 'instagram',
+        'insta': 'instagram',
+        'spotify': 'spotify',
+        'youtube': 'youtube',
+        'yt': 'youtube',
+        'google': 'google',
+        'discord': 'discord',
+        'telegram': 'telegram',
+        'copilot': 'copilot',
+        'ms copilot': 'copilot',
+        'copilt': 'copilot',
+        'word': 'word',
+        'msword': 'word',
+        'ms word': 'word',
+        'excel': 'excel',
+        'msexcel': 'excel',
+        'ms excel': 'excel',
+        'powerpoint': 'powerpoint',
+        'ppt': 'powerpoint',
+        'zoom': 'zoom',
+        'vlc': 'vlc',
+        'steam': 'steam',
         'cmd': 'cmd',
         'command prompt': 'cmd',
         'prompt': 'cmd',
@@ -754,29 +818,31 @@ export class AIAgentEngine {
         'lock pc': 'lock'
       };
 
-      if (commonSites[target]) {
+      if (knownAppsMap[target]) {
+        const appRes = await systemApi.launchApp(knownAppsMap[target]);
+        result = {
+          reply: appRes.success
+            ? (personaMode === 'girlfriend'
+              ? `Opening ${target} app directly on your PC babe! ⚡`
+              : `Launching ${target} app directly on your PC, Boss Karthik! ⚡`)
+            : `Error opening ${target}: ${appRes.error}`,
+          toolUsed: 'LAUNCH_APP'
+        };
+      } else if (commonSites[target]) {
         const siteUrl = commonSites[target];
         await systemApi.openUrl(siteUrl);
         result = {
           reply: personaMode === 'girlfriend'
-            ? `Opening ${target} for you babe! 🌐\n\n👉 [Click here to open ${target}](${siteUrl})`
-            : `Opening ${target}, Boss Karthik. 🌐\n\n👉 [Click here to open ${target}](${siteUrl})`,
+            ? `Opening ${target} directly for you babe! 🌐`
+            : `Opening ${target} directly, Boss Karthik! 🌐`,
           toolUsed: 'OPEN_URL'
-        };
-      } else if (knownAppsMap[target]) {
-        const appRes = await systemApi.launchApp(knownAppsMap[target]);
-        result = {
-          reply: appRes.success
-            ? (personaMode === 'girlfriend' ? `Opening ${target} for you babe!` : `Opening ${target} on PC, Boss Karthik. ⚡`)
-            : `Error opening ${target}: ${appRes.error}`,
-          toolUsed: 'LAUNCH_APP'
         };
       } else if (target.includes('.') || target.includes('www') || target.includes('http')) {
         let siteUrl = target;
         if (!siteUrl.startsWith('http://') && !siteUrl.startsWith('https://')) siteUrl = `https://${siteUrl}`;
         await systemApi.openUrl(siteUrl);
         result = {
-          reply: `Opening ${target}, Boss Karthik. 🌐\n\n👉 [Click here to open ${target}](${siteUrl})`,
+          reply: `Opening ${target} directly, Boss Karthik! 🌐`,
           toolUsed: 'OPEN_URL'
         };
       } else {
@@ -787,7 +853,7 @@ export class AIAgentEngine {
           await systemApi.openUrl(searchUrl);
         }
         result = {
-          reply: `Opening ${target}, Boss Karthik. ⚡\n\n👉 [Click here to open Google Search](${searchUrl})`,
+          reply: `Opening ${target} directly, Boss Karthik! ⚡`,
           toolUsed: 'OPEN_APP_OR_WEB'
         };
       }
@@ -883,8 +949,43 @@ export class AIAgentEngine {
     // AUTONOMOUS CONTINUOUS MACHINE LEARNING
     autoMlEngine.learnFromInteraction(rawQuery, result.reply, personaMode, result.toolUsed);
 
+    if (result && result.reply) {
+      result.reply = ensureResponseHasImage(result.reply, rawQuery);
+    }
+
     return result;
   }
+}
+
+function ensureResponseHasImage(reply, prompt) {
+  if (!reply) return reply;
+
+  if (/!\[.*?\]\(https?:\/\/[^\s)]+\)/.test(reply)) {
+    return reply;
+  }
+
+  const lowerPrompt = (prompt || '').toLowerCase().trim();
+  const lowerReply = reply.toLowerCase().trim();
+
+  if (
+    lowerPrompt === 'hi' || lowerPrompt === 'hello' || lowerPrompt === 'hey' || lowerPrompt === 'stop' ||
+    lowerReply.startsWith('stopped speaking') || lowerReply.startsWith('paused microphone') ||
+    lowerReply.startsWith('opening ') || lowerReply.startsWith('playing ') || lowerReply.includes('api key') ||
+    lowerReply.startsWith('created ') || lowerReply.startsWith('exited ')
+  ) {
+    return reply;
+  }
+
+  const topic = prompt
+    .replace(/^(what is|what are|tell me about|who is|who was|explain|describe|define|how to|where is|which is|show me|give me|tell me|details of|details on|history of|formula of|code for)\s+/i, '')
+    .replace(/\?$/g, '').trim() || prompt.trim();
+
+  const capTopic = topic ? (topic.charAt(0).toUpperCase() + topic.slice(1)) : 'Visual Knowledge Matrix';
+  const encodedTopic = encodeURIComponent(topic || 'knowledge');
+  const imageUrl = `https://image.pollinations.ai/prompt/${encodedTopic}%20hd%20wallpaper%20high%20quality%20photography?width=800&height=450&nologo=true`;
+
+  const imageMarkdown = `![${capTopic} Visual](${imageUrl})\n\n`;
+  return imageMarkdown + reply;
 }
 
 export const aiAgent = new AIAgentEngine();
