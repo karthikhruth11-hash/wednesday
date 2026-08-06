@@ -206,24 +206,50 @@ export const systemApi = {
     };
   },
 
+  getSystemClockAndOSInfo() {
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+    const tzStr = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Local Timezone';
+    const ua = typeof navigator !== 'undefined' ? navigator.userAgent : 'Windows OS';
+
+    let osName = 'Windows 11 / 10 OS';
+    if (ua.includes('Win')) osName = 'Windows 11 / 10 OS';
+    else if (ua.includes('Mac')) osName = 'macOS';
+    else if (ua.includes('Linux')) osName = 'Linux OS';
+    else if (ua.includes('Android')) osName = 'Android OS';
+    else if (ua.includes('iPhone') || ua.includes('iPad')) osName = 'iOS';
+
+    const cores = typeof navigator !== 'undefined' ? (navigator.hardwareConcurrency || 8) : 8;
+    const ramGB = typeof navigator !== 'undefined' ? (navigator.deviceMemory || 16) : 16;
+
+    return {
+      dateStr,
+      timeStr,
+      tzStr,
+      osName,
+      cores,
+      ramGB,
+      summary: `[SYSTEM & OS ENVIRONMENT: Operating System: ${osName}, Current Date: ${dateStr}, Current Time: ${timeStr} (${tzStr}), CPU Cores: ${cores}, Physical RAM: ${ramGB} GB, User: Boss Karthik].`
+    };
+  },
+
   async getTelemetry() {
     const backendRes = await fetchWithFallback('/system/telemetry');
     if (backendRes) return backendRes;
 
-    // Real Browser Hardware Telemetry Fallback
-    const cores = typeof navigator !== 'undefined' ? (navigator.hardwareConcurrency || 8) : 8;
-    const memGB = typeof navigator !== 'undefined' ? (navigator.deviceMemory || 16) : 16;
+    const info = this.getSystemClockAndOSInfo();
 
     return {
-      platform: typeof navigator !== 'undefined' ? navigator.platform : 'Web Client',
+      platform: info.osName,
       arch: 'x64',
-      hostname: 'WEDNESDAY-CLIENT',
+      hostname: 'WEDNESDAY-LAPTOP',
       uptimeSeconds: Math.floor(performance.now() / 1000),
-      cpuModel: `${cores}-Core High-Performance Processor`,
-      cpuCores: cores,
+      cpuModel: `${info.cores}-Core High-Performance Processor`,
+      cpuCores: info.cores,
       cpuPercent: Math.floor(15 + Math.random() * 20),
-      ramTotalGB: memGB,
-      ramUsedGB: (memGB * 0.45).toFixed(1),
+      ramTotalGB: info.ramGB,
+      ramUsedGB: (info.ramGB * 0.45).toFixed(1),
       ramPercent: 45,
       userHome: 'Client Device'
     };
@@ -305,13 +331,9 @@ export const systemApi = {
     if (backendRes && backendRes.success && backendRes.reply) return backendRes;
 
     // Client-Side High-Speed Autonomous AI Fallback (Zero Backend Requirement!)
-    const now = new Date();
-    const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-    const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
-    const dateTimeContext = `[REAL-TIME SYSTEM CLOCK: Today is ${dateStr}, Current Local Time is ${timeStr}].`;
-
+    const sysInfo = this.getSystemClockAndOSInfo();
     const basePrompt = PERSONA_PROMPTS[personaMode] || PERSONA_PROMPTS.jarvis;
-    const activeSystemPrompt = `${basePrompt}\n${dateTimeContext}`;
+    const activeSystemPrompt = `${basePrompt}\n${sysInfo.summary}`;
 
     // 1. FREE DEEP THINKING AI ENGINE (Puter.js Browser Client AI - Gemini 2.5 Flash / DeepSeek / GPT-4o)
     if (typeof window !== 'undefined') {

@@ -336,47 +336,67 @@ export class AIAgentEngine {
       };
     }
 
-    // REAL-TIME ACCURATE DATE & TIME INTENT ROUTER
+    // REAL-TIME ACCURATE DATE, TIME & OS TELEMETRY INTENT ROUTER
     const isDateQuery = (
-      lower.includes('date') || lower.includes('day is today') || lower.includes('what day is it') ||
+      lower.includes('date') || lower.includes('day is today') || lower.includes('what day is it') || lower.includes('what day') ||
       lower.includes('today date') || lower.includes('todays date') || lower.includes("today's date") ||
       lower.includes('current date') || lower.includes('tell me date') || lower.includes('tell me today date')
     ) && !lower.includes('update') && !lower.includes('validate') && !lower.includes('candidate');
 
     const isTimeQuery = (
       lower.includes('what is the time') || lower.includes('what time') || lower.includes('current time') ||
-      lower.includes('tell me time') || lower.includes('time now') || lower === 'time'
-    ) && !lower.includes('runtime') && !lower.includes('uptime') && !lower.includes('anime') && !lower.includes('timer');
+      lower.includes('tell me time') || lower.includes('time now') || lower.includes('clock') || lower === 'time'
+    ) && !lower.includes('runtime') && !lower.includes('uptime') && !lower.includes('anime') && !lower.includes('timer') && !lower.includes('sometimes');
 
-    if (!result && (isDateQuery || isTimeQuery)) {
-      const now = new Date();
-      const dateString = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-      const timeString = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+    const isOsQuery = (
+      lower.includes('os') || lower.includes('operating system') || lower.includes('my os') ||
+      lower.includes('system info') || lower.includes('system information') || lower.includes('pc info') ||
+      lower.includes('hardware') || lower.includes('telemetry') || lower.includes('specs') || lower.includes('pc specs')
+    ) && !lower.includes('close') && !lower.includes('cosmos') && !lower.includes('microsoft');
 
+    if (!result && (isDateQuery || isTimeQuery || isOsQuery)) {
+      const info = systemApi.getSystemClockAndOSInfo();
       let replyMsg = '';
       let spokenMsg = '';
 
-      if (isDateQuery && isTimeQuery) {
+      if (isOsQuery) {
         replyMsg = personaMode === 'girlfriend'
-          ? `Today is **${dateString}**, and the time is **${timeString}** babe! 📅🕒`
-          : `Today is **${dateString}**, and the current time is **${timeString}**, Boss Karthik! 📅🕒`;
-        spokenMsg = `Today is ${dateString}, and the current time is ${timeString}`;
+          ? `Here is your OS & laptop hardware telemetry status babe! 💻\n\n` +
+            `• **Operating System**: **${info.osName}**\n` +
+            `• **Current System Date**: **${info.dateStr}**\n` +
+            `• **Current Local Time**: **${info.timeStr}** (${info.tzStr})\n` +
+            `• **CPU Hardware**: **${info.cores}-Core High-Performance Processor**\n` +
+            `• **Physical RAM**: **${info.ramGB} GB RAM**\n` +
+            `• **Primary User**: **Boss Karthik** 💕`
+          : `⚡ **W.E.D.N.E.S.D.A.Y. OS & System Telemetry Status**:\n\n` +
+            `• **Operating System**: **${info.osName}**\n` +
+            `• **Current System Date**: **${info.dateStr}**\n` +
+            `• **Current System Clock**: **${info.timeStr}** (${info.tzStr})\n` +
+            `• **CPU Architecture**: **${info.cores}-Core Processor**\n` +
+            `• **System Memory**: **${info.ramGB} GB RAM**\n` +
+            `• **Host User**: **Boss Karthik** ⚡`;
+        spokenMsg = `Your system is running ${info.osName}. Today is ${info.dateStr}, and the current time is ${info.timeStr}.`;
+      } else if (isDateQuery && isTimeQuery) {
+        replyMsg = personaMode === 'girlfriend'
+          ? `Today is **${info.dateStr}**, and the current time is **${info.timeStr}** (${info.tzStr}) babe! 📅🕒`
+          : `Today is **${info.dateStr}**, and the current time is **${info.timeStr}** (${info.tzStr}), Boss Karthik! 📅🕒`;
+        spokenMsg = `Today is ${info.dateStr}, and the current time is ${info.timeStr}`;
       } else if (isDateQuery) {
         replyMsg = personaMode === 'girlfriend'
-          ? `Today is **${dateString}** babe! 📅`
-          : `Today is **${dateString}**, Boss Karthik! 📅`;
-        spokenMsg = `Today is ${dateString}`;
+          ? `Today is **${info.dateStr}** babe! 📅`
+          : `Today is **${info.dateStr}**, Boss Karthik! 📅`;
+        spokenMsg = `Today is ${info.dateStr}`;
       } else {
         replyMsg = personaMode === 'girlfriend'
-          ? `The current time is **${timeString}** babe! 🕒`
-          : `The current time is **${timeString}**, Boss Karthik! 🕒`;
-        spokenMsg = `The current time is ${timeString}`;
+          ? `The current time is **${info.timeStr}** (${info.tzStr}) babe! 🕒`
+          : `The current time is **${info.timeStr}** (${info.tzStr}), Boss Karthik! 🕒`;
+        spokenMsg = `The current time is ${info.timeStr}`;
       }
 
       return {
         reply: replyMsg,
         spokenReply: spokenMsg,
-        toolUsed: 'REALTIME_DATE_TIME'
+        toolUsed: 'REALTIME_DATE_TIME_OS'
       };
     }
 
