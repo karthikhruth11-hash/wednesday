@@ -305,7 +305,13 @@ export const systemApi = {
     if (backendRes && backendRes.success && backendRes.reply) return backendRes;
 
     // Client-Side High-Speed Autonomous AI Fallback (Zero Backend Requirement!)
-    const activeSystemPrompt = PERSONA_PROMPTS[personaMode] || PERSONA_PROMPTS.jarvis;
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+    const dateTimeContext = `[REAL-TIME SYSTEM CLOCK: Today is ${dateStr}, Current Local Time is ${timeStr}].`;
+
+    const basePrompt = PERSONA_PROMPTS[personaMode] || PERSONA_PROMPTS.jarvis;
+    const activeSystemPrompt = `${basePrompt}\n${dateTimeContext}`;
 
     // 1. FREE DEEP THINKING AI ENGINE (Puter.js Browser Client AI - Gemini 2.5 Flash / DeepSeek / GPT-4o)
     if (typeof window !== 'undefined') {

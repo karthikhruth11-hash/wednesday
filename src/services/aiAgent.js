@@ -336,6 +336,50 @@ export class AIAgentEngine {
       };
     }
 
+    // REAL-TIME ACCURATE DATE & TIME INTENT ROUTER
+    const isDateQuery = (
+      lower.includes('date') || lower.includes('day is today') || lower.includes('what day is it') ||
+      lower.includes('today date') || lower.includes('todays date') || lower.includes("today's date") ||
+      lower.includes('current date') || lower.includes('tell me date') || lower.includes('tell me today date')
+    ) && !lower.includes('update') && !lower.includes('validate') && !lower.includes('candidate');
+
+    const isTimeQuery = (
+      lower.includes('what is the time') || lower.includes('what time') || lower.includes('current time') ||
+      lower.includes('tell me time') || lower.includes('time now') || lower === 'time'
+    ) && !lower.includes('runtime') && !lower.includes('uptime') && !lower.includes('anime') && !lower.includes('timer');
+
+    if (!result && (isDateQuery || isTimeQuery)) {
+      const now = new Date();
+      const dateString = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      const timeString = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+
+      let replyMsg = '';
+      let spokenMsg = '';
+
+      if (isDateQuery && isTimeQuery) {
+        replyMsg = personaMode === 'girlfriend'
+          ? `Today is **${dateString}**, and the time is **${timeString}** babe! 📅🕒`
+          : `Today is **${dateString}**, and the current time is **${timeString}**, Boss Karthik! 📅🕒`;
+        spokenMsg = `Today is ${dateString}, and the current time is ${timeString}`;
+      } else if (isDateQuery) {
+        replyMsg = personaMode === 'girlfriend'
+          ? `Today is **${dateString}** babe! 📅`
+          : `Today is **${dateString}**, Boss Karthik! 📅`;
+        spokenMsg = `Today is ${dateString}`;
+      } else {
+        replyMsg = personaMode === 'girlfriend'
+          ? `The current time is **${timeString}** babe! 🕒`
+          : `The current time is **${timeString}**, Boss Karthik! 🕒`;
+        spokenMsg = `The current time is ${timeString}`;
+      }
+
+      return {
+        reply: replyMsg,
+        spokenReply: spokenMsg,
+        toolUsed: 'REALTIME_DATE_TIME'
+      };
+    }
+
     // 0. INSTANT OMNISCIENT KNOWLEDGE LOOKUP (ZERO DELAY)
     if (!this.activeTranslationLang) {
       const instantAns = omniscientKnowledgeEngine.findInstantAnswer(rawQuery);
