@@ -489,25 +489,63 @@ export const systemApi = {
     };
   },
 
-  // 5. OPTIONAL BACKEND DATABASE SERVICE (PERSISTS TO BACKEND database.json OR LOCALSTORAGE)
+  // 5. OPTIONAL CUSTOM BACKEND DATABASE SERVICE (PERSISTS TO CUSTOM MONGODB, SQLITE, REST API, OR LOCAL DB)
   db: {
+    getCustomDbConfig() {
+      if (typeof localStorage === 'undefined') return {};
+      return {
+        customDbType: localStorage.getItem('wednesday_custom_db_type') || 'json',
+        customDbUri: localStorage.getItem('wednesday_custom_db_uri') || '',
+        customDbTable: localStorage.getItem('wednesday_custom_db_table') || 'wednesday_memory'
+      };
+    },
+
     async saveData(key, value) {
       if (typeof localStorage !== 'undefined') {
         try { localStorage.setItem(`wednesday_db_${key}`, JSON.stringify(value)); } catch {}
       }
+      const dbConfig = this.getCustomDbConfig();
+
+      if (dbConfig.customDbType === 'rest_api' && dbConfig.customDbUri && dbConfig.customDbUri.startsWith('http')) {
+        try {
+          const res = await fetch(dbConfig.customDbUri, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ key, value, table: dbConfig.customDbTable })
+          });
+          if (res.ok) return await res.json();
+        } catch (e) {
+          console.warn("Direct REST DB save note:", e);
+        }
+      }
+
       const backendRes = await fetchWithFallback('/db/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key, value })
+        body: JSON.stringify({ key, value, ...dbConfig })
       });
       return backendRes || { success: true, localOnly: true };
     },
 
     async getData(key, defaultValue = null) {
+      const dbConfig = this.getCustomDbConfig();
+
+      if (dbConfig.customDbType === 'rest_api' && dbConfig.customDbUri && dbConfig.customDbUri.startsWith('http')) {
+        try {
+          const res = await fetch(`${dbConfig.customDbUri}?key=${encodeURIComponent(key)}&table=${encodeURIComponent(dbConfig.customDbTable)}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.value !== undefined) return data.value;
+          }
+        } catch (e) {
+          console.warn("Direct REST DB get note:", e);
+        }
+      }
+
       const backendRes = await fetchWithFallback('/db/get', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key })
+        body: JSON.stringify({ key, ...dbConfig })
       });
       if (backendRes && backendRes.success && backendRes.data !== undefined && backendRes.data !== null) {
         return backendRes.data;

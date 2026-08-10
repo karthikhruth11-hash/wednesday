@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, Key, Bot, X, Save, Volume2 } from 'lucide-react';
+import { Settings, Key, Bot, X, Save, Volume2, Database } from 'lucide-react';
 import { soundFx } from '../services/soundFx';
 import { speechEngine } from '../services/speech';
 import PersonalitySelector from './PersonalitySelector';
@@ -13,6 +13,9 @@ export default function SettingsModal({ isOpen, onClose, onPersonaChange }) {
   const [speechRate, setSpeechRate] = useState(localStorage.getItem('wednesday_speech_rate') || '1.0');
   const [speechPitch, setSpeechPitch] = useState(localStorage.getItem('wednesday_speech_pitch') || '1.0');
   const [micLang, setMicLang] = useState(localStorage.getItem('wednesday_mic_lang') || 'en-US');
+  const [customDbType, setCustomDbType] = useState(localStorage.getItem('wednesday_custom_db_type') || 'json');
+  const [customDbUri, setCustomDbUri] = useState(localStorage.getItem('wednesday_custom_db_uri') || '');
+  const [customDbTable, setCustomDbTable] = useState(localStorage.getItem('wednesday_custom_db_table') || 'wednesday_memory');
   const [savedStatus, setSavedStatus] = useState('');
 
   const MIC_LANGUAGES = [
@@ -70,6 +73,9 @@ export default function SettingsModal({ isOpen, onClose, onPersonaChange }) {
     localStorage.setItem('wednesday_ai_provider', provider);
     localStorage.setItem('wednesday_api_key', apiKey.trim());
     localStorage.setItem('wednesday_persona_mode', personaMode);
+    localStorage.setItem('wednesday_custom_db_type', customDbType);
+    localStorage.setItem('wednesday_custom_db_uri', customDbUri.trim());
+    localStorage.setItem('wednesday_custom_db_table', customDbTable.trim());
     speechEngine.setRecognitionLanguage(micLang);
 
     if (onPersonaChange) {
@@ -82,7 +88,7 @@ export default function SettingsModal({ isOpen, onClose, onPersonaChange }) {
     localStorage.setItem('wednesday_speech_rate', speechRate);
     localStorage.setItem('wednesday_speech_pitch', speechPitch);
 
-    setSavedStatus('Settings & Multi-Language Voice Saved!');
+    setSavedStatus('Settings & Custom Database Config Saved!');
     setTimeout(() => {
       setSavedStatus('');
       onClose();
@@ -256,6 +262,63 @@ export default function SettingsModal({ isOpen, onClose, onPersonaChange }) {
                 Loading system speech synthesis voices...
               </div>
             )}
+          </div>
+
+          {/* Custom Database Engine Section */}
+          <div style={{ padding: '0.75rem', background: 'rgba(0, 240, 255, 0.04)', border: '1px solid rgba(0, 240, 255, 0.2)', borderRadius: '8px', marginTop: '0.75rem' }}>
+            <label style={{ fontSize: '0.8rem', color: '#00f0ff', fontFamily: 'Orbitron', display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.5rem' }}>
+              <Database size={16} /> Custom Database Integration
+            </label>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.6rem' }}>
+              <div>
+                <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.2rem' }}>
+                  Database Engine:
+                </label>
+                <select
+                  className="input-hud"
+                  value={customDbType}
+                  onChange={(e) => setCustomDbType(e.target.value)}
+                  style={{ width: '100%' }}
+                >
+                  <option value="json">📁 Local JSON Database (database.json)</option>
+                  <option value="mongodb">🍃 MongoDB (mongodb://...)</option>
+                  <option value="sqlite">🗄️ SQLite (wednesday_custom.db)</option>
+                  <option value="rest_api">⚡ Custom REST / Webhook API (https://...)</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.2rem' }}>
+                  Table / Collection Name:
+                </label>
+                <input
+                  type="text"
+                  className="input-hud"
+                  placeholder="wednesday_memory"
+                  value={customDbTable}
+                  onChange={(e) => setCustomDbTable(e.target.value)}
+                  style={{ width: '100%' }}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.2rem' }}>
+                Database Connection URI / Endpoint URL (Optional):
+              </label>
+              <input
+                type="text"
+                className="input-hud"
+                placeholder="mongodb://localhost:27017/wednesday OR https://api.yourdb.com/v1"
+                value={customDbUri}
+                onChange={(e) => setCustomDbUri(e.target.value)}
+                style={{ width: '100%' }}
+              />
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.3rem' }}>
+                Connect your own MongoDB, SQLite, or Custom REST Database URL to store all memory and logs.
+              </div>
+            </div>
           </div>
 
           {savedStatus && (

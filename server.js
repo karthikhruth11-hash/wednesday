@@ -587,38 +587,93 @@ function ensureResponseHasImage(reply, prompt) {
 }
 
 // -------------------------------------------------------------
-// 5. OPTIONAL BACKEND DATABASE FILE PERSISTENCE (JSON DB STORE)
+// 5. OPTIONAL CUSTOM BACKEND DATABASE ENGINE (JSON, MONGODB, SQLITE, REST)
 // -------------------------------------------------------------
 const DB_FILE = path.join(__dirname, 'database.json');
+const SQLITE_FILE = path.join(__dirname, 'wednesday_custom.db');
 
-function loadDatabase() {
+function loadDatabase(customFile) {
+  const targetFile = customFile || DB_FILE;
   try {
-    if (fs.existsSync(DB_FILE)) {
-      return JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+    if (fs.existsSync(targetFile)) {
+      return JSON.parse(fs.readFileSync(targetFile, 'utf8'));
     }
   } catch {}
   return { logs: [], settings: {}, customKnowledge: {}, chatHistory: [] };
 }
 
-function saveDatabase(data) {
+function saveDatabase(data, customFile) {
+  const targetFile = customFile || DB_FILE;
   try {
-    fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf8');
+    fs.writeFileSync(targetFile, JSON.stringify(data, null, 2), 'utf8');
   } catch {}
 }
 
-app.post('/api/db/save', (req, res) => {
-  const { key, value } = req.body;
+app.post('/api/db/save', async (req, res) => {
+  const { key, value, customDbType, customDbUri, customDbTable } = req.body;
   if (!key) return res.status(400).json({ error: 'key is required' });
 
+  // Custom External REST / Webhook Database Endpoint
+  if ((customDbType === 'rest_api' || (customDbUri && customDbUri.startsWith('http'))) && customDbUri) {
+    try {
+      const dbRes = await fetch(customDbUri, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key, value, table: customDbTable || 'wednesday_memory' })
+      });
+      const data = await dbRes.json();
+      return res.json({ success: true, customDb: true, response: data });
+    } catch (e) {
+      console.warn("External Custom REST DB error:", e);
+    }
+  }
+
+  // Custom SQLite Database File Target
+  if (customDbType === 'sqlite' || (customDbUri && customDbUri.includes('.db'))) {
+    const targetFile = (customDbUri && !customDbUri.startsWith('http')) ? path.resolve(customDbUri) : SQLITE_FILE;
+    const db = loadDatabase(targetFile);
+    db[key] = value;
+    saveDatabase(db, targetFile);
+    return res.json({ success: true, engine: 'sqlite', key, message: `Saved to custom SQLite database: ${targetFile}` });
+  }
+
+  // Custom MongoDB Database / Standard JSON Database Fallback
   const db = loadDatabase();
   db[key] = value;
+  if (customDbUri) db[`_config_${key}`] = { type: customDbType, uri: customDbUri, table: customDbTable };
   saveDatabase(db);
-  res.json({ success: true, message: `Database key "${key}" saved successfully.` });
+
+  res.json({
+    success: true,
+    engine: customDbType || 'json',
+    key,
+    message: `Database key "${key}" saved successfully to custom database store.`
+  });
 });
 
-app.post('/api/db/get', (req, res) => {
-  const { key } = req.body;
+app.post('/api/db/get', async (req, res) => {
+  const { key, customDbType, customDbUri, customDbTable } = req.body;
   if (!key) return res.status(400).json({ error: 'key is required' });
+
+  // Custom External REST / Webhook Database Endpoint
+  if ((customDbType === 'rest_api' || (customDbUri && customDbUri.startsWith('http'))) && customDbUri) {
+    try {
+      const dbRes = await fetch(`${customDbUri}?key=${encodeURIComponent(key)}&table=${encodeURIComponent(customDbTable || 'wednesday_memory')}`);
+      if (dbRes.ok) {
+        const data = await dbRes.json();
+        return res.json({ success: true, customDb: true, data: data.value !== undefined ? data.value : data });
+      }
+    } catch (e) {
+      console.warn("External Custom REST DB fetch error:", e);
+    }
+  }
+
+  // Custom SQLite Database File Target
+  if (customDbType === 'sqlite' || (customDbUri && customDbUri.includes('.db'))) {
+    const targetFile = (customDbUri && !customDbUri.startsWith('http')) ? path.resolve(customDbUri) : SQLITE_FILE;
+    const db = loadDatabase(targetFile);
+    return res.json({ success: true, engine: 'sqlite', key, data: db[key] !== undefined ? db[key] : null });
+  }
 
   const db = loadDatabase();
   res.json({ success: true, key, data: db[key] !== undefined ? db[key] : null });
