@@ -586,6 +586,49 @@ function ensureResponseHasImage(reply, prompt) {
   return imageMarkdown + reply;
 }
 
+// -------------------------------------------------------------
+// 5. OPTIONAL BACKEND DATABASE FILE PERSISTENCE (JSON DB STORE)
+// -------------------------------------------------------------
+const DB_FILE = path.join(__dirname, 'database.json');
+
+function loadDatabase() {
+  try {
+    if (fs.existsSync(DB_FILE)) {
+      return JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+    }
+  } catch {}
+  return { logs: [], settings: {}, customKnowledge: {}, chatHistory: [] };
+}
+
+function saveDatabase(data) {
+  try {
+    fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf8');
+  } catch {}
+}
+
+app.post('/api/db/save', (req, res) => {
+  const { key, value } = req.body;
+  if (!key) return res.status(400).json({ error: 'key is required' });
+
+  const db = loadDatabase();
+  db[key] = value;
+  saveDatabase(db);
+  res.json({ success: true, message: `Database key "${key}" saved successfully.` });
+});
+
+app.post('/api/db/get', (req, res) => {
+  const { key } = req.body;
+  if (!key) return res.status(400).json({ error: 'key is required' });
+
+  const db = loadDatabase();
+  res.json({ success: true, key, data: db[key] !== undefined ? db[key] : null });
+});
+
+app.get('/api/db/export', (req, res) => {
+  const db = loadDatabase();
+  res.json({ success: true, database: db });
+});
+
 // Unified Single-Server SPA Fallback Route (Express 5 compatible)
 app.use((req, res, next) => {
   if (req.path.startsWith('/api')) return next();

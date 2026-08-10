@@ -449,6 +449,31 @@ export const systemApi = {
       } catch { }
     }
 
+    // 2.5 Free Unlimited Pollinations Live AI Engine Tier (Zero Keys & Zero Balance Popup!)
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 6000);
+      const polResponse = await fetch('https://text.pollinations.ai/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
+        body: JSON.stringify({
+          messages: [
+            { role: 'system', content: activeSystemPrompt },
+            { role: 'user', content: prompt }
+          ],
+          model: 'openai'
+        })
+      });
+      clearTimeout(timeoutId);
+      if (polResponse.ok) {
+        const textReply = await polResponse.text();
+        if (textReply && textReply.trim().length > 15 && !textReply.includes('<html>') && !textReply.includes('PAYMENT_REQUIRED')) {
+          return { success: true, reply: textReply.trim() };
+        }
+      }
+    } catch {}
+
     // 3. WIKIPEDIA FACTUAL KNOWLEDGE RETRIEVAL FALLBACK
     const wikiData = await fetchWikipediaKnowledge(prompt);
     if (wikiData) {
@@ -462,8 +487,60 @@ export const systemApi = {
       success: true,
       reply: instantReply
     };
+  },
+
+  // 5. OPTIONAL BACKEND DATABASE SERVICE (PERSISTS TO BACKEND database.json OR LOCALSTORAGE)
+  db: {
+    async saveData(key, value) {
+      if (typeof localStorage !== 'undefined') {
+        try { localStorage.setItem(`wednesday_db_${key}`, JSON.stringify(value)); } catch {}
+      }
+      const backendRes = await fetchWithFallback('/db/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key, value })
+      });
+      return backendRes || { success: true, localOnly: true };
+    },
+
+    async getData(key, defaultValue = null) {
+      const backendRes = await fetchWithFallback('/db/get', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key })
+      });
+      if (backendRes && backendRes.success && backendRes.data !== undefined && backendRes.data !== null) {
+        return backendRes.data;
+      }
+      if (typeof localStorage !== 'undefined') {
+        try {
+          const raw = localStorage.getItem(`wednesday_db_${key}`);
+          return raw ? JSON.parse(raw) : defaultValue;
+        } catch {
+          return defaultValue;
+        }
+      }
+      return defaultValue;
+    }
   }
 };
+
+// Auto-dismiss Puter low-balance / payment popups if injected into DOM
+if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+  const dismissPuterModals = () => {
+    try {
+      const modals = document.querySelectorAll('div, section, article, iframe');
+      modals.forEach(el => {
+        if (el.innerText && (el.innerText.includes('Low Balance') || el.innerText.includes('Upgrade Now') || el.innerText.includes('not enough funding'))) {
+          if (el.classList.contains('puter-modal-container') || el.className.includes('puter') || el.id.includes('puter') || el.parentElement === document.body) {
+            el.remove();
+          }
+        }
+      });
+    } catch {}
+  };
+  setInterval(dismissPuterModals, 500);
+}
 
 async function fetchWikipediaKnowledge(prompt) {
   try {
