@@ -80,15 +80,21 @@ export default function App() {
     setAppState('processing');
 
     try {
-      const currentSession = sessionManager.getActiveSession();
+      let currentSession = sessionManager.getActiveSession();
       if (!currentSession) {
-        await sessionManager.createNewSession(text);
+        currentSession = await sessionManager.createNewSession(text);
       }
 
+      // 1. Immediately append User Message to session so it displays instantly
+      await sessionManager.addUserMessageToActiveSession(text);
+      reloadSessions();
+
+      // 2. Process query through AI Agent
       const res = await aiAgent.processQuery(text, personaMode);
 
       if (res && res.reply) {
-        await sessionManager.addTurnToActiveSession(text, res.reply);
+        // 3. Append Assistant Reply to session
+        await sessionManager.addAssistantReplyToActiveSession(res.reply);
         reloadSessions();
 
         const ttsEnabled = localStorage.getItem('wednesday_tts_enabled') !== 'false';

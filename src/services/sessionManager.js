@@ -103,13 +103,12 @@ class SessionManagerEngine {
     return null;
   }
 
-  async addTurnToActiveSession(userMsg, assistantReply) {
+  async addUserMessageToActiveSession(userMsg) {
     const session = this.getActiveSession();
-    if (!session) return;
+    if (!session) return null;
 
     const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-    // Auto-update title if default
     if (session.title === 'New Conversation' || session.messages.length <= 1) {
       session.title = this.generateTitleFromQuery(userMsg);
     }
@@ -120,6 +119,17 @@ class SessionManagerEngine {
       timestamp: timeStr
     });
 
+    session.updatedAt = new Date().toISOString();
+    await this.persist();
+    return session;
+  }
+
+  async addAssistantReplyToActiveSession(assistantReply) {
+    const session = this.getActiveSession();
+    if (!session) return null;
+
+    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
     session.messages.push({
       sender: 'assistant',
       text: assistantReply.trim(),
@@ -128,6 +138,12 @@ class SessionManagerEngine {
 
     session.updatedAt = new Date().toISOString();
     await this.persist();
+    return session;
+  }
+
+  async addTurnToActiveSession(userMsg, assistantReply) {
+    await this.addUserMessageToActiveSession(userMsg);
+    await this.addAssistantReplyToActiveSession(assistantReply);
   }
 
   async renameSession(id, newTitle) {
