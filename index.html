@@ -7,11 +7,15 @@
     <meta http-equiv="Expires" content="0" />
     <script>
       (function() {
-        const buildVer = "VER_FIX_IMMEDIATE_MESSAGE_DISPLAY_20260810_v28";
+        const buildVer = "FORCE_CACHE_RESET_VER_20260810_v29";
         if (localStorage.getItem("wednesday_ver") !== buildVer) {
           localStorage.setItem("wednesday_ver", buildVer);
           if ('caches' in window) {
-            caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+            caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k)))).then(() => {
+              window.location.reload(true);
+            });
+          } else {
+            window.location.reload(true);
           }
           if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
