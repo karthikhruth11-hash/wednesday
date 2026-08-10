@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import './App.css';
 import Sidebar from './components/Sidebar';
 import ChatGPTConsole from './components/ChatGPTConsole';
 import AgentTools from './components/AgentTools';
