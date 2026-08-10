@@ -435,13 +435,81 @@ export class AIAgentEngine {
       lower.includes('stop opening') ||
       lower.includes('no tab') ||
       lower.includes('do not open') ||
-      lower.includes('not open')
+      lower.includes('not open') ||
+      lower.includes('without opening') ||
+      lower.includes('dont launch') ||
+      lower.includes("don't launch")
     );
 
-    // Dedicated YouTube Command Router (Handles "TELUGU SONGS IN YOUTUBE", "OPEN IN YOUTUBE TELUGU SONGS", "open youtube", "search X on youtube", "play X on youtube")
-    const isExplicitYtCmd = !isNegativeTabCmd && (
-      lower.includes('youtube') || lower.includes(' yt ') || lower.endsWith(' yt') || lower.startsWith('yt ')
+    // Information / Question Query Guard (Do not launch apps when asking for information/questions!)
+    const isInfoOrQuestionQuery = (
+      lower.startsWith('tell me') ||
+      lower.startsWith('tell ') ||
+      lower.startsWith('what ') ||
+      lower.startsWith('what is') ||
+      lower.startsWith("what's") ||
+      lower.startsWith('what are') ||
+      lower.startsWith('what do') ||
+      lower.startsWith('what can') ||
+      lower.startsWith('who ') ||
+      lower.startsWith('who is') ||
+      lower.startsWith('who made') ||
+      lower.startsWith('who created') ||
+      lower.startsWith('who founded') ||
+      lower.startsWith('who owns') ||
+      lower.startsWith('how ') ||
+      lower.startsWith('how to') ||
+      lower.startsWith('how do') ||
+      lower.startsWith('how does') ||
+      lower.startsWith('how can') ||
+      lower.startsWith('how works') ||
+      lower.startsWith('explain') ||
+      lower.startsWith('describe') ||
+      lower.startsWith('details') ||
+      lower.startsWith('info') ||
+      lower.startsWith('information') ||
+      lower.startsWith('meaning') ||
+      lower.startsWith('definition') ||
+      lower.startsWith('why ') ||
+      lower.startsWith('why is') ||
+      lower.startsWith('why do') ||
+      lower.startsWith('why does') ||
+      lower.startsWith('why use') ||
+      lower.startsWith('is ') ||
+      lower.startsWith('can ') ||
+      lower.startsWith('could ') ||
+      lower.startsWith('would ') ||
+      lower.startsWith('should ') ||
+      lower.startsWith('do ') ||
+      lower.startsWith('does ') ||
+      lower.startsWith('give me') ||
+      lower.startsWith('show details') ||
+      lower.startsWith('show info') ||
+      lower.includes('tell me') ||
+      lower.includes('details about') ||
+      lower.includes('info about') ||
+      lower.includes('information about') ||
+      lower.includes('what is') ||
+      lower.includes('how to use') ||
+      lower.includes('how does') ||
+      lower.includes('who created') ||
+      lower.includes('who made') ||
+      lower.includes('who founded')
+    ) && !lower.startsWith('open ') && !lower.startsWith('launch ') && !lower.startsWith('start ') && !lower.startsWith('run ') && !lower.startsWith('play ');
+
+    // Dedicated YouTube Command Router (Handles explicit open/play/search commands ONLY)
+    const hasYtAction = (
+      lower === 'youtube' || lower === 'yt' ||
+      lower.startsWith('open youtube') || lower.startsWith('launch youtube') ||
+      (lower.startsWith('play ') && lower.includes('youtube')) ||
+      (lower.startsWith('search ') && lower.includes('youtube')) ||
+      (lower.startsWith('watch ') && lower.includes('youtube')) ||
+      lower.includes('on youtube') || lower.includes('in youtube') || lower.includes('open in youtube') ||
+      lower.includes('youtube search') || lower.includes('search on youtube') || lower.includes('play on youtube') ||
+      (lower.startsWith('youtube ') && !isInfoOrQuestionQuery) ||
+      (lower.startsWith('yt ') && !isInfoOrQuestionQuery)
     );
+    const isExplicitYtCmd = !isNegativeTabCmd && !isInfoOrQuestionQuery && hasYtAction;
 
     if (!result && isExplicitYtCmd) {
       let ytTarget = rawQuery
@@ -475,10 +543,14 @@ export class AIAgentEngine {
       }
     }
 
-    // Dedicated Google Command Router (Handles "OPEN ABOUT UNIVERSE IN GOOGLE", "OPEN IN GOOGLE EARTH", "open google", "search X on google")
-    const isExplicitGoogleCmd = !isNegativeTabCmd && (
-      lower.includes('google') || lower.includes('in google') || lower.includes('on google')
+    // Dedicated Google Command Router (Handles explicit open/search commands ONLY)
+    const hasGoogleAction = (
+      lower === 'google' ||
+      lower.startsWith('open google') || lower.startsWith('launch google') || lower.startsWith('google search ') ||
+      lower.includes('in google search') || lower.includes('on google search') || lower.includes('open in google') || lower.includes('search on google') ||
+      (lower.startsWith('google ') && !isInfoOrQuestionQuery)
     );
+    const isExplicitGoogleCmd = !isNegativeTabCmd && !isInfoOrQuestionQuery && hasGoogleAction;
 
     if (!result && isExplicitGoogleCmd) {
       let gTarget = rawQuery
@@ -509,10 +581,16 @@ export class AIAgentEngine {
       }
     }
 
-    // Dedicated Spotify Command Router (Handles "play telugu songs in spotify", "play X on spotify", "open spotify")
-    const isExplicitSpotifyCmd = !isNegativeTabCmd && (
-      lower.includes('spotify') || lower.startsWith('spotify ')
+    // Dedicated Spotify Command Router (Handles explicit open/play commands ONLY)
+    const hasSpotifyAction = (
+      lower === 'spotify' ||
+      lower.startsWith('open spotify') || lower.startsWith('launch spotify') ||
+      (lower.startsWith('play ') && lower.includes('spotify')) ||
+      (lower.startsWith('listen to ') && lower.includes('spotify')) ||
+      lower.includes('on spotify') || lower.includes('in spotify') || lower.includes('open in spotify') || lower.includes('play on spotify') ||
+      (lower.startsWith('spotify ') && !isInfoOrQuestionQuery)
     );
+    const isExplicitSpotifyCmd = !isNegativeTabCmd && !isInfoOrQuestionQuery && hasSpotifyAction;
 
     if (!result && isExplicitSpotifyCmd) {
       let sTarget = rawQuery
@@ -544,10 +622,19 @@ export class AIAgentEngine {
       }
     }
 
-    // Dedicated WhatsApp Command Router (Handles "open whatsapp", "open whatsapp for Mom", "chat with Mom on whatsapp", "open John in whatsapp")
-    const isExplicitWhatsAppCmd = !isNegativeTabCmd && (
-      lower.includes('whatsapp') || lower.includes('whats app') || lower.startsWith('whatsapp ')
+    // Dedicated WhatsApp Command Router (Handles explicit open/chat commands ONLY)
+    const hasWhatsAppAction = (
+      lower === 'whatsapp' || lower === 'whats app' ||
+      lower.startsWith('open whatsapp') || lower.startsWith('launch whatsapp') || lower.startsWith('start whatsapp') ||
+      lower.includes('chat with') || lower.includes('send message to') ||
+      (lower.includes('message') && (lower.includes('whatsapp') || lower.includes('whats app'))) ||
+      lower.includes('on whatsapp') || lower.includes('in whatsapp') || lower.includes('whatsapp web') ||
+      (lower.startsWith('open ') && (lower.includes('whatsapp') || lower.includes('whats app'))) ||
+      (lower.startsWith('launch ') && (lower.includes('whatsapp') || lower.includes('whats app'))) ||
+      (lower.startsWith('whatsapp ') && !isInfoOrQuestionQuery) ||
+      (lower.startsWith('whats app ') && !isInfoOrQuestionQuery)
     );
+    const isExplicitWhatsAppCmd = !isNegativeTabCmd && !isInfoOrQuestionQuery && hasWhatsAppAction;
 
     if (!result && isExplicitWhatsAppCmd) {
       let wTarget = rawQuery
@@ -583,10 +670,15 @@ export class AIAgentEngine {
       }
     }
 
-    // Dedicated Instagram Command Router (Handles "open instagram", "open instagram in pc", "launch instagram")
-    const isExplicitInstagramCmd = !isNegativeTabCmd && (
-      lower.includes('instagram') || lower.includes('insta') || lower.startsWith('instagram ')
+    // Dedicated Instagram Command Router (Handles explicit open/view commands ONLY)
+    const hasInstagramAction = (
+      lower === 'instagram' || lower === 'insta' ||
+      lower.startsWith('open instagram') || lower.startsWith('launch instagram') || lower.startsWith('open insta') ||
+      lower.includes('on instagram') || lower.includes('in instagram') || lower.includes('open in instagram') || lower.includes('view profile') ||
+      (lower.startsWith('instagram ') && !isInfoOrQuestionQuery) ||
+      (lower.startsWith('insta ') && !isInfoOrQuestionQuery)
     );
+    const isExplicitInstagramCmd = !isNegativeTabCmd && !isInfoOrQuestionQuery && hasInstagramAction;
 
     if (!result && isExplicitInstagramCmd) {
       let instaTarget = rawQuery
@@ -618,10 +710,15 @@ export class AIAgentEngine {
       }
     }
 
-    // Dedicated Notepad & PC Dictation Command Router (Handles "open notepad in pc", "open notepad and write Hello", "write python script in notepad")
-    const isExplicitNotepadCmd = !isNegativeTabCmd && (
-      lower.includes('notepad') || lower.includes('note pad')
+    // Dedicated Notepad & PC Dictation Command Router (Handles explicit open/write commands ONLY)
+    const hasNotepadAction = (
+      lower === 'notepad' || lower === 'note pad' ||
+      lower.startsWith('open notepad') || lower.startsWith('launch notepad') || lower.startsWith('start notepad') ||
+      lower.includes('write in notepad') || lower.includes('type in notepad') || lower.includes('dictate') || lower.includes('in notepad') || lower.includes('on notepad') ||
+      (lower.startsWith('notepad ') && !isInfoOrQuestionQuery) ||
+      (lower.startsWith('note pad ') && !isInfoOrQuestionQuery)
     );
+    const isExplicitNotepadCmd = !isNegativeTabCmd && !isInfoOrQuestionQuery && hasNotepadAction;
 
     if (!result && isExplicitNotepadCmd) {
       let noteText = rawQuery
@@ -779,18 +876,20 @@ export class AIAgentEngine {
     }
 
     // 2. UNIVERSAL OPEN-ANYTHING ROUTER (WEBSITES, APPS, DESKTOP TOOLS)
-    const isExplicitOpenCmd = !isNegativeTabCmd && (
+    const isExplicitOpenCmd = !isNegativeTabCmd && !isInfoOrQuestionQuery && (
       lower.startsWith('open ') ||
       lower.startsWith('launch ') ||
       lower.startsWith('start ') ||
       lower.startsWith('run ') ||
+      lower.startsWith('go to ') ||
       lower === 'youtube' ||
       lower === 'google' ||
       lower === 'github' ||
       lower === 'spotify' ||
       lower === 'instagram' ||
       lower === 'wikipedia' ||
-      lower === 'copilot'
+      lower === 'copilot' ||
+      lower === 'whatsapp'
     );
 
     if (!result && isExplicitOpenCmd) {
@@ -948,8 +1047,10 @@ export class AIAgentEngine {
       };
     }
 
-    // 4. DESKTOP APPLICATION LAUNCHING FALLBACK
-    if (!result) {
+    // 4. DESKTOP APPLICATION LAUNCHING FALLBACK (EXPLICIT OPEN / LAUNCH COMMANDS ONLY)
+    if (!result && !isNegativeTabCmd && !isInfoOrQuestionQuery) {
+      const hasLaunchPrefix = lower.startsWith('open ') || lower.startsWith('launch ') || lower.startsWith('start ') || lower.startsWith('run ') || lower.startsWith('go to ');
+
       const appKeywords = {
         'my file manager': 'my file manager',
         'file manager': 'file manager',
@@ -977,7 +1078,7 @@ export class AIAgentEngine {
       };
 
       for (const [key, appName] of Object.entries(appKeywords)) {
-        if (lower.includes(key)) {
+        if ((hasLaunchPrefix && lower.includes(key)) || lower === key) {
           const res = await systemApi.launchApp(appName);
           result = {
             reply: res.success ? (personaMode === 'girlfriend' ? `Opening ${key} for you sweetheart!` : `Opening ${key} on desktop, Boss Karthik. ⚡`) : `Error opening ${key}: ${res.error}`,
