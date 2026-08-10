@@ -1089,6 +1089,40 @@ export class AIAgentEngine {
       }
     }
 
+    // 4.5 DEDICATED REALISTIC IMAGE GENERATOR (EXPLICIT IMAGE / PHOTO REQUESTS ONLY)
+    if (!result && isExplicitImageRequest(rawQuery)) {
+      let cleanTopic = rawQuery
+        .replace(/^(please\s+)?(can\s+you\s+)?(show\s+me|generate|draw|create|make|give\s+me|get\s+me|find|display|render)\s+/gi, '')
+        .replace(/\b(image|photo|picture|wallpaper|visual|drawing|pic|photos|images|pictures|pics)\b/gi, '')
+        .replace(/^(a|an|the|of|for|about|on|in)\s+/gi, '')
+        .replace(/\s+(of|for|about|on|in)$/gi, '')
+        .replace(/[?._!]+$/g, '')
+        .trim();
+
+      if (!cleanTopic) cleanTopic = rawQuery.replace(/^(generate|show|create|draw)\s+/gi, '').trim();
+
+      const capTopic = cleanTopic ? (cleanTopic.charAt(0).toUpperCase() + cleanTopic.slice(1)) : 'Photo';
+      const encoded = encodeURIComponent(cleanTopic || 'photo');
+      const knownApps = ['whatsapp', 'instagram', 'youtube', 'spotify', 'google', 'chrome', 'github', 'facebook', 'twitter', 'x', 'netflix', 'apple', 'windows', 'vscode', 'discord', 'telegram', 'copilot', 'chatgpt', 'openai'];
+
+      let imageUrl = '';
+      if (knownApps.some(app => cleanTopic.toLowerCase().includes(app))) {
+        imageUrl = `https://image.pollinations.ai/prompt/official%203D%20logo%20icon%20and%20app%20interface%20design%20of%20${encoded}%20sleek%20modern%20tech%20render%20high%20resolution?width=800&height=450&nologo=true`;
+      } else {
+        imageUrl = `https://image.pollinations.ai/prompt/high%20resolution%20realistic%20photo%20of%20${encoded}%20authentic%20detailed%20photography%20no%20anime%20no%20cgi%20realistic?width=800&height=450&nologo=true`;
+      }
+
+      const imgMarkdown = `![${capTopic} Photo](${imageUrl})\n\n`;
+      const replyMsg = personaMode === 'girlfriend'
+        ? `${imgMarkdown}Here is the photo of **${capTopic}** for you babe! 🖼️💕`
+        : `${imgMarkdown}Here is the high-resolution image for **${capTopic}**, Boss Karthik! 🖼️⚡`;
+
+      result = {
+        reply: replyMsg,
+        toolUsed: 'IMAGE_GENERATOR'
+      };
+    }
+
     // 5. MULTI-PERSONA AI ENGINE CHAT (GIRLFRIEND, LAWYER, POLYGLOT, JARVIS)
     if (!result) {
       const provider = localStorage.getItem('wednesday_ai_provider') || 'jarvis';
@@ -1150,22 +1184,37 @@ function ensureResponseHasImage(reply, prompt) {
     return reply;
   }
 
-  if (/!\[.*?\]\(https?:\/\/[^\s)]+\)/.test(reply)) {
-    return reply;
+  // Clean LLM text if LLM gave refusal message
+  let cleanReply = reply;
+  if (/don't have the capability|cannot generate|can't generate|language model/i.test(cleanReply)) {
+    cleanReply = `Here is the image you requested! 🖼️⚡`;
   }
 
-  const topic = prompt
-    .replace(/^(show me|generate|draw|create|make|give me|get me|find|display)?\s*(a|an|the)?\s*(image|photo|picture|wallpaper|visual|drawing)?\s*(of|for|about)?\s*/i, '')
-    .replace(/\?$/g, '').trim() || prompt.trim();
+  if (/!\[.*?\]\(https?:\/\/[^\s)]+\)/.test(cleanReply)) {
+    return cleanReply;
+  }
 
-  const capTopic = topic ? (topic.charAt(0).toUpperCase() + topic.slice(1)) : 'Photo';
-  const encodedTopic = encodeURIComponent(topic || 'nature');
+  let cleanTopic = prompt
+    .replace(/^(please\s+)?(can\s+you\s+)?(show\s+me|generate|draw|create|make|give\s+me|get\s+me|find|display|render)\s+/gi, '')
+    .replace(/\b(image|photo|picture|wallpaper|visual|drawing|pic|photos|images|pictures|pics)\b/gi, '')
+    .replace(/^(a|an|the|of|for|about|on|in)\s+/gi, '')
+    .replace(/\s+(of|for|about|on|in)$/gi, '')
+    .replace(/[?._!]+$/g, '')
+    .trim() || prompt.trim();
 
-  // Realistic photography prompt without AI girl / anime artifacts
-  const imageUrl = `https://image.pollinations.ai/prompt/real%20authentic%20photography%20high%20resolution%20detailed%20photo%20of%20${encodedTopic}%20no%20anime%20no%20cgi%20realistic?width=800&height=450&nologo=true`;
+  const capTopic = cleanTopic.charAt(0).toUpperCase() + cleanTopic.slice(1);
+  const encodedTopic = encodeURIComponent(cleanTopic || 'photo');
+  const knownApps = ['whatsapp', 'instagram', 'youtube', 'spotify', 'google', 'chrome', 'github', 'facebook', 'twitter', 'x', 'netflix', 'apple', 'windows', 'vscode', 'discord', 'telegram', 'copilot', 'chatgpt', 'openai'];
+
+  let imageUrl = '';
+  if (knownApps.some(app => cleanTopic.toLowerCase().includes(app))) {
+    imageUrl = `https://image.pollinations.ai/prompt/official%203D%20logo%20icon%20and%20app%20interface%20design%20of%20${encodedTopic}%20sleek%20modern%20tech%20render%20high%20resolution?width=800&height=450&nologo=true`;
+  } else {
+    imageUrl = `https://image.pollinations.ai/prompt/high%20resolution%20realistic%20photo%20of%20${encodedTopic}%20authentic%20detailed%20photography%20no%20anime%20no%20cgi%20realistic?width=800&height=450&nologo=true`;
+  }
 
   const imageMarkdown = `![${capTopic} Photo](${imageUrl})\n\n`;
-  return imageMarkdown + reply;
+  return imageMarkdown + cleanReply;
 }
 
 export const aiAgent = new AIAgentEngine();
