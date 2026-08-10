@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Bot, User, Copy, Check } from 'lucide-react';
+import { Bot, User, Copy, Check, Paperclip, Mic, Send, Square, Sparkles, RefreshCw, Edit3 } from 'lucide-react';
+import WelcomeScreen from './WelcomeScreen';
 
 function CodeBlock({ code, language }) {
   const [copied, setCopied] = useState(false);
@@ -182,7 +183,7 @@ function TextSection({ text }) {
       return <div key={lineIdx} style={{ height: '0.5rem' }} />;
     }
 
-    // Headings (### or ##)
+    // Headings
     if (line.startsWith('### ') || line.startsWith('## ') || line.startsWith('# ')) {
       const headingText = line.replace(/^#+\s*/, '');
       return (
@@ -212,13 +213,20 @@ function TextSection({ text }) {
 }
 
 function renderInlineFormatting(line) {
-  const parts = line.split(/(\*\*[^*]+\*\*)/g);
+  if (!line) return null;
+  const parts = line.split(/(\*\*[^*]+\*\*|`[^`]+`)/g);
   return parts.map((part, partIdx) => {
     if (part.startsWith('**') && part.endsWith('**')) {
       return (
         <strong key={partIdx} style={{ color: '#00f0ff', fontWeight: '700' }}>
           {part.slice(2, -2)}
         </strong>
+      );
+    } else if (part.startsWith('`') && part.endsWith('`') && part.length > 2) {
+      return (
+        <code key={partIdx} style={{ background: 'rgba(0, 240, 255, 0.15)', color: '#00f0ff', padding: '0.15rem 0.4rem', borderRadius: '4px', fontFamily: 'Consolas, monospace', fontSize: '0.88em' }}>
+          {part.slice(1, -1)}
+        </code>
       );
     }
     return part;
@@ -228,7 +236,7 @@ function renderInlineFormatting(line) {
 function renderFormattedMessage(text) {
   if (!text) return null;
 
-  const codeBlockRegex = /```([a-zA-Z0-9_-]*)\n([\s\S]*?)```/g;
+  const codeBlockRegex = /```([a-zA-Z0-9_-]*)[ \t]*\r?\n([\s\S]*?)```/g;
   const elements = [];
   let lastIndex = 0;
   let match;
@@ -255,11 +263,19 @@ function renderFormattedMessage(text) {
 }
 
 export default function ChatGPTConsole({
+  activeSession,
   messages,
   interimTranscript,
-  onSendMessage
+  onSendMessage,
+  isProcessing,
+  onStopGeneration,
+  isVoiceListening,
+  onToggleVoiceListening
 }) {
+  const [inputText, setInputText] = useState('');
+  const [copiedMsgIdx, setCopiedMsgIdx] = useState(null);
   const messagesEndRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -267,56 +283,167 @@ export default function ChatGPTConsole({
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, interimTranscript]);
+  }, [messages, interimTranscript, isProcessing]);
 
-  const suggestions = [
-    { label: '⚖️ Constitutional Rights', prompt: 'Explain my constitutional fundamental rights' },
-    { label: '💻 Python Code Scraper', prompt: 'Write a Python web scraper script' },
-    { label: '🎵 Play Music on YouTube', prompt: 'Open YouTube and play music' },
-    { label: '💕 Chat Companion', prompt: 'How are you feeling today sweetheart?' }
-  ];
+  const handleSend = () => {
+    if (!inputText.trim() || isProcessing) return;
+    onSendMessage(inputText.trim());
+    setInputText('');
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
+  const handleCopyMessage = (text, idx) => {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text);
+      } else {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+      }
+      setCopiedMsgIdx(idx);
+      setTimeout(() => setCopiedMsgIdx(null), 2000);
+    } catch (e) {
+      setCopiedMsgIdx(idx);
+      setTimeout(() => setCopiedMsgIdx(null), 2000);
+    }
+  };
+
+  const hasMessages = messages && messages.length > 0;
 
   return (
-    <div style={{ width: '100%', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-      {/* Quick Suggestion Chips */}
-      <div className="suggestion-chips">
-        {suggestions.map((s, i) => (
-          <button key={i} className="suggestion-chip" onClick={() => onSendMessage(s.prompt)}>
-            {s.label}
-          </button>
-        ))}
-      </div>
+    <div className="main-chat-container">
+      {/* Top Header Bar */}
+      <header className="chat-top-header">
+        <div className="chat-header-title-box">
+          <Sparkles size={16} className="title-spark" />
+          <h2 className="chat-header-title">
+            {activeSession ? activeSession.title : 'Wednesday AI Workspace'}
+          </h2>
+          <span className="status-badge">
+            <span className="status-dot"></span> Active
+          </span>
+        </div>
+      </header>
 
-      {/* Messages Scroll Area */}
-      <div className="chat-stream">
-        {messages.map((msg, idx) => (
-          <div key={idx} className={`chat-bubble ${msg.sender === 'user' ? 'user-msg' : 'assistant-msg'}`}>
-            <div className={`avatar-icon ${msg.sender === 'user' ? 'user-avatar' : 'assistant-avatar'}`}>
-              {msg.sender === 'user' ? <User size={16} /> : <Bot size={16} />}
-            </div>
+      {/* Main Chat Reading Scroll Area */}
+      <div className="chat-scroll-area">
+        {!hasMessages ? (
+          <WelcomeScreen onSelectPrompt={(p) => onSendMessage(p)} />
+        ) : (
+          <div className="messages-max-reading-column">
+            {messages.map((msg, idx) => (
+              <div key={idx} className={`chat-bubble ${msg.sender === 'user' ? 'user-msg' : 'assistant-msg'}`}>
+                <div className={`avatar-icon ${msg.sender === 'user' ? 'user-avatar' : 'assistant-avatar'}`}>
+                  {msg.sender === 'user' ? <User size={16} /> : <Bot size={16} />}
+                </div>
 
-            <div className="bubble-content">
-              <div className="bubble-meta">
-                {msg.sender === 'user' ? 'YOU' : 'W.E.D.N.E.S.D.A.Y.'} • {msg.timestamp}
+                <div className="bubble-content">
+                  <div className="bubble-meta">
+                    {msg.sender === 'user' ? 'YOU' : 'W.E.D.N.E.S.D.A.Y.'} • {msg.timestamp}
+                  </div>
+
+                  <div className="bubble-text">
+                    {renderFormattedMessage(msg.text)}
+                  </div>
+
+                  {msg.sender === 'assistant' && (
+                    <div className="message-action-bar">
+                      <button className="action-btn" onClick={() => handleCopyMessage(msg.text, idx)} title="Copy Response">
+                        {copiedMsgIdx === idx ? <Check size={13} className="success" /> : <Copy size={13} />}
+                        <span>{copiedMsgIdx === idx ? 'Copied' : 'Copy'}</span>
+                      </button>
+                      <button className="action-btn" onClick={() => onSendMessage("Regenerate the previous response with deeper details")} title="Regenerate">
+                        <RefreshCw size={13} />
+                        <span>Regenerate</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
-              <div>
-                {renderFormattedMessage(msg.text)}
-              </div>
-            </div>
-          </div>
-        ))}
+            ))}
 
-        {interimTranscript && (
-          <div className="chat-bubble user-msg" style={{ opacity: 0.85 }}>
-            <div className="avatar-icon user-avatar"><User size={16} /></div>
-            <div className="bubble-content" style={{ borderStyle: 'dashed', borderColor: '#f43f5e' }}>
-              <div className="bubble-meta" style={{ color: '#f43f5e' }}>SPEAKING NOW...</div>
-              <div style={{ fontStyle: 'italic' }}>{interimTranscript}</div>
-            </div>
+            {interimTranscript && (
+              <div className="chat-bubble user-msg" style={{ opacity: 0.85 }}>
+                <div className="avatar-icon user-avatar"><User size={16} /></div>
+                <div className="bubble-content" style={{ borderStyle: 'dashed', borderColor: '#f43f5e' }}>
+                  <div className="bubble-meta" style={{ color: '#f43f5e' }}>SPEAKING NOW...</div>
+                  <div style={{ fontStyle: 'italic' }}>{interimTranscript}</div>
+                </div>
+              </div>
+            )}
+
+            {isProcessing && (
+              <div className="chat-bubble assistant-msg thinking-bubble">
+                <div className="avatar-icon assistant-avatar"><Bot size={16} /></div>
+                <div className="bubble-content">
+                  <div className="thinking-indicator">
+                    <span className="thinking-dot"></span>
+                    <span className="thinking-dot"></span>
+                    <span className="thinking-dot"></span>
+                    <span className="thinking-text">Processing & Retrieving Context...</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div ref={messagesEndRef} />
           </div>
         )}
+      </div>
 
-        <div ref={messagesEndRef} />
+      {/* Floating Modern AI Input Box */}
+      <div className="floating-input-wrapper">
+        <div className="floating-input-card">
+          <input
+            type="file"
+            ref={fileInputRef}
+            style={{ display: 'none' }}
+            onChange={(e) => {
+              if (e.target.files && e.target.files[0]) {
+                onSendMessage(`[ATTACHED FILE: ${e.target.files[0].name}] Analyze this file content.`);
+              }
+            }}
+          />
+
+          <button className="input-action-btn" onClick={() => fileInputRef.current?.click()} title="Attach File">
+            <Paperclip size={18} />
+          </button>
+
+          <textarea
+            className="floating-textarea"
+            placeholder="Ask Wednesday anything... (Enter to send, Shift+Enter for new line)"
+            rows={1}
+            value={inputText}
+            onChange={e => setInputText(e.target.value)}
+            onKeyDown={handleKeyDown}
+          />
+
+          <button className={`input-action-btn ${isVoiceListening ? 'listening' : ''}`} onClick={onToggleVoiceListening} title="Voice Microphone">
+            <Mic size={18} />
+          </button>
+
+          {isProcessing ? (
+            <button className="send-pill-btn stop" onClick={onStopGeneration} title="Stop Generation">
+              <Square size={16} />
+              <span>Stop</span>
+            </button>
+          ) : (
+            <button className="send-pill-btn" onClick={handleSend} title="Send Message">
+              <Send size={16} />
+              <span>Send</span>
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
