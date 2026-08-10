@@ -28,7 +28,7 @@ class SpeechEngine {
   }
 
   setRecognitionLanguage(langCode) {
-    const code = langCode || localStorage.getItem('wednesday_mic_lang') || 'te-IN';
+    const code = langCode || localStorage.getItem('wednesday_mic_lang') || 'en-US';
     localStorage.setItem('wednesday_mic_lang', code);
     if (this.recognition) {
       this.recognition.lang = code;
@@ -36,7 +36,7 @@ class SpeechEngine {
   }
 
   getRecognitionLanguage() {
-    return (this.recognition && this.recognition.lang) || localStorage.getItem('wednesday_mic_lang') || 'te-IN';
+    return (this.recognition && this.recognition.lang) || localStorage.getItem('wednesday_mic_lang') || 'en-US';
   }
 
   initRecognition() {
@@ -45,7 +45,7 @@ class SpeechEngine {
       this.recognition = new SpeechRecognition();
       this.recognition.continuous = true;
       this.recognition.interimResults = true;
-      const savedMicLang = localStorage.getItem('wednesday_mic_lang') || 'te-IN';
+      const savedMicLang = localStorage.getItem('wednesday_mic_lang') || 'en-US';
       this.recognition.lang = savedMicLang;
 
       this.recognition.onstart = () => {

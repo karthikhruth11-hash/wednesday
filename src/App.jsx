@@ -469,6 +469,8 @@ export default function App() {
             outline: 'none'
           }}
         >
+          <option value="en-US">🇺🇸 English (US)</option>
+          <option value="en-IN">🇮🇳 English (IN)</option>
           <option value="te-IN">🇮🇳 Telugu (తెలుగు)</option>
           <option value="hi-IN">🇮🇳 Hindi (हिंदी)</option>
           <option value="ta-IN">🇮🇳 Tamil (தமிழ்)</option>
@@ -476,8 +478,6 @@ export default function App() {
           <option value="ml-IN">🇮🇳 Malayalam (മലയാളం)</option>
           <option value="mr-IN">🇮🇳 Marathi (మరాఠీ)</option>
           <option value="bn-IN">🇮🇳 Bengali (బెంగాలీ)</option>
-          <option value="en-US">🇺🇸 English (US)</option>
-          <option value="en-IN">🇮🇳 English (IN)</option>
           <option value="es-ES">🇪🇸 Spanish</option>
           <option value="fr-FR">🇫🇷 French</option>
           <option value="de-DE">🇩🇪 German</option>

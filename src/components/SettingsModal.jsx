@@ -12,10 +12,12 @@ export default function SettingsModal({ isOpen, onClose, onPersonaChange }) {
   const [selectedVoiceName, setSelectedVoiceName] = useState(localStorage.getItem('wednesday_voice_name') || '');
   const [speechRate, setSpeechRate] = useState(localStorage.getItem('wednesday_speech_rate') || '1.0');
   const [speechPitch, setSpeechPitch] = useState(localStorage.getItem('wednesday_speech_pitch') || '1.0');
-  const [micLang, setMicLang] = useState(localStorage.getItem('wednesday_mic_lang') || 'te-IN');
+  const [micLang, setMicLang] = useState(localStorage.getItem('wednesday_mic_lang') || 'en-US');
   const [savedStatus, setSavedStatus] = useState('');
 
   const MIC_LANGUAGES = [
+    { code: 'en-US', label: '🇺🇸 English (US)' },
+    { code: 'en-IN', label: '🇮🇳 English (India)' },
     { code: 'te-IN', label: '🇮🇳 Telugu (తెలుగు)' },
     { code: 'hi-IN', label: '🇮🇳 Hindi (हिंदी)' },
     { code: 'ta-IN', label: '🇮🇳 Tamil (தமிழ்)' },
@@ -23,8 +25,6 @@ export default function SettingsModal({ isOpen, onClose, onPersonaChange }) {
     { code: 'ml-IN', label: '🇮🇳 Malayalam (മലയാളം)' },
     { code: 'mr-IN', label: '🇮🇳 Marathi (మరాఠీ)' },
     { code: 'bn-IN', label: '🇮🇳 Bengali (బెంగాలీ)' },
-    { code: 'en-US', label: '🇺🇸 English (US)' },
-    { code: 'en-IN', label: '🇮🇳 English (India)' },
     { code: 'es-ES', label: '🇪🇸 Spanish (Español)' },
     { code: 'fr-FR', label: '🇫🇷 French (Français)' },
     { code: 'de-DE', label: '🇩🇪 German (Deutsch)' },
