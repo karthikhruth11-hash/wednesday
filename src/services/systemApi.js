@@ -524,7 +524,6 @@ function generateAutonomousKnowledge(prompt, personaMode, customTitle = '', cust
   // Deep-Thinking Software Development & Coding Creation Handler
   if (p.includes('program') || p.includes('software') || p.includes('app') || p.includes('code') || p.includes('develop') || p.includes('create one program')) {
     return `**Complete Step-by-Step Guide: How to Create a Computer Program** 💻\n\n` +
-           `![Software Development Lifecycle](https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&auto=format&fit=crop&q=80)\n\n` +
            `Creating a computer program is a structured software engineering process. Below is the complete 7-phase walkthrough from initial idea to executable software:\n\n` +
            `**Phase 1: Define the Problem & Requirements**\n` +
            `• Clearly specify what input your program takes, what processing logic it executes, and what output it produces.\n` +
@@ -578,7 +577,7 @@ function generateAutonomousKnowledge(prompt, personaMode, customTitle = '', cust
   // Check for comparison query (e.g., Difference between Human Intelligence and Artificial Intelligence)
   if (p.includes('difference between') || p.includes('vs') || p.includes('compare')) {
     const topicName = customTitle || rawP;
-    const bannerImg = customImage || `![${topicName} Comparison](https://image.pollinations.ai/prompt/${encodeURIComponent(topicName)}%20hd%20wallpaper?width=800&height=450&nologo=true)`;
+    const bannerImg = customImage ? `${customImage}\n\n` : '';
     const introExtract = customExtract ? `\n\n> ${customExtract}\n\n` : '\n\n';
 
     return `**Comparative Analysis & Deep Breakdown: ${topicName}** ⚖️\n\n${bannerImg}${introExtract}` +
@@ -596,11 +595,11 @@ function generateAutonomousKnowledge(prompt, personaMode, customTitle = '', cust
   // General Dynamic Knowledge Synthesizer
   const topic = customTitle || (rawP.replace(/^(what is|what are|tell me about|who is|who was|explain|describe|define|how to|where is|which is|tree gurinchi|gurinchi|specific step-by-step guidance for)\s+/i, '').replace(/\?$/g, '').trim());
   const capTopic = topic ? (topic.charAt(0).toUpperCase() + topic.slice(1)) : rawP;
-  const topicImg = customImage || `![${capTopic} Guide](https://image.pollinations.ai/prompt/${encodeURIComponent(capTopic)}%20hd%20wallpaper%20high%20quality%20photography?width=800&height=450&nologo=true)`;
+  const topicImg = customImage ? `${customImage}\n\n` : '';
   const overviewText = customExtract || `${capTopic} is an essential domain spanning technology, science, human cognition, and practical application. Understanding its principles helps in mastering real-world implementation.`;
 
   return `**Master Insights & Operational Guide: ${capTopic}** ⚡\n\n` +
-         `${topicImg}\n\n` +
+         `${topicImg}` +
          `**1. Executive Overview & Core Concepts**:\n` +
          `${overviewText}\n\n` +
          `**2. Key Principles & Structure**:\n` +

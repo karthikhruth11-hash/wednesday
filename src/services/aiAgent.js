@@ -1122,34 +1122,49 @@ export class AIAgentEngine {
   }
 }
 
+function isExplicitImageRequest(prompt) {
+  if (!prompt) return false;
+  const lower = prompt.toLowerCase().trim();
+  return (
+    lower.includes('image') ||
+    lower.includes('photo') ||
+    lower.includes('picture') ||
+    lower.includes('wallpaper') ||
+    lower.includes('visual of') ||
+    lower.includes('draw ') ||
+    lower.includes('generate image') ||
+    lower.includes('generate photo') ||
+    lower.includes('show me a picture') ||
+    lower.includes('show picture') ||
+    lower.includes('show image') ||
+    lower.includes('show photo') ||
+    lower.includes('look like')
+  );
+}
+
 function ensureResponseHasImage(reply, prompt) {
   if (!reply) return reply;
+
+  // ONLY attach an image if the user explicitly requested an image/photo/picture!
+  if (!isExplicitImageRequest(prompt)) {
+    return reply;
+  }
 
   if (/!\[.*?\]\(https?:\/\/[^\s)]+\)/.test(reply)) {
     return reply;
   }
 
-  const lowerPrompt = (prompt || '').toLowerCase().trim();
-  const lowerReply = reply.toLowerCase().trim();
-
-  if (
-    lowerPrompt === 'hi' || lowerPrompt === 'hello' || lowerPrompt === 'hey' || lowerPrompt === 'stop' ||
-    lowerReply.startsWith('stopped speaking') || lowerReply.startsWith('paused microphone') ||
-    lowerReply.startsWith('opening ') || lowerReply.startsWith('playing ') || lowerReply.includes('api key') ||
-    lowerReply.startsWith('created ') || lowerReply.startsWith('exited ')
-  ) {
-    return reply;
-  }
-
   const topic = prompt
-    .replace(/^(what is|what are|tell me about|who is|who was|explain|describe|define|how to|where is|which is|show me|give me|tell me|details of|details on|history of|formula of|code for)\s+/i, '')
+    .replace(/^(show me|generate|draw|create|make|give me|get me|find|display)?\s*(a|an|the)?\s*(image|photo|picture|wallpaper|visual|drawing)?\s*(of|for|about)?\s*/i, '')
     .replace(/\?$/g, '').trim() || prompt.trim();
 
-  const capTopic = topic ? (topic.charAt(0).toUpperCase() + topic.slice(1)) : 'Visual Knowledge Matrix';
-  const encodedTopic = encodeURIComponent(topic || 'knowledge');
-  const imageUrl = `https://image.pollinations.ai/prompt/${encodedTopic}%20hd%20wallpaper%20high%20quality%20photography?width=800&height=450&nologo=true`;
+  const capTopic = topic ? (topic.charAt(0).toUpperCase() + topic.slice(1)) : 'Photo';
+  const encodedTopic = encodeURIComponent(topic || 'nature');
 
-  const imageMarkdown = `![${capTopic} Visual](${imageUrl})\n\n`;
+  // Realistic photography prompt without AI girl / anime artifacts
+  const imageUrl = `https://image.pollinations.ai/prompt/real%20authentic%20photography%20high%20resolution%20detailed%20photo%20of%20${encodedTopic}%20no%20anime%20no%20cgi%20realistic?width=800&height=450&nologo=true`;
+
+  const imageMarkdown = `![${capTopic} Photo](${imageUrl})\n\n`;
   return imageMarkdown + reply;
 }
 
