@@ -7,6 +7,9 @@ import { trainingEngine } from './trainingEngine';
 import { autoMlEngine } from './autoMlEngine';
 import { omniscientKnowledgeEngine } from './omniscientKnowledgeEngine';
 import { speechEngine } from './speech';
+import { memoryManager } from './memoryManager';
+import { EmotionEngine } from './emotionEngine';
+import { InputProcessor } from './inputProcessor';
 
 const LANG_MAP = {
   // Telugu aliases
@@ -176,8 +179,16 @@ export class AIAgentEngine {
   // Universal Natural Language System Intent Router with Persona Support & Auto ML Learning
   async processQuery(query, personaMode = 'jarvis') {
     const rawQuery = query.trim();
-    const lower = rawQuery.toLowerCase();
+    const inputAnalysis = InputProcessor.processInput(rawQuery);
+    const effectiveQueryText = inputAnalysis.normalizedIntent || rawQuery;
+    const lower = effectiveQueryText.toLowerCase();
     let result = null;
+
+    // Detect user emotion & mood framing
+    const emotionData = EmotionEngine.detectEmotion(rawQuery);
+
+    // Retrieve Short-Term, Long-Term, and Project Memory context
+    const memorySnippet = memoryManager.getRelevantContext(effectiveQueryText);
 
     // Active Topic Context Resolution
     let effectiveQuery = rawQuery;
@@ -1128,7 +1139,26 @@ export class AIAgentEngine {
       const provider = localStorage.getItem('wednesday_ai_provider') || 'jarvis';
       const apiKey = localStorage.getItem('wednesday_api_key') || '';
 
-      const llmRes = await systemApi.sendAIChat(rawQuery, apiKey, provider, personaMode);
+      let queryWithContext = rawQuery;
+      let contextParts = [];
+
+      if (emotionData && emotionData.guidance) {
+        contextParts.push(`[EMOTION / TONE DETECTED: ${emotionData.tone.toUpperCase()}] Guideline: ${emotionData.guidance}`);
+      }
+
+      if (memorySnippet) {
+        contextParts.push(memorySnippet);
+      }
+
+      if (inputAnalysis.isCodeOnlyReq) {
+        contextParts.push(`[USER REQUESTED CODE ONLY]: Output ONLY the complete code block inside triple backticks without any surrounding conversational text.`);
+      }
+
+      if (contextParts.length > 0) {
+        queryWithContext = `${contextParts.join('\n\n')}\n\nUser Question: ${rawQuery}`;
+      }
+
+      const llmRes = await systemApi.sendAIChat(queryWithContext, apiKey, provider, personaMode);
       if (llmRes && llmRes.success && llmRes.reply) {
         result = {
           reply: llmRes.reply,
@@ -1145,10 +1175,14 @@ export class AIAgentEngine {
       };
     }
 
-    // AUTONOMOUS CONTINUOUS MACHINE LEARNING
+    // AUTONOMOUS CONTINUOUS MACHINE LEARNING & MEMORY RECORDING
     autoMlEngine.learnFromInteraction(rawQuery, result.reply, personaMode, result.toolUsed);
 
     if (result && result.reply) {
+      await memoryManager.recordInteraction(rawQuery, result.reply, {
+        emotion: emotionData ? emotionData.tone : 'neutral',
+        toolUsed: result.toolUsed
+      });
       result.reply = ensureResponseHasImage(result.reply, rawQuery);
     }
 

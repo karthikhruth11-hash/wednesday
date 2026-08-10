@@ -1,12 +1,100 @@
-import React, { useRef, useEffect } from 'react';
-import { Bot, User } from 'lucide-react';
+import React, { useRef, useEffect, useState } from 'react';
+import { Bot, User, Copy, Check } from 'lucide-react';
 
-function renderFormattedMessage(text) {
+function CodeBlock({ code, language }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(code);
+      } else {
+        const textArea = document.createElement('textarea');
+        textArea.value = code;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+      }
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  return (
+    <div
+      style={{
+        margin: '0.8rem 0',
+        borderRadius: '10px',
+        overflow: 'hidden',
+        border: '1px solid rgba(0, 240, 255, 0.35)',
+        background: '#040b18',
+        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.4)'
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '0.4rem 0.8rem',
+          background: 'rgba(0, 240, 255, 0.12)',
+          borderBottom: '1px solid rgba(0, 240, 255, 0.2)',
+          fontSize: '0.75rem',
+          fontFamily: 'Orbitron, monospace',
+          color: '#00f0ff'
+        }}
+      >
+        <span>💻 {language ? language.toUpperCase() : 'CODE'}</span>
+        <button
+          type="button"
+          onClick={handleCopy}
+          style={{
+            background: copied ? 'rgba(34, 197, 94, 0.25)' : 'rgba(0, 240, 255, 0.15)',
+            color: copied ? '#4ade80' : '#00f0ff',
+            border: `1px solid ${copied ? '#22c55e' : 'rgba(0, 240, 255, 0.4)'}`,
+            borderRadius: '6px',
+            padding: '0.2rem 0.6rem',
+            fontSize: '0.7rem',
+            fontFamily: 'Orbitron, monospace',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.3rem',
+            transition: 'all 0.2s ease'
+          }}
+        >
+          {copied ? <Check size={12} /> : <Copy size={12} />}
+          {copied ? 'Copied!' : 'Copy Code'}
+        </button>
+      </div>
+
+      <pre
+        style={{
+          margin: 0,
+          padding: '0.8rem 1rem',
+          fontSize: '0.82rem',
+          fontFamily: 'Consolas, Monaco, "Courier New", monospace',
+          color: '#e2e8f0',
+          overflowX: 'auto',
+          lineHeight: '1.5'
+        }}
+      >
+        <code>{code}</code>
+      </pre>
+    </div>
+  );
+}
+
+function TextSection({ text }) {
   if (!text) return null;
-
   const lines = text.split('\n');
+
   return lines.map((line, lineIdx) => {
-    // Check if line contains markdown image
+    // Markdown Image
     const imgMatch = line.match(/!\[([^\]]*)\]\((https?:\/\/[^\s)]+)\)/);
     if (imgMatch) {
       const altText = imgMatch[1] || 'Visual Matrix';
@@ -61,7 +149,7 @@ function renderFormattedMessage(text) {
       );
     }
 
-    // Check if line contains markdown link [text](url)
+    // Markdown Link
     const linkMatch = line.match(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/);
     if (linkMatch) {
       return (
@@ -94,22 +182,76 @@ function renderFormattedMessage(text) {
       return <div key={lineIdx} style={{ height: '0.5rem' }} />;
     }
 
-    const parts = line.split(/(\*\*[^*]+\*\*)/g);
+    // Headings (### or ##)
+    if (line.startsWith('### ') || line.startsWith('## ') || line.startsWith('# ')) {
+      const headingText = line.replace(/^#+\s*/, '');
+      return (
+        <h4 key={lineIdx} style={{ color: '#00f0ff', fontFamily: 'Orbitron, sans-serif', marginTop: '0.6rem', marginBottom: '0.3rem' }}>
+          {headingText}
+        </h4>
+      );
+    }
+
+    // Bullet list items
+    if (line.trim().startsWith('• ') || line.trim().startsWith('- ') || line.trim().startsWith('* ')) {
+      const bulletText = line.trim().replace(/^([•\-*])\s*/, '');
+      return (
+        <div key={lineIdx} style={{ paddingLeft: '1rem', marginBottom: '0.3rem', lineHeight: '1.6', position: 'relative' }}>
+          <span style={{ color: '#00f0ff', marginRight: '0.5rem' }}>•</span>
+          {renderInlineFormatting(bulletText)}
+        </div>
+      );
+    }
+
     return (
       <div key={lineIdx} style={{ marginBottom: '0.35rem', lineHeight: '1.6' }}>
-        {parts.map((part, partIdx) => {
-          if (part.startsWith('**') && part.endsWith('**')) {
-            return (
-              <strong key={partIdx} style={{ color: '#00f0ff', fontWeight: '700' }}>
-                {part.slice(2, -2)}
-              </strong>
-            );
-          }
-          return part;
-        })}
+        {renderInlineFormatting(line)}
       </div>
     );
   });
+}
+
+function renderInlineFormatting(line) {
+  const parts = line.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((part, partIdx) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return (
+        <strong key={partIdx} style={{ color: '#00f0ff', fontWeight: '700' }}>
+          {part.slice(2, -2)}
+        </strong>
+      );
+    }
+    return part;
+  });
+}
+
+function renderFormattedMessage(text) {
+  if (!text) return null;
+
+  const codeBlockRegex = /```([a-zA-Z0-9_-]*)\n([\s\S]*?)```/g;
+  const elements = [];
+  let lastIndex = 0;
+  let match;
+
+  while ((match = codeBlockRegex.exec(text)) !== null) {
+    const textBefore = text.substring(lastIndex, match.index);
+    if (textBefore) {
+      elements.push(<TextSection key={`text_${lastIndex}`} text={textBefore} />);
+    }
+
+    const lang = match[1] || 'code';
+    const code = match[2].trim();
+    elements.push(<CodeBlock key={`code_${match.index}`} code={code} language={lang} />);
+
+    lastIndex = match.index + match[0].length;
+  }
+
+  const remainingText = text.substring(lastIndex);
+  if (remainingText) {
+    elements.push(<TextSection key={`text_${lastIndex}`} text={remainingText} />);
+  }
+
+  return elements;
 }
 
 export default function ChatGPTConsole({
@@ -157,7 +299,7 @@ export default function ChatGPTConsole({
               <div className="bubble-meta">
                 {msg.sender === 'user' ? 'YOU' : 'W.E.D.N.E.S.D.A.Y.'} • {msg.timestamp}
               </div>
-              <div style={{ whiteSpace: 'pre-wrap' }}>
+              <div>
                 {renderFormattedMessage(msg.text)}
               </div>
             </div>
