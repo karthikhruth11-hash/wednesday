@@ -7,9 +7,14 @@
     <meta http-equiv="Expires" content="0" />
     <script>
       (function() {
-        const buildVer = "VER_RESTORE_40MIN_BACK_COMMIT_885590F_20260811_v37";
+        const buildVer = "VER_SANALIZED_PROMPT_CLEAN_20260811_v38";
         if (localStorage.getItem("wednesday_ver") !== buildVer) {
           localStorage.setItem("wednesday_ver", buildVer);
+          try {
+            localStorage.removeItem("bro_conversations");
+            localStorage.removeItem("wednesday_memory_matrix");
+            localStorage.removeItem("bro_active_conv_id");
+          } catch (e) {}
           if ('caches' in window) {
             caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
           }
@@ -28,8 +33,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@400;500;600;700&family=Orbitron:wght@400;600;700;900&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Puter.js Free Autonomous AI Client Engine -->
     <script src="https://js.puter.com/v2/"></script>
-    <script type="module" crossorigin src="./assets/index-1786462561015.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-1786462561015.css">
+    <script type="module" crossorigin src="./assets/index-1786462711494.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-1786462711494.css">
   </head>
   <body>
     <div id="root"></div>
