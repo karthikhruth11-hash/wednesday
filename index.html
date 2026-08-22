@@ -16,7 +16,7 @@
             localStorage.removeItem("bro_active_conv_id");
           } catch (e) {}
           if ('caches' in window) {
-            caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+            caches.keys().then(keys => keys.forEach(k => keys.delete(k)));
           }
           if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
@@ -31,12 +31,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@400;500;600;700&family=Orbitron:wght@400;600;700;900&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Puter.js Free Autonomous AI Client Engine -->
-    <script src="https://js.puter.com/v2/"></script>
     <script type="module" crossorigin src="./assets/index-1786607439370.js"></script>
     <link rel="stylesheet" crossorigin href="./assets/index-1786607439370.css">
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"></div>
   </body>
 </html>
