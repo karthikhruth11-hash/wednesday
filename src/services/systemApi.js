@@ -350,24 +350,7 @@ export const systemApi = {
         }
 
         if (window.puter && window.puter.ai && typeof window.puter.ai.chat === 'function') {
-          const callPuterWithTimeout = (modelName, timeoutMs = 6500) => {
-            return Promise.race([
-              window.puter.ai.chat(`${activeSystemPrompt}\n\nUser Query: ${prompt}`, { model: modelName }),
-              new Promise((_, reject) => setTimeout(() => reject(new Error('Puter AI timeout')), timeoutMs))
-            ]);
-          };
-
-          let puterRes = null;
-          try {
-            puterRes = await callPuterWithTimeout('gemini-2.5-flash', 6500);
-          } catch (err1) {
-            try {
-              puterRes = await callPuterWithTimeout('gpt-4o-mini', 5000);
-            } catch (err2) {
-              console.warn("Puter AI models timed out/failed:", err1, err2);
-            }
-          }
-
+          const puterRes = await window.puter.ai.chat(`${activeSystemPrompt}\n\nUser Query: ${prompt}`, { model: 'gemini-2.5-flash' });
           if (puterRes) {
             const text = typeof puterRes === 'string' ? puterRes : (puterRes.text || puterRes.message?.content || '');
             if (text && text.trim().length > 30) {
@@ -466,10 +449,10 @@ export const systemApi = {
       } catch { }
     }
 
-    // 2.5 Free Unlimited Pollinations Live AI Engine Tier (POST + Fast GET Fallback)
+    // 2.5 Free Unlimited Pollinations Live AI Engine Tier (Zero Keys & Zero Balance Popup!)
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      const timeoutId = setTimeout(() => controller.abort(), 6000);
       const polResponse = await fetch('https://text.pollinations.ai/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -487,23 +470,6 @@ export const systemApi = {
         const textReply = await polResponse.text();
         if (textReply && textReply.trim().length > 15 && !textReply.includes('<html>') && !textReply.includes('PAYMENT_REQUIRED')) {
           return { success: true, reply: textReply.trim() };
-        }
-      }
-    } catch {}
-
-    // Pollinations Fast GET Fallback
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 4000);
-      const encodedPrompt = encodeURIComponent(prompt);
-      const getRes = await fetch(`https://text.pollinations.ai/${encodedPrompt}?model=openai`, {
-        signal: controller.signal
-      });
-      clearTimeout(timeoutId);
-      if (getRes.ok) {
-        const getReply = await getRes.text();
-        if (getReply && getReply.trim().length > 15 && !getReply.includes('<html>') && !getReply.includes('PAYMENT_REQUIRED')) {
-          return { success: true, reply: getReply.trim() };
         }
       }
     } catch {}
@@ -670,7 +636,78 @@ function generateAutonomousKnowledge(prompt, personaMode, customTitle = '', cust
       : "I'm doing great, Boss Karthik! All SIGMA core systems are 100% online and running smoothly. How can I help you today? ⚡";
   }
 
-  // Dynamic Knowledge Synthesizer
+  // Deep-Thinking Software Development & Coding Creation Handler
+  if (p.includes('program') || p.includes('software') || p.includes('app') || p.includes('code') || p.includes('develop') || p.includes('create one program')) {
+    return `**Complete Step-by-Step Guide: How to Create a Computer Program** 💻\n\n` +
+           `Creating a computer program is a structured software engineering process. Below is the complete 7-phase walkthrough from initial idea to executable software:\n\n` +
+           `**Phase 1: Define the Problem & Requirements**\n` +
+           `• Clearly specify what input your program takes, what processing logic it executes, and what output it produces.\n` +
+           `• **Example**: Creating a CLI interactive calculator that takes two numbers and an operator (+, -, *, /) and outputs the calculated result.\n\n` +
+           `**Phase 2: Choose the Programming Language & Tools**\n` +
+           `• **Python**: Best for beginners, data automation, AI, and backend scripting.\n` +
+           `• **JavaScript / TypeScript**: Best for web development (React, Node.js).\n` +
+           `• **C++ / Java / Rust**: Best for high-performance desktop software and system utilities.\n` +
+           `• **IDE / Editor**: Install **Visual Studio Code (VS Code)**.\n\n` +
+           `**Phase 3: Design the Algorithm & Logic Flow**\n` +
+           `Draft the logical sequence before writing code:\n` +
+           `1. Prompt user for Input A and Input B.\n` +
+           `2. Verify operator validity.\n` +
+           `3. Execute mathematical logic.\n` +
+           `4. Handle errors (e.g., division by zero) and display output.\n\n` +
+           `**Phase 4: Write the Source Code (Executable Python Example)**\n\n` +
+           `\`\`\`python\n` +
+           `# Complete Executable Python Program\n` +
+           `def calculate(n1, n2, op):\n` +
+           `    if op == '+': return n1 + n2\n` +
+           `    elif op == '-': return n1 - n2\n` +
+           `    elif op == '*': return n1 * n2\n` +
+           `    elif op == '/':\n` +
+           `        return "Error: Division by zero!" if n2 == 0 else n1 / n2\n` +
+           `    return "Error: Invalid Operator"\n\n` +
+           `def main():\n` +
+           `    print("=== W.E.D.N.E.S.D.A.Y. Python Core Program ===")\n` +
+           `    try:\n` +
+           `        num1 = float(input("Enter first number: "))\n` +
+           `        operator = input("Enter operator (+, -, *, /): ").strip()\n` +
+           `        num2 = float(input("Enter second number: "))\n` +
+           `        result = calculate(num1, num2, operator)\n` +
+           `        print(f"Result: {result}")\n` +
+           `    except ValueError:\n` +
+           `        print("Error: Invalid numeric input!")\n\n` +
+           `if __name__ == "__main__":\n` +
+           `    main()\n` +
+           `\`\`\`\n\n` +
+           `**Phase 5: Test & Debug the Code**\n` +
+           `• Run syntax checks and test edge cases (e.g., passing invalid characters or dividing by zero).\n` +
+           `• Use print statements or VS Code breakpoint debuggers to inspect runtime variable states.\n\n` +
+           `**Phase 6: Compile & Run the Program**\n` +
+           `• Open Terminal / Command Prompt and run:\n` +
+           `  \`\`\`bash\n` +
+           `  python main.py\n` +
+           `  \`\`\`\n\n` +
+           `**Phase 7: Maintenance & Git Version Control**\n` +
+           `• Use \`git init\` and \`git commit\` to save versions, and modularize code into reusable functions, Boss Karthik! ⚡`;
+  }
+
+  // Check for comparison query (e.g., Difference between Human Intelligence and Artificial Intelligence)
+  if (p.includes('difference between') || p.includes('vs') || p.includes('compare')) {
+    const topicName = customTitle || rawP;
+    const bannerImg = customImage ? `${customImage}\n\n` : '';
+    const introExtract = customExtract ? `\n\n> ${customExtract}\n\n` : '\n\n';
+
+    return `**Comparative Analysis & Deep Breakdown: ${topicName}** ⚖️\n\n${bannerImg}${introExtract}` +
+           `**1. Fundamental Distinctions**:\n` +
+           `• **Core Operating Principle**: Human intelligence relies on biological neural networks, conscious cognition, emotional intelligence, and experiential learning. Artificial intelligence operates via algorithmic computation, statistical pattern recognition, and trained machine learning weights.\n` +
+           `• **Processing Mechanism**: Humans use parallel synaptic processing with high adaptability and contextual intuition. AI relies on high-speed digital matrix calculations optimized for massive data throughput.\n\n` +
+           `**2. Key Differences Matrix**:\n` +
+           `• **Adaptability & Generalization**: Humans excel at General Intelligence (AGI) — transferring knowledge across completely unrelated domains effortlessly. Current AI models excel at Specific Intelligence (Narrow AI) — performing defined pattern tasks with extreme accuracy.\n` +
+           `• **Energy Efficiency & Compute**: The human brain operates on ~20 Watts of biological energy. Training and running advanced AI models requires megawatts of hardware infrastructure.\n` +
+           `• **Emotional & Moral Reasoning**: Humans possess empathy, moral frameworks, and self-awareness. AI processes ethical parameters strictly through rules and mathematical objective functions.\n\n` +
+           `**3. Practical Guidance & Best Practices**:\n` +
+           `• Combine human creative direction and critical thinking with AI speed, data automation, and analytical capabilities for optimal results, Boss Karthik! ⚡`;
+  }
+
+  // General Dynamic Knowledge Synthesizer
   const topic = customTitle || (rawP.replace(/^(what is|what are|tell me about|who is|who was|explain|describe|define|how to|where is|which is|tree gurinchi|gurinchi|specific step-by-step guidance for)\s+/i, '').replace(/\?$/g, '').trim());
   const capTopic = topic ? (topic.charAt(0).toUpperCase() + topic.slice(1)) : rawP;
   const topicImg = customImage ? `${customImage}\n\n` : '';
