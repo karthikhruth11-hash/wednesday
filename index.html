@@ -7,15 +7,16 @@
     <meta http-equiv="Expires" content="0" />
     <script>
       (function() {
-        const buildVer = "VER_PERFECT_DESIRED_MODERN_INTERFACE_20260811_v34";
+        const buildVer = "VER_SANALIZED_PROMPT_CLEAN_20260811_v38";
         if (localStorage.getItem("wednesday_ver") !== buildVer) {
           localStorage.setItem("wednesday_ver", buildVer);
+          try {
+            localStorage.removeItem("bro_conversations");
+            localStorage.removeItem("wednesday_memory_matrix");
+            localStorage.removeItem("bro_active_conv_id");
+          } catch (e) {}
           if ('caches' in window) {
-            caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k)))).then(() => {
-              window.location.reload(true);
-            });
-          } else {
-            window.location.reload(true);
+            caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
           }
           if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
@@ -25,15 +26,15 @@
     </script>
     <link rel="icon" type="image/svg+xml" href="./vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>W.E.D.N.E.S.D.A.Y. - Stark AI Assistant</title>
-    <!-- Google Fonts: Orbitron (Sci-Fi Headings), Rajdhani (UI Elements), Fira Code (Console & Code) -->
+    <title>BRO — Next-Gen Personal AI Agent & Universal OS Platform</title>
+    <!-- Google Fonts: Orbitron, Outfit, Inter, Fira Code -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@400;500;600;700&family=Orbitron:wght@400;600;700;900&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Puter.js Free Autonomous AI Client Engine -->
     <script src="https://js.puter.com/v2/"></script>
-    <script type="module" crossorigin src="./assets/index-1787915204142.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-1787915204142.css">
+    <script type="module" crossorigin src="./assets/index-1787915439016.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-1787915439016.css">
   </head>
   <body>
     <div id="root"></div>
